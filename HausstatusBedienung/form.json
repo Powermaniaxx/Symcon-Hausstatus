@@ -1,329 +1,477 @@
 {
   "elements": [
     {
-      "type": "Select",
-      "name": "View",
-      "caption": "Kachelansicht",
-      "options": [
+      "type": "Label",
+      "caption": "Hausstatus 0.9 – Einstellungen"
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "TileSettings",
+      "caption": "Kachel und Konfiguration",
+      "expanded": true,
+      "items": [
         {
-          "caption": "Gesamter Hausstatus",
-          "value": 0
+          "type": "CheckBox",
+          "name": "ActiveView",
+          "caption": "Diese Kachel aktivieren"
         },
         {
-          "caption": "Anwesenheit und Alarm",
-          "value": 1
+          "type": "Select",
+          "name": "View",
+          "caption": "Inhalt dieser Kachel",
+          "options": [
+            {
+              "value": 0,
+              "caption": "Hausstatus – gemeinsame Übersicht"
+            },
+            {
+              "value": 1,
+              "caption": "Einzeln: Anwesenheit und Alarm"
+            },
+            {
+              "value": 2,
+              "caption": "Einzeln: Haustür"
+            },
+            {
+              "value": 5,
+              "caption": "Einzeln: Wohnzimmerlicht"
+            },
+            {
+              "value": 6,
+              "caption": "Einzeln: Cinema 40"
+            },
+            {
+              "value": 4,
+              "caption": "Einzeln: Gerätewarnungen"
+            },
+            {
+              "value": 7,
+              "caption": "Einzeln: PV-Anlage"
+            },
+            {
+              "value": 11,
+              "caption": "Einzeln: Markise und Dachfenster"
+            },
+            {
+              "value": 8,
+              "caption": "Detail: Bewegung"
+            },
+            {
+              "value": 9,
+              "caption": "Detail: Temperaturen"
+            },
+            {
+              "value": 10,
+              "caption": "Detail: Wetter"
+            }
+          ],
+          "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
         },
         {
-          "caption": "Haustuer und Tuerbedienung",
-          "value": 2
+          "type": "Label",
+          "caption": "Die Auswahl bestimmt nur den Inhalt dieser Instanz. Sie legt keine weiteren Kacheln an."
         },
         {
-          "caption": "Geraete",
-          "value": 4
+          "type": "SelectInstance",
+          "name": "ConfigSource",
+          "caption": "Gemeinsame Einstellungen aus einer anderen Hausstatus-Instanz",
+          "validModules": [
+            "{9E33E109-4881-4E78-9906-38CAC2F1E210}"
+          ],
+          "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
         },
         {
-          "caption": "Wohnzimmerlicht",
-          "value": 5
-        },
-        {
-          "caption": "Cinema 40",
-          "value": 6
-        },
-        {
-          "caption": "PV-Anlage",
-          "value": 7
-        },
-        {
-          "caption": "Bewegungsmelder",
-          "value": 8
-        },
-        {
-          "caption": "Raumtemperaturen",
-          "value": 9
-        },
-        {
-          "caption": "Wetter",
-          "value": 10
-        },
-        {
-          "caption": "Markise und Dachfenster",
-          "value": 11
+          "type": "Label",
+          "caption": "Leer lassen für eigene Einstellungen. Bei den gemeinsamen Detailkacheln ist hier 52627 ausgewählt."
         }
       ]
     },
     {
-      "type": "SelectInstance",
-      "name": "ConfigSource",
-      "caption": "Zentrale Konfiguration (0 = eigene Einstellungen)"
-    },
-    {
-      "type": "CheckBox",
-      "name": "SeparateDetails",
-      "caption": "Bewegung, Temperaturen und Wetter in eigenen Kacheln anzeigen (danach Detailkacheln einrichten)"
-    },
-    {
       "type": "Label",
-      "caption": "Bei zentraler Konfiguration die Quellen und Bedienoptionen dort einstellen. Die folgenden lokalen Quellenfelder werden dann nicht verwendet."
+      "caption": "Die Quellen und Bedienoptionen werden in dieser Instanz eingestellt.",
+      "name": "SettingsOrigin"
     },
     {
-      "type": "Label",
-      "caption": "Tueroeffnung: Freigeben, danach Tuer oeffnen und Sicherheitsfrage bestaetigen. Die Freigabe selbst oeffnet keine Tuer. Oeffnen ruft das vorhandene Aktionsskript der Bedienvariable auf."
-    },
-    {
-      "type": "CheckBox",
-      "name": "DoorEnabled",
-      "caption": "Tuer oeffnen mit Sicherheitsfrage aktivieren"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "DoorControl",
-      "caption": "Tuer-Bedienvariable mit Aktionsskript und Aktion Oeffnen"
-    },
-    {
-      "type": "Label",
-      "caption": "Hausstatus mit HTML-Bedienung. Alle Quellen sind frei waehlbar."
-    },
-    {
-      "type": "Label",
-      "caption": "Licht: docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php ersetzt Skript 33054. Danach dieses Skript als Licht-Bedienskript auswaehlen. Ohne ausgewaehltes Skript bleiben Lichtbuttons gesperrt."
-    },
-    {
-      "type": "CheckBox",
-      "name": "LightEnabled",
-      "caption": "Lichtbedienung aktivieren"
-    },
-    {
-      "type": "SelectScript",
-      "name": "LightCommandScript",
-      "caption": "Lichtautomatik 33054 (zuerst auf Version 3.3 aktualisieren)"
-    },
-    {
-      "type": "CheckBox",
-      "name": "CinemaEnabled",
-      "caption": "Cinema-40-Bedienung aktivieren"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Presence",
-      "caption": "Anwesenheit"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Lock",
-      "caption": "Schlossstatus"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "DoorContact",
-      "caption": "Tuerkontakt (1 = offen)"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "DoorPermission",
-      "caption": "Tuerfreigabe"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Alarm",
-      "caption": "Alarm innen"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "BatteryWarnings",
-      "caption": "Integer-Variable Anzahl Geraetewarnungen unter Batteriewaechter"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "LightState",
-      "caption": "Wohnzimmerlicht - Status und direkte Schaltaktion"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Brightness",
-      "caption": "Wohnzimmerlicht - Helligkeit 1 bis 100"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "CinemaState",
-      "caption": "Cinema 40 - Status (Boolean)"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "CinemaControl",
-      "caption": "Cinema 40 - schaltbare Power-Variable (Boolean)"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "PVPower",
-      "caption": "PV aktuelle Leistung"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "PVEnergy",
-      "caption": "PV Energie heute"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Weather",
-      "caption": "Wetter"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Wind",
-      "caption": "Wind"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Rain",
-      "caption": "Regen"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Warning",
-      "caption": "Wetterwarnung"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Sunrise",
-      "caption": "Sonnenaufgang"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "Sunset",
-      "caption": "Sonnenuntergang"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "DoorOpened",
-      "caption": "Letzte Tueroeffnung"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "DoorClosed",
-      "caption": "Letzte Tuerschliessung"
-    },
-    {
-      "type": "List",
-      "name": "Rooms",
-      "caption": "Raumtemperaturen",
-      "rowCount": 9,
-      "add": true,
-      "delete": true,
-      "columns": [
+      "type": "ExpansionPanel",
+      "name": "OverviewSettings",
+      "caption": "Übersicht und Detailkacheln",
+      "expanded": true,
+      "items": [
         {
-          "caption": "Raum",
-          "name": "Name",
-          "width": "200px",
-          "add": "Raum",
-          "edit": {
-            "type": "ValidationTextBox"
-          }
+          "type": "CheckBox",
+          "name": "SeparateDetails",
+          "caption": "Bewegung, Temperaturen und Wetter aus der Übersicht ausblenden"
         },
         {
-          "caption": "Temperaturvariable",
-          "name": "Variable",
-          "width": "auto",
-          "add": 0,
-          "edit": {
-            "type": "SelectVariable"
-          }
+          "type": "Label",
+          "caption": "Diese Bereiche erscheinen in ihren eigenen Detailkacheln. Zum erstmaligen Anlegen das vollständige Einrichtungsskript Hausstatus_Detailkacheln_0_8_KOMPLETT.php verwenden."
         }
       ]
     },
     {
-      "type": "SelectInstance",
-      "name": "MotionArchive",
-      "caption": "Bewegungsarchiv (0 = automatisch bei genau einem Archiv)"
-    },
-    {
-      "type": "CheckBox",
-      "name": "MotionLogging",
-      "caption": "Archivierung fuer ausgewaehlte Bewegungsmelder aktivieren"
-    },
-    {
-      "type": "List",
-      "name": "MotionSensors",
-      "caption": "Bewegungsmelder mit 24-Stunden-Verlauf",
-      "rowCount": 6,
-      "add": true,
-      "delete": true,
-      "columns": [
+      "type": "ExpansionPanel",
+      "name": "PresenceSettings",
+      "caption": "01 · Anwesenheit und Alarm",
+      "expanded": false,
+      "items": [
         {
-          "caption": "Melder",
-          "name": "Name",
-          "width": "220px",
-          "add": "Bewegungsmelder",
-          "edit": {
-            "type": "ValidationTextBox"
-          }
+          "type": "SelectVariable",
+          "name": "Presence",
+          "caption": "Anwesenheit – Statusvariable"
         },
         {
-          "caption": "Boolean-Variable",
-          "name": "Variable",
-          "width": "auto",
-          "add": 0,
-          "edit": {
-            "type": "SelectVariable"
-          }
+          "type": "SelectVariable",
+          "name": "Alarm",
+          "caption": "Alarm innen – Statusvariable"
         }
       ]
     },
     {
-      "type": "SelectVariable",
-      "name": "CinemaSource",
-      "caption": "Cinema 40 - Quelle (16889; Auswahl aus Darstellung oder Profil)"
+      "type": "ExpansionPanel",
+      "name": "DoorSettings",
+      "caption": "02 · Haustür",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "Lock",
+          "caption": "Türschloss – verriegelt / aufgeschlossen"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DoorContact",
+          "caption": "Türkontakt – offen / geschlossen (1 = offen)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DoorOpened",
+          "caption": "Zeitpunkt der letzten Öffnung"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DoorClosed",
+          "caption": "Zeitpunkt der letzten Schließung"
+        },
+        {
+          "type": "CheckBox",
+          "name": "DoorEnabled",
+          "caption": "Türfreigabe und Öffnen mit Sicherheitsfrage aktivieren"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DoorPermission",
+          "caption": "Freigabe – Boolean-Variable"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DoorControl",
+          "caption": "Öffnen – Bedienvariable mit vorhandenem Aktionsskript"
+        },
+        {
+          "type": "Label",
+          "caption": "Freigeben öffnet die Tür noch nicht. Erst „Tür öffnen“ und die bestätigte Sicherheitsfrage rufen die Öffnen-Aktion auf."
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "CinemaVolume",
-      "caption": "Cinema 40 - Lautstaerke (45376; Regler aus Darstellung oder Profil)"
+      "type": "ExpansionPanel",
+      "name": "LightSettings",
+      "caption": "03 · Wohnzimmerlicht",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "LightState",
+          "caption": "Licht – Statusvariable"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Brightness",
+          "caption": "Helligkeit – Variable von 1 bis 100 %"
+        },
+        {
+          "type": "CheckBox",
+          "name": "LightEnabled",
+          "caption": "Lichtbedienung aktivieren"
+        },
+        {
+          "type": "SelectScript",
+          "name": "LightCommandScript",
+          "caption": "Lichtautomatik – Bedienskript"
+        },
+        {
+          "type": "Label",
+          "caption": "Für die vorhandene Automatik Skript 33054 mit der Fassung 3.3 verwenden. Ein/Aus und Helligkeit werden an dieses Skript übergeben."
+        }
+      ]
     },
     {
-      "type": "CheckBox",
-      "name": "OutdoorEnabled",
-      "caption": "Markise und Dachfenster bedienen (vorhandene Variablenaktionen verwenden)"
+      "type": "ExpansionPanel",
+      "name": "CinemaSettings",
+      "caption": "04 · Cinema 40",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "CinemaState",
+          "caption": "Ein/Aus – Statusvariable"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "CinemaSource",
+          "caption": "Quelle – Variable (16889)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "CinemaVolume",
+          "caption": "Lautstärke – Variable (45376)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "CinemaEnabled",
+          "caption": "Cinema-40-Bedienung aktivieren"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "CinemaControl",
+          "caption": "Ein/Aus – schaltbare Power-Variable"
+        },
+        {
+          "type": "Label",
+          "caption": "Quelle und Lautstärke verwenden die Optionen und Grenzen der Variablendarstellung. Die Power-Variable benötigt eine vorhandene Bedienaktion."
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "AwningPosition",
-      "caption": "Markise - Position"
+      "type": "ExpansionPanel",
+      "name": "DeviceSettings",
+      "caption": "05 · Gerätewarnungen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "BatteryWarnings",
+          "caption": "Anzahl Gerätewarnungen – Integer-Variable"
+        },
+        {
+          "type": "Label",
+          "caption": "Die Zählvariable unter dem Batteriewächter auswählen, nicht das PHP-Skript."
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "AwningAuto",
-      "caption": "Markise - Automatik"
+      "type": "ExpansionPanel",
+      "name": "PVSettings",
+      "caption": "06 · PV-Anlage",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "PVPower",
+          "caption": "Aktuelle Leistung"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "PVEnergy",
+          "caption": "Energie heute"
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "AwningStatus",
-      "caption": "Markise - Status"
+      "type": "ExpansionPanel",
+      "name": "OutdoorSettings",
+      "caption": "07 · Markise und Dachfenster",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "OutdoorEnabled",
+          "caption": "Markise und Dachfenster bedienen"
+        },
+        {
+          "type": "Label",
+          "caption": "Markise"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "AwningPosition",
+          "caption": "Position"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "AwningStatus",
+          "caption": "Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "AwningAuto",
+          "caption": "Automatik"
+        },
+        {
+          "type": "Label",
+          "caption": "Dachfenster"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "RoofPosition",
+          "caption": "Position"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "RoofStatus",
+          "caption": "Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "RoofAuto",
+          "caption": "Automatik"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "RoofNight",
+          "caption": "Über Nacht"
+        },
+        {
+          "type": "Label",
+          "caption": "Für die Bedienung Variablen mit vorhandenen Aktionen auswählen. Positionsregler übernehmen deren Grenzen und Schritte."
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "RoofPosition",
-      "caption": "Dachfenster - Position"
+      "type": "ExpansionPanel",
+      "name": "MotionSettings",
+      "caption": "08 · Bewegung und Verlauf",
+      "expanded": false,
+      "items": [
+        {
+          "type": "List",
+          "name": "MotionSensors",
+          "caption": "Bewegungsmelder – Verlauf der letzten 24 Stunden",
+          "rowCount": 6,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Melder",
+              "name": "Name",
+              "width": "220px",
+              "add": "Bewegungsmelder",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Boolean-Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
+        },
+        {
+          "type": "SelectInstance",
+          "name": "MotionArchive",
+          "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "MotionLogging",
+          "caption": "Ausgewählte Bewegungsmelder archivieren"
+        },
+        {
+          "type": "Label",
+          "caption": "Die Melder müssen Boolean-Variablen sein. Der Verlauf zeigt die im Archiv gespeicherten Zustandswechsel."
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "RoofAuto",
-      "caption": "Dachfenster - Automatik"
+      "type": "ExpansionPanel",
+      "name": "TemperatureSettings",
+      "caption": "09 · Temperaturen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "List",
+          "name": "Rooms",
+          "caption": "Räume und Temperaturvariablen",
+          "rowCount": 9,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Raum",
+              "name": "Name",
+              "width": "200px",
+              "add": "Raum",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Temperaturvariable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
-      "type": "SelectVariable",
-      "name": "RoofNight",
-      "caption": "Dachfenster - ueber Nacht"
-    },
-    {
-      "type": "SelectVariable",
-      "name": "RoofStatus",
-      "caption": "Dachfenster - Status"
+      "type": "ExpansionPanel",
+      "name": "WeatherSettings",
+      "caption": "10 · Wetter",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "Weather",
+          "caption": "Wetterzustand"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Wind",
+          "caption": "Wind"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Rain",
+          "caption": "Regen"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Warning",
+          "caption": "Warnstufe"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Sunrise",
+          "caption": "Sonnenaufgang"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Sunset",
+          "caption": "Sonnenuntergang"
+        }
+      ]
     }
   ],
   "actions": [
     {
       "type": "Button",
-      "caption": "Werte aktualisieren",
-      "onClick": "SVHS_Refresh($id);"
+      "caption": "Werte jetzt aktualisieren",
+      "onClick": "echo SVHS_RefreshFromConfiguration($id);",
+      "link": false
+    },
+    {
+      "type": "Label",
+      "caption": "Liest die aktuellen Symcon-Werte und den gespeicherten Bewegungsverlauf neu. Neue Moduldateien werden über Module Control geladen."
     }
   ]
 }

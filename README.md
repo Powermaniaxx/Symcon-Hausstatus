@@ -1,6 +1,14 @@
-# Sven Hausstatus 0.8
+# Sven Hausstatus 0.9
 
 Symcon-Modul ab Version 9.0 mit HTML-Bedienung. Zentrale Instanz: 52627. Kachel-Basis: 55503. Hausstatus-Link: 29867. Vorhandene Quellen und Bedienoptionen bleiben in der zentralen Instanz konfiguriert.
+
+## Aenderungen in 0.9
+
+Der Aktualisieren-Button in jeder HTML-Kachel sendet eine eigene Anfrage und wartet auf die zugehoerige Rueckmeldung. Er zeigt waehrenddessen Aktualisiere und nach erfolgreicher Antwort Aktualisiert um mit Uhrzeit. Das funktioniert auch bei unveraenderten Werten. Fehler und eine fehlende Antwort nach acht Sekunden werden direkt neben dem Button angezeigt. Der Bewegungsverlauf wird dabei ohne den bisherigen 30-Sekunden-Zwischenspeicher neu aus dem Archiv gelesen. Der Button liest die aktuellen Symcon-Variablenwerte; er loest keine Geraeteabfrage oder Modulaktualisierung aus.
+
+Die Instanzkonfiguration ist nach Bereichen geordnet. Zuerst stehen Inhalt und Aktivierung der Kachel sowie die gemeinsame Konfigurationsquelle. Quellen und Bedienoptionen sind zusammengefasst in Anwesenheit/Alarm, Haustuer, Licht, Cinema, Geraetewarnungen, PV, Markise/Dachfenster, Bewegung, Temperaturen und Wetter. Die Bereiche sind aufklappbar. Die Kachelansichten folgen derselben Reihenfolge und unterscheiden Uebersicht, Einzelkachel und Detailkachel. Bei einer gemeinsamen Konfigurationsquelle werden die ungenutzten lokalen Quellenfelder ausgeblendet; ein Hinweis nennt die zustaendige zentrale Instanz. Gespeicherte Eigenschaftsnamen und Auswahlen bleiben erhalten.
+
+Auch der Button Werte jetzt aktualisieren in der Instanzkonfiguration liest den Verlauf frisch und gibt eine Erfolgs- oder Fehlermeldung aus. Es werden nur die bereits uebernommenen Einstellungen verwendet.
 
 ## Aenderungen in 0.8
 
@@ -14,11 +22,11 @@ Bewegung, Temperaturen und Wetter koennen als drei eigene Kacheln eingerichtet w
 
 ## Bestehende Installation aktualisieren
 
-ZIP entpacken. Im Repository https://github.com/Powermaniaxx/Symcon-Hausstatus library.json und den Ordner HausstatusBedienung durch die neuen Dateien ersetzen und committen. README.md und docs koennen ebenfalls aktualisiert werden. Keine ZIP-Datei und keine zusaetzliche Ordnerstufe hochladen. library.json liegt im Hauptverzeichnis und zeigt Version 0.8, Build 8.
+ZIP entpacken. Im Repository https://github.com/Powermaniaxx/Symcon-Hausstatus library.json und den Ordner HausstatusBedienung durch die neuen Dateien ersetzen und committen. README.md und docs koennen ebenfalls aktualisiert werden. Keine ZIP-Datei und keine zusaetzliche Ordnerstufe hochladen. library.json liegt im Hauptverzeichnis und zeigt Version 0.9, Build 9.
 
-In Symcon Module Control das Repository aktualisieren. Danach Instanz 52627 oeffnen und Aenderungen uebernehmen. Bestehende Instanz und Quellen behalten. Der Aktualisieren-Button in der Kachel holt Werte, keine neuen Moduldateien; sein Tooltip zeigt Hausstatus 0.8.
+In Symcon Module Control das Repository aktualisieren. Danach Instanz 52627 oeffnen und Aenderungen uebernehmen. Die Instanzkonfiguration schliessen und neu oeffnen; auch die Visualisierung neu laden, damit die neue HTML-Fassung geladen wird. Fuer das Update von 0.8 auf 0.9 ist kein Einrichtungsskript erforderlich. Bestehende Instanz und Quellen behalten. Der Aktualisieren-Button in der Kachel holt Werte, keine neuen Moduldateien; sein Tooltip zeigt Hausstatus 0.9.
 
-Fuer die gewuenschte Aufteilung anschliessend docs/Hausstatus_Detailkacheln_0_8_KOMPLETT.php vollstaendig in ein NEUES temporaeres PHP-Skript kopieren und einmal manuell ausfuehren. Nicht Skript 49024, das Lichtskript oder ein anderes vorhandenes Skript damit ersetzen. Dieses Skript laesst Hausstatus sichtbar, richtet Bewegung/Temperaturen/Wetter als eigene Kacheln ein und blendet nur die frueher vom Modul erzeugten anderen Einzelkacheln aus. Die vorhandenen Raum- und Geraetebereiche werden in seiner Ausgabe aufgefuehrt. Keine Geraete werden dabei geschaltet.
+Falls die Detailkacheln noch nicht eingerichtet sind, fuer die gewuenschte Aufteilung docs/Hausstatus_Detailkacheln_0_8_KOMPLETT.php vollstaendig in ein NEUES temporaeres PHP-Skript kopieren und einmal manuell ausfuehren. Nicht Skript 49024, das Lichtskript oder ein anderes vorhandenes Skript damit ersetzen. Dieses Skript laesst Hausstatus sichtbar, richtet Bewegung/Temperaturen/Wetter als eigene Kacheln ein und blendet nur die frueher vom Modul erzeugten anderen Einzelkacheln aus. Die vorhandenen Raum- und Geraetebereiche werden in seiner Ausgabe aufgefuehrt. Keine Geraete werden dabei geschaltet.
 
 Das erstmalige Einrichtungsskript docs/Einrichten_Kachel_KOMPLETT.php fuer diese vorhandene Installation nicht erneut ausfuehren. Die alte Visualisierung unter 30848 wird nicht bearbeitet. Die neue Einrichtung verwendet ausschliesslich 55503.
 
@@ -56,7 +64,7 @@ CinemaVolume: 45376, Master Volume, Float mit Aktion. CinemaSource: 16889, Input
 
 Moderne Schieberegler-Darstellungen und Aufzaehlungen werden ueber IPS_GetVariablePresentation gelesen. Klassische Profile funktionieren ebenfalls. Der Lautstaerkeregler nutzt native Grenzen, Schritte und Einheit. Fehlen geeignete Daten, zeigt die Kachel den Grund. Schritt 0 bedeutet bei Float einen kontinuierlichen Regler. Ein Befehl wird erst beim Loslassen gesendet. Die Quellenwahl verwendet ausschliesslich hinterlegte Integer-Optionen.
 
-LichtEnabled aktiviert die Lichtbedienung. Bei aktiver Lichtautomatik docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php als vollstaendigen Ersatz fuer Skript 33054 verwenden und danach 33054 als LightCommandScript waehlen. Falls die live verwendete Automatik inzwischen geaendert wurde, diese Aenderungen zuvor abgleichen. Ein setzt den manuellen Modus und Weiss; Aus setzt die vorhandene 30-Minuten-Sperre. Das Modul simuliert keine Fernbedienungstastendruecke und schreibt keinen erfundenen Automatikzustand.
+LightEnabled aktiviert die Lichtbedienung. Bei aktiver Lichtautomatik docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php als vollstaendigen Ersatz fuer Skript 33054 verwenden und danach 33054 als LightCommandScript waehlen. Falls die live verwendete Automatik inzwischen geaendert wurde, diese Aenderungen zuvor abgleichen. Ein setzt den manuellen Modus und Weiss; Aus setzt die vorhandene 30-Minuten-Sperre. Das Modul simuliert keine Fernbedienungstastendruecke und schreibt keinen erfundenen Automatikzustand.
 
 ## Bewegung, Temperaturen und Wetter
 
@@ -80,7 +88,7 @@ Optional: docs/Kacheln_zusammenfassen_KOMPLETT.php stellt alle Detailbereiche wi
 
 ## Pruefung und Grenzen
 
-JSON und JavaScript-Syntax sowie die Bedienlogik wurden in einem simulierten DOM geprueft: unabhaengige Schloss-/Kontaktzustaende, Reihenfolge, Einzelauswahl der Detailbereiche, Tuerfrage, Befehlsrueckmeldungen, Kinoquelle, Float-Regler und unveraenderte Rohwerte bei Prozentanzeigen. Die CSS-Regeln wurden auf passende Kartenbreiten und Umbruchregeln geprueft. Eine echte Browserdarstellung, PHP-/Symcon-Laufzeit und physische Geraete waren lokal nicht verfuegbar. Neue Quellen und Befehle muessen vor Ort geprueft werden.
+Fuer 0.9 wurden JSON, der Erhalt aller Konfigurationsfelder und die JavaScript-Logik in einem simulierten DOM geprueft: Aktualisierung in allen Ansichten, bestaetigte unveraenderte Werte, Fehler, Timeout, erneuter Versuch und getrennte Bedienbestaetigungen. Die vorherige Fassung wurde ebenfalls in einem simulierten DOM geprueft: unabhaengige Schloss-/Kontaktzustaende, Reihenfolge, Einzelauswahl der Detailbereiche, Tuerfrage, Befehlsrueckmeldungen, Kinoquelle, Float-Regler und unveraenderte Rohwerte bei Prozentanzeigen. Die CSS-Regeln wurden auf passende Kartenbreiten und Umbruchregeln geprueft. Eine echte Browserdarstellung, PHP-/Symcon-Laufzeit und physische Geraete waren lokal nicht verfuegbar. Neue Quellen und Befehle muessen vor Ort geprueft werden.
 
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/
 https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenverwaltung/ips-getvariablepresentation/

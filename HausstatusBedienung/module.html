@@ -7,6 +7,7 @@
 .doorHistory{margin-top:10px;padding-top:5px;border-top:1px solid #8883;font-size:11px}.doorHistory .row{padding:3px 0;border:0}.doorHistory .row span:last-child{max-width:70%;font-variant-numeric:tabular-nums}
 
 [hidden]{display:none!important}
+.head{gap:8px;flex-wrap:wrap}.refreshStatus{font-size:11px;line-height:1.4;opacity:.75;text-align:right}
 .dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
 .dashboard>.card,.overview-group{min-width:0;padding:12px;border:1px solid #8883;border-radius:12px}
 .dashboard>.card{display:flex;flex-direction:column}.overview-group{display:flex;flex-direction:column;background:#8881}
@@ -34,13 +35,14 @@
 <section class="section" id="motionSection"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
-<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.8">&#8635;</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.9">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
 let state=/*INITIAL_STATE*/null;
 let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
+let refreshRequest=null,refreshTimer=null;
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
 function showStatus(value,temporary=false){
@@ -99,6 +101,7 @@ function renderOutdoor(data){
  block.append(inside);el('cards').append(block);
 }
 function render(){
+ updateRefreshButton();
  if(!state)return;
  el('cards').replaceChildren();
  const s=state;
@@ -196,9 +199,22 @@ function send(command,value){
  if(typeof requestAction!=='function'){showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
  busy=true;editing=false;showStatus('Befehl wird gesendet ...');render();
  timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
- try{requestAction(command,value);pendingTimer=setTimeout(()=>requestAction('Refresh',null),1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
+ try{requestAction(command,value);if(busy)pendingTimer=setTimeout(()=>{pendingTimer=null;try{requestAction('Refresh',true);}catch(e){showStatus('Status konnte nicht nachgeladen werden.');}},1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
 }
-function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;}
+function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
+function updateRefreshButton(){
+ const waiting=refreshRequest!==null;el('refresh').disabled=busy||waiting;
+ el('refresh').setAttribute('aria-busy',String(waiting));text(el('refresh'),waiting?'Aktualisiere ...':'\u21bb Aktualisieren');
+}
+function finishRefresh(){clearTimeout(refreshTimer);refreshTimer=null;refreshRequest=null;updateRefreshButton();}
+function requestRefresh(){
+ if(busy||refreshRequest!==null)return;
+ if(typeof requestAction!=='function'){text(el('refreshStatus'),'Aktualisieren ist nur in Symcon verf\u00fcgbar.');return;}
+ refreshRequest='refresh-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+ text(el('refreshStatus'),'Werte werden geladen ...');updateRefreshButton();
+ refreshTimer=setTimeout(()=>{finishRefresh();text(el('refreshStatus'),'Keine Antwort. Bitte die Verbindung pr\u00fcfen.');},8000);
+ try{requestAction('Refresh',refreshRequest);}catch(e){finishRefresh();text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');}
+}
 function handleMessage(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
  if(message?.error){finish();showStatus(message.error);render();return;}
@@ -217,11 +233,21 @@ function closeDoorDialog(){clearTimeout(doorExpiryTimer);doorToken=null;doorRequ
 el('doorCancel').addEventListener('click',closeDoorDialog);
 el('doorDialog').addEventListener('cancel',closeDoorDialog);
 el('doorYes').addEventListener('click',()=>{if(!doorToken)return;const value={request:doorRequest,token:doorToken};closeDoorDialog();send('DoorOpen',value);});
-el('refresh').addEventListener('click',()=>{if(typeof requestAction==='function')requestAction('Refresh',null);});
+el('refresh').addEventListener('click',requestRefresh);
 // Enable acknowledgement handling separately so background messages cannot unblock a command.
 const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
+ if(message&&Object.prototype.hasOwnProperty.call(message,'refreshDone')){
+  if(message.state?.Controls){state=message.state;if(!busy&&!editing)render();}
+  if(refreshRequest!==null&&message.refreshDone===refreshRequest){
+   finishRefresh();
+   if(message.refreshError)text(el('refreshStatus'),'Aktualisierung fehlgeschlagen: '+message.refreshError);
+   else if(message.state?.Controls)text(el('refreshStatus'),'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+   else text(el('refreshStatus'),'Aktualisierung hat keine g\u00fcltigen Werte geliefert.');
+  }
+  return;
+ }
  if(message?.doorConfirmation){
   const c=message.doorConfirmation;if(c.request!==doorRequest)return;
   finish();doorToken=c.token;const remaining=(c.ttl??20)*1000;

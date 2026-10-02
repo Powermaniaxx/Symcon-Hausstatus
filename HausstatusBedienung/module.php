@@ -120,6 +120,71 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+    public function GetConfigurationForm(): string
+    {
+        $form = json_decode((string)file_get_contents(__DIR__ . '/form.json'), true, 512, JSON_THROW_ON_ERROR);
+        $fields = $this->SettingsFormFields($this->ReadPropertyInteger('ConfigSource'), $this->ReadPropertyInteger('View'));
+        foreach ($form['elements'] as &$element) {
+            $name = $element['name'] ?? '';
+            if (isset($fields[$name])) { $element = array_replace($element, $fields[$name]); }
+        }
+        unset($element);
+        return json_encode($form, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    public function UpdateSettingsForm(int $Source, int $View): void
+    {
+        // Only change form visibility. Pending selections are not saved or applied here.
+        foreach ($this->SettingsFormFields($Source, $View) as $name => $parameters) {
+            foreach ($parameters as $parameter => $value) { $this->UpdateFormField($name, $parameter, $value); }
+        }
+    }
+
+    private function SettingsFormFields(int $source, int $view): array
+    {
+        $own = $source === 0;
+        $fields = [];
+        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6,
+            'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
+            'TemperatureSettings' => 9, 'WeatherSettings' => 10] as $name => $sectionView) {
+            $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
+        }
+        $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
+        $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
+        if (!$own) {
+            if ($source === $this->InstanceID || !IPS_InstanceExists($source)
+                || IPS_GetInstance($source)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+                || IPS_GetProperty($source, 'ConfigSource') !== 0) {
+                $caption = 'Die gewählte Konfigurationsquelle ist ungültig. Eine Hausstatus-Instanz mit eigenen Einstellungen wählen oder die Auswahl leeren.';
+            } else {
+                $caption = 'Gemeinsame Einstellungen aus ' . IPS_GetName($source) . ' (ID ' . $source
+                    . '). Quellen und Bedienoptionen dort ändern. Hier werden nur Inhalt und Aktivierung dieser Kachel festgelegt.';
+            }
+        }
+        $fields['SettingsOrigin'] = ['caption' => $caption];
+        return $fields;
+    }
+
+    private function FreshState(): array
+    {
+        $this->SetBuffer('MotionCache', '');
+        $state = $this->State();
+        $this->SetBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+        return $state;
+    }
+
+    public function RefreshFromConfiguration(): string
+    {
+        if (!$this->ReadPropertyBoolean('ActiveView')) { return 'Diese Kachel ist pausiert. Zum Aktualisieren zuerst aktivieren und Änderungen übernehmen.'; }
+        try {
+            $this->UpdateVisualizationValue(json_encode($this->FreshState(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+            return 'Werte wurden neu gelesen und an die geöffnete Kachel übergeben.';
+        } catch (Throwable $e) {
+            $this->SendDebug('Aktualisierungsfehler', $e->getMessage(), 0);
+            return 'Aktualisierung fehlgeschlagen: ' . $e->getMessage();
+        }
+    }
+
     public function GetVisualizationTile(): string
     {
         $html = file_get_contents(__DIR__ . '/module.html');
@@ -133,7 +198,20 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         if (!$this->ReadPropertyBoolean('ActiveView')) { throw new RuntimeException('Diese Ansicht ist pausiert. Bitte die gemeinsame Hausstatus-Kachel verwenden.'); }
         if ($Ident === 'Refresh') {
-            $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+            // Reply to the requesting tile even when no values have changed.
+            // A manual refresh must also bypass the cached archive history.
+            $request = is_string($Value) && preg_match('/^refresh-[a-z0-9-]{1,80}$/D', $Value) === 1 ? $Value : null;
+            try {
+                $state = $this->FreshState();
+                $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                $reply = $request === null ? $encoded : json_encode(['refreshDone' => $request, 'state' => $state],
+                    JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                $this->UpdateVisualizationValue($reply);
+            } catch (Throwable $e) {
+                $this->SendDebug('Aktualisierungsfehler', $e->getMessage(), 0);
+                $this->UpdateVisualizationValue(json_encode(['refreshDone' => $request, 'refreshError' => $e->getMessage()],
+                    JSON_INVALID_UTF8_SUBSTITUTE));
+            }
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
