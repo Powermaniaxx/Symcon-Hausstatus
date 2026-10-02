@@ -10,7 +10,9 @@ class HausstatusBedienung extends IPSModuleStrict
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 45376, 'PVPower' => 55194, 'PVEnergy' => 50290,
         'Weather' => 43788, 'Wind' => 29921, 'Rain' => 54690, 'Warning' => 37768,
         'Sunrise' => 33479, 'Sunset' => 16488,
-        'DoorOpened' => 19534, 'DoorClosed' => 55355
+        'DoorOpened' => 19534, 'DoorClosed' => 55355,
+        'AwningPosition' => 20434, 'AwningAuto' => 44425, 'AwningStatus' => 35313,
+        'RoofPosition' => 37131, 'RoofAuto' => 30082, 'RoofNight' => 44013, 'RoofStatus' => 25259
     ];
 
     public function Create(): void
@@ -21,10 +23,12 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $this->RegisterPropertyInteger('View', 0);
         $this->RegisterPropertyBoolean('ActiveView', true);
+        $this->RegisterPropertyBoolean('SeparateDetails', false);
+        $this->RegisterPropertyBoolean('OutdoorEnabled', true);
         $this->RegisterPropertyInteger('ConfigSource', 0);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
-        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Praesenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Praesenz","Variable":0},{"Name":"Keller","Variable":0}]');
+        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Praesenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Praesenz","Variable":22412},{"Name":"Keller","Variable":16931}]');
         $this->RegisterPropertyBoolean('DoorEnabled', false);
         $this->RegisterPropertyBoolean('LightEnabled', false);
         $this->RegisterPropertyBoolean('CinemaEnabled', false);
@@ -67,7 +71,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $ids = [];
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
-        if (in_array($this->ReadPropertyInteger('View'), [0, 9], true)) {
+        if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
         }
         if ($this->HasMotionView()) {
@@ -132,7 +136,8 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission'], true)) {
+        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -141,7 +146,9 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
-            if ($Ident === 'DoorPermission') {
+            if (in_array($Ident, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
+                $this->SetOutdoor($Ident, $Value);
+            } elseif ($Ident === 'DoorPermission') {
                 $this->SetDoorPermission($Value);
             } elseif ($Ident === 'DoorConfirm') {
                 $this->PrepareDoor($Value);
@@ -197,15 +204,29 @@ class HausstatusBedienung extends IPSModuleStrict
     private function ConfigInteger(string $name): int { return (int)$this->ConfigValue($name); }
     private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
-    private function HasMotionView(): bool { return in_array($this->ReadPropertyInteger('View'), [0, 8], true); }
+    private function HasMotionView(): bool
+    {
+        $view = $this->ReadPropertyInteger('View');
+        return $view === 8 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
+    }
+    private function HasTemperatureView(): bool
+    {
+        $view = $this->ReadPropertyInteger('View');
+        return $view === 9 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
+    }
 
     private function SourceNames(): array
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => [],
-            10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset']];
-        return $views[$this->ReadPropertyInteger('View')] ?? array_keys(self::SOURCES);
+            10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus']];
+        $view = $this->ReadPropertyInteger('View');
+        if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
+            return array_values(array_diff(array_keys(self::SOURCES), $views[10]));
+        }
+        return $views[$view] ?? array_keys(self::SOURCES);
     }
 
     private function CinemaSourceOptions(): array
@@ -256,31 +277,40 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function CinemaVolumePlan(): array
     {
-        $id = $this->ConfigInteger('CinemaVolume');
         if (!$this->ConfigBoolean('CinemaEnabled')) { throw new RuntimeException('Cinema-Bedienung ist im Modul deaktiviert.'); }
-        if ($id <= 0 || !IPS_VariableExists($id)) { throw new RuntimeException('Lautstaerkevariable fehlt.'); }
+        return $this->SliderPlan($this->ConfigInteger('CinemaVolume'));
+    }
+
+    private function SliderPlan(int $id): array
+    {
+        if ($id <= 0 || !IPS_VariableExists($id)) { throw new RuntimeException('Bedienvariable fehlt.'); }
         $v = IPS_GetVariable($id); $type = (int)$v['VariableType'];
-        if (!in_array($type, [1, 2], true)) { throw new RuntimeException('Lautstaerke muss eine Integer- oder Float-Variable sein.'); }
-        if (!$this->HasAction($id, $type)) { throw new RuntimeException('Die Lautstaerkevariable hat keine aktive Bedienaktion.'); }
+        if (!in_array($type, [1, 2], true)) { throw new RuntimeException('Regler braucht eine Integer- oder Float-Variable.'); }
+        if (!$this->HasAction($id, $type)) { throw new RuntimeException('Die Variable hat keine aktive Bedienaktion.'); }
         $presentation = $this->VariablePresentation($id);
         $kind = $presentation['PRESENTATION'] ?? '';
         if ($kind === '{6B9CAEEC-5958-C223-30F7-BD36569FC57A}') {
             $min = $presentation['MIN'] ?? null; $max = $presentation['MAX'] ?? null;
             $step = $presentation['STEP_SIZE'] ?? 0;
+            $percentage = (bool)($presentation['PERCENTAGE'] ?? false);
+            $prefix = (string)($presentation['PREFIX'] ?? ''); $suffix = (string)($presentation['SUFFIX'] ?? '');
+            $digits = (int)($presentation['DIGITS'] ?? 0);
         } elseif (in_array($kind, ['', '{4153A8D4-5C33-C65F-C1F3-7B61AAF99B1C}'], true)) {
             $name = $presentation['PROFILE'] ?? ($v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile']);
             if ($name === '' || !IPS_VariableProfileExists($name)) {
-                throw new RuntimeException('In der Lautstaerkevariable sind keine Reglergrenzen hinterlegt.');
+                throw new RuntimeException('In der Variable sind keine Reglergrenzen hinterlegt.');
             }
             $p = IPS_GetVariableProfile($name);
             $min = $p['MinValue']; $max = $p['MaxValue']; $step = $p['StepSize'];
+            $prefix = (string)$p['Prefix']; $suffix = (string)$p['Suffix'];
+            $percentage = trim($suffix) === '%'; $digits = (int)$p['Digits'];
         } else {
-            throw new RuntimeException('Die Lautstaerkevariable verwendet keine Schieberegler-Darstellung.');
+            throw new RuntimeException('Die Variable verwendet keine Schieberegler-Darstellung.');
         }
         if (!is_numeric($min) || !is_numeric($max) || !is_numeric($step)
             || !is_finite((float)$min) || !is_finite((float)$max) || !is_finite((float)$step)
             || (float)$max <= (float)$min || (float)$step < 0) {
-            throw new RuntimeException('Die Lautstaerkedarstellung hat ungueltige Reglergrenzen.');
+            throw new RuntimeException('Die Darstellung hat ungueltige Reglergrenzen.');
         }
         $min = (float)$min; $max = (float)$max; $step = (float)$step;
         if ($type === 1 && (floor($min) !== $min || floor($max) !== $max || floor($step) !== $step)) {
@@ -288,23 +318,65 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         // Step 0 means no fixed increment in Symcon, not an invented 0.5 dB step.
         $step = $step > 0 ? $step : ($type === 1 ? 1 : 'any');
-        return ['min' => $min, 'max' => $max, 'step' => $step, 'type' => $type];
+        return ['min' => $min, 'max' => $max, 'step' => $step, 'type' => $type,
+            'percentage' => $percentage, 'prefix' => $prefix, 'suffix' => $suffix, 'digits' => max(0, min(6, $digits))];
     }
 
     private function SetCinemaVolume(mixed $Value): void
     {
         $control = $this->CinemaVolumePlan();
+        $this->SetSlider($this->ConfigInteger('CinemaVolume'), $Value, $control);
+    }
+
+    private function SetSlider(int $id, mixed $Value, array $control): void
+    {
         if ((!is_int($Value) && !is_float($Value)) || !is_finite((float)$Value)
             || $Value < $control['min'] || $Value > $control['max']
             || ($control['type'] === 1 && floor($Value) !== (float)$Value)) {
-            throw new RuntimeException('Lautstaerke liegt ausserhalb der konfigurierten Reglergrenzen.');
+            throw new RuntimeException('Wert liegt ausserhalb der konfigurierten Reglergrenzen.');
         }
         if (is_numeric($control['step'])) {
             $steps = ((float)$Value - $control['min']) / $control['step'];
-            if (abs($steps - round($steps)) > 0.000001) { throw new RuntimeException('Lautstaerke passt nicht zur konfigurierten Schrittweite.'); }
+            if (abs($steps - round($steps)) > 0.000001) { throw new RuntimeException('Wert passt nicht zur konfigurierten Schrittweite.'); }
         }
         $value = $control['type'] === 1 ? (int)$Value : (float)$Value;
-        if (!RequestAction($this->ConfigInteger('CinemaVolume'), $value)) { throw new RuntimeException('Lautstaerkeaktion fehlgeschlagen.'); }
+        if (!RequestAction($id, $value)) { throw new RuntimeException('Regleraktion fehlgeschlagen.'); }
+    }
+
+    private function SetOutdoor(string $command, mixed $value): void
+    {
+        if (!$this->ConfigBoolean('OutdoorEnabled')) { throw new RuntimeException('Markise/Dachfenster-Bedienung ist deaktiviert.'); }
+        $id = $this->ConfigInteger($command);
+        if (in_array($command, ['AwningPosition', 'RoofPosition'], true)) {
+            $this->SetSlider($id, $value, $this->SliderPlan($id));
+        } else {
+            if (!is_bool($value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
+            $this->ValidateAction($id, 0);
+            if (!RequestAction($id, $value)) { throw new RuntimeException('Automatikaktion fehlgeschlagen.'); }
+        }
+    }
+
+    private function OutdoorState(): array
+    {
+        $enabled = $this->ConfigBoolean('OutdoorEnabled');
+        $result = [];
+        foreach (['Awning', 'Roof'] as $name) {
+            $control = null; $reason = '';
+            try {
+                if (!$enabled) { throw new RuntimeException('Bedienung ist deaktiviert.'); }
+                $control = $this->SliderPlan($this->ConfigInteger($name . 'Position'));
+            } catch (Throwable $e) { $reason = $e->getMessage(); }
+            $result[$name] = [
+                'position' => $this->Read($this->ConfigInteger($name . 'Position')),
+                'auto' => $this->Read($this->ConfigInteger($name . 'Auto')),
+                'status' => $this->Read($this->ConfigInteger($name . 'Status')),
+                'control' => $control, 'reason' => $reason,
+                'canAuto' => $enabled && $this->HasAction($this->ConfigInteger($name . 'Auto'), 0)
+            ];
+        }
+        $result['Roof']['night'] = $this->Read($this->ConfigInteger('RoofNight'));
+        $result['Roof']['canNight'] = $enabled && $this->HasAction($this->ConfigInteger('RoofNight'), 0);
+        return $result;
     }
 
     private function CanSetDoorPermission(): bool
@@ -514,18 +586,21 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function State(): array
     {
-        $state = ['View' => $this->ReadPropertyInteger('View')];
+        $state = ['View' => $this->ReadPropertyInteger('View'), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
+        $state['Outdoor'] = in_array($this->ReadPropertyInteger('View'), [0, 11], true) ? $this->OutdoorState() : null;
         $state['CinemaOptions'] = $this->CinemaSourceOptions();
         $state['VolumeControl'] = null;
         $state['VolumeReason'] = '';
         try { $state['VolumeControl'] = $this->CinemaVolumePlan(); }
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
-        foreach ($this->Rooms() as $room) {
-            $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];
+        if ($this->HasTemperatureView()) {
+            foreach ($this->Rooms() as $room) {
+                $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];
+            }
         }
         $script = $this->ConfigInteger('LightCommandScript');
         $scriptOK = $script > 0 && IPS_ScriptExists($script);

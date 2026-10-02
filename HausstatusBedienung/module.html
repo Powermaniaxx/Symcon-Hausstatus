@@ -6,9 +6,27 @@
 .motionTrack{position:relative;height:18px;background:#8882;border-radius:4px;overflow:hidden;margin:6px 0}.motionBar{position:absolute;top:0;height:100%;background:#00b99d;min-width:2px}.motionItem{margin:12px 0}.motionLog{max-height:180px;overflow:auto}.motionScale{display:flex;justify-content:space-between;font-size:10px;opacity:.65}dialog{color:inherit;background:Canvas;border:1px solid #8885;border-radius:12px;padding:18px;width:min(340px,90%)}dialog::backdrop{background:#0006}dialog p{line-height:1.4}.confirm-open{background:#d23c3c25}dialog h2{margin:0;font-size:17px}
 .doorHistory{margin-top:10px;padding-top:5px;border-top:1px solid #8883;font-size:11px}.doorHistory .row{padding:3px 0;border:0}.doorHistory .row span:last-child{max-width:70%;font-variant-numeric:tabular-nums}
 
-.dashboard{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:start}.dashboard>.overview-status{grid-column:span 3}.dashboard>.overview-door{grid-column:span 3}.dashboard>#card-battery,.dashboard>#card-pv{grid-column:span 1}.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 2}.overview-group{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.overview-group h2{margin:0 0 10px;font-size:12px;font-weight:600}.overview-status .group-content{display:grid;grid-template-columns:1fr 1fr;gap:12px}.overview-group .card{border:0;padding:0;background:none}.overview-status .icon{display:none}.overview-status .value{font-size:17px}.overview-status .card.on .value{color:#258145}.overview-status #card-alarm.on .value{color:#bf3828}.overview-door .group-content{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.overview-door #card-lock{display:grid;grid-template-columns:auto 1fr;gap:0 8px;align-items:center}.overview-door #card-lock .icon{grid-row:span 2;font-size:19px;margin:0}.overview-door #card-lock .value{font-size:17px}.overview-door #card-permission .icon{display:none}.overview-door #card-permission .value{font-size:13px;font-weight:500}.overview-door .buttons{margin-top:6px}.overview-door #card-permission>button{width:100%;margin-top:6px!important}.dashboard>.card{min-width:0}.dashboard>#card-light,.dashboard>#card-cinema{padding:12px}.dashboard .icon{font-size:19px;margin-bottom:3px}.dashboard .buttons{margin-top:7px}.dashboard .cinemaFields{margin-top:7px}.dashboard .cinemaFields label{font-size:12px;margin:6px 0 3px}.dashboard input[type=range]{margin:8px 0 0}.dashboard>#card-battery .value,.dashboard>#card-pv .value{font-size:15px}.dashboard select{padding:6px;font-size:12px}.dashboard #card-pv .small{line-height:1.3}
-@media(max-width:850px){.dashboard{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.dashboard>.overview-status{grid-column:span 2}.dashboard>#card-battery,.dashboard>#card-pv{grid-column:span 1}.dashboard>.overview-door{grid-column:span 2}.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 1}.overview-door .group-content{grid-template-columns:1fr 1fr;gap:10px}.dashboard>.card,.overview-group,.dashboard>#card-light,.dashboard>#card-cinema{padding:9px}.overview-group h2{margin-bottom:7px}.dashboard .value{font-size:14px}.dashboard button{min-height:36px;font-size:12px;padding:6px 8px}.overview-door #card-permission .label{font-size:9px}.overview-door #card-lock .value{font-size:15px}}
-@media(max-width:340px){.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 2}.overview-door .group-content{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+.dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
+.dashboard>.card,.overview-group{min-width:0;padding:12px;border:1px solid #8883;border-radius:12px}
+.dashboard>.card{display:flex;flex-direction:column}.overview-group{display:flex;flex-direction:column;background:#8881}
+.overview-group h2{font-size:14px;line-height:1.3;margin:0 0 12px;font-weight:600}
+.overview-group .card{padding:0;border:0;background:none;min-width:0}
+.overview-status .group-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;flex:1;align-items:center}
+.overview-status .value{font-size:20px}.overview-status .card.on .value{color:#258145}.overview-status #card-alarm.on .value{color:#bf3828}
+.overview-door .group-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.overview-door #card-permission{grid-column:1/-1}.overview-door #card-permission .icon{display:none}.overview-door #card-permission .value{font-size:13px;font-weight:500}
+.overview-door .buttons{margin-top:8px}.overview-door #card-permission>button{width:100%;margin-top:8px!important}
+.overview-door #card-lock .value,.overview-door #card-contact .value{font-size:17px}
+.dashboard .icon{font-size:22px;line-height:1.3;margin-bottom:5px}.dashboard .label{line-height:1.3;font-size:10px}.dashboard .value{line-height:1.3}
+.dashboard .buttons{gap:8px;margin-top:10px}.dashboard button{min-height:38px}.dashboard .cinemaFields{margin-top:10px}.dashboard .cinemaFields label{font-size:12px}
+.dashboard input[type=range]{margin:12px 0 2px}.dashboard select{font-size:13px;padding:8px}
+.overview-outdoor{grid-column:1/-1}.outdoorDevices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.outdoorDevice{min-width:0}.outdoorDevice h3{margin:0 0 8px;font-size:13px}.outdoorDevice .small{line-height:1.5}
+.outdoorDevice+.outdoorDevice{border-left:1px solid #8883;padding-left:16px}.outdoorToggle{display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;min-height:36px;cursor:pointer}
+.outdoorToggle input{width:18px;height:18px;margin:0;accent-color:#3c78d2}.grid>#card-permission{grid-column:1/-1}
+@media(max-width:600px){.dashboard{gap:8px}.dashboard>.overview-status,.dashboard>.overview-door{grid-column:1/-1}.dashboard>.card,.overview-group{padding:10px}.overview-status .value{font-size:17px}.overview-group h2{font-size:13px;margin-bottom:10px}.dashboard .value{font-size:15px}.dashboard button{font-size:12px;padding:7px 8px}.dashboard .icon{font-size:20px}.dashboard select{font-size:12px;padding:7px}.overview-door .group-content{gap:10px}.overview-door #card-lock .value,.overview-door #card-contact .value{font-size:15px}.outdoorDevices{gap:12px}.outdoorDevice+.outdoorDevice{padding-left:12px}.doorHistory .row{font-size:11px}}
+@media(max-width:380px){.dashboard>#card-light,.dashboard>#card-cinema{grid-column:1/-1}.outdoorDevices{grid-template-columns:1fr}.outdoorDevice+.outdoorDevice{border-left:0;border-top:1px solid #8883;padding:12px 0 0}}
 </style></head><body><main>
 
 <div class="grid" id="cards"></div>
@@ -16,7 +34,7 @@
 <section class="section" id="motionSection"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
-<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.7">&#8635;</button></div>
+<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.8">&#8635;</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -46,6 +64,40 @@ function rows(target,list){const root=typeof target==='string'?el(target):target
 function doorHistory(s){const box=document.createElement('div');box.className='doorHistory';rows(box,[['Letzte \u00d6ffnung',s.DoorOpened.text],['Letzte Schlie\u00dfung',s.DoorClosed.text]]);return box;}
 function boolValue(entry,on='An',off='Aus'){return entry?.raw===null?'Unbekannt':entry?.raw===true?on:entry?.raw===false?off:'Unbekannt';}
 function kind(entry){return entry?.raw===true?'on':'';}
+function contactValue(entry){return entry?.raw===true||entry?.raw===1?'Offen':entry?.raw===false||entry?.raw===0?'Geschlossen':'Unbekannt';}
+function sliderText(value,control,formatted=''){
+ let number=Number(value);if(control.percentage)number=(number-control.min)/(control.max-control.min)*100;
+ const digits=Number.isInteger(control.digits)?Math.max(0,Math.min(6,control.digits)):2;
+ const numeric=number.toLocaleString('de-DE',{maximumFractionDigits:digits});
+ if(typeof control.suffix==='string')return (control.prefix??'')+numeric+control.suffix;
+ const unit=String(formatted).replace(/[-+]?\d+(?:[.,]\d+)?/,'').trim();return numeric+(unit?' '+unit:'');
+}
+function outdoorToggle(box,label,entry,command,enabled){
+ const row=document.createElement('label');row.className='outdoorToggle';
+ const input=document.createElement('input');input.type='checkbox';input.checked=entry.raw===true;input.disabled=!enabled||busy;
+ input.addEventListener('change',()=>send(command,input.checked));
+ const caption=document.createElement('span');text(caption,label+': '+boolValue(entry));row.append(input,caption);box.append(row);
+}
+function renderOutdoor(data){
+ if(!data)return;
+ const block=document.createElement('section');block.id='card-outdoor';block.className='overview-group overview-outdoor';
+ const heading=document.createElement('h2');text(heading,'Markise und Dachfenster');block.append(heading);
+ const inside=document.createElement('div');inside.className='outdoorDevices';
+ for(const [name,title] of [['Awning','Markise'],['Roof','Dachfenster']]){
+  const d=data[name];const box=document.createElement('div');box.className='outdoorDevice';const h=document.createElement('h3');text(h,title);box.append(h);
+  const position=document.createElement('div');position.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,'Position');text(value,d.position.text);position.append(label,value);box.append(position);
+  if(d.control&&typeof d.position.raw==='number'){
+   const range=document.createElement('input');range.type='range';range.min=String(d.control.min);range.max=String(d.control.max);range.step=String(d.control.step);range.value=String(d.position.raw);range.disabled=busy;range.setAttribute('aria-label',title+' Position');
+   range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(value,sliderText(range.value,d.control,d.position.text));});
+   range.addEventListener('change',()=>{editing=false;send(name+'Position',Number(range.value));});range.addEventListener('blur',()=>{if(editing){editing=false;render();}});box.append(range);
+  }else if(d.reason){const n=document.createElement('div');n.className='small';text(n,d.reason);box.append(n);}
+  const status=document.createElement('div');status.className='small';text(status,'Status: '+d.status.text);box.append(status);
+  outdoorToggle(box,'Automatik',d.auto,name+'Auto',d.canAuto);
+  if(name==='Roof')outdoorToggle(box,'\u00dcber Nacht',d.night,'RoofNight',d.canNight);
+  inside.append(box);
+ }
+ block.append(inside);el('cards').append(block);
+}
 function render(){
  if(!state)return;
  el('cards').replaceChildren();
@@ -53,7 +105,8 @@ function render(){
  card('presence','\u{1f3e0}','Anwesenheit',boolValue(s.Presence,'Zu Hause','Abwesend'),kind(s.Presence));
  const doorOpen=s.DoorContact.raw===1||s.DoorContact.raw===true;
  const lock=s.Lock.raw;
- const lockCard=card('lock',doorOpen?'\u{1f6aa}':lock===1?'\u{1f512}':'\u{1f513}','Haust\u00fcr',doorOpen?'T\u00fcr offen':lock===1?'Verriegelt':lock===2?'Aufgeschlossen':'Unbekannt',doorOpen?'danger':lock===1?'on':lock===2?'warn':'');
+ const lockCard=card('lock',lock===1?'\u{1f512}':'\u{1f513}','T\u00fcrschloss',lock===1?'Verriegelt':lock===2?'Aufgeschlossen':'Unbekannt',lock===1?'on':lock===2?'warn':'');
+ card('contact','\u{1f6aa}','T\u00fcrkontakt',contactValue(s.DoorContact),doorOpen?'danger':contactValue(s.DoorContact)==='Geschlossen'?'on':'');
  if(s.View===2)lockCard.append(doorHistory(s));
  const permission=card('permission','\u{1f510}','T\u00fcr \u00f6ffnen',boolValue(s.DoorPermission,'Freigegeben','Gesperrt'),s.DoorPermission.raw===true?'danger':s.DoorPermission.raw===false?'on':'');
  const permissionButtons=document.createElement('div');permissionButtons.className='buttons';
@@ -75,25 +128,26 @@ function render(){
  light.append(range,level);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',boolValue(s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);renderCinemaFields(cinema,s);
  const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);
+ renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
  rows('rooms',s.Rooms.map(r=>[r.name,r.value]));
  rows('weather',[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regen',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  applyView(s.View??0);
 }
 function applyView(view){
- const keys={1:['presence','alarm'],2:['lock','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[]};
+ const keys={1:['presence','alarm'],2:['lock','contact','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[],11:['outdoor']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
  if(view===0)groupOverview();
  el('cards').hidden=[8,9,10].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
- for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view!==0&&view!==v;
+ for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v;
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
  const group=(name,title,keys)=>{const box=document.createElement('section');box.className='overview-group '+name;const h=document.createElement('h2');text(h,title);box.append(h);const inside=document.createElement('div');inside.className='group-content';for(const key of keys)inside.append(items[key]);box.append(inside);return box;};
  const status=group('overview-status','Anwesenheit und Alarm',['presence','alarm']);
- const door=group('overview-door','Haust\u00fcr',['lock','permission']);
+ const door=group('overview-door','Haust\u00fcr',['lock','contact','permission']);
  door.append(doorHistory(state));
- el('cards').replaceChildren(status,door,items.light,items.cinema,items.battery,items.pv);
+ const ordered=[status,door,items.light,items.cinema,items.battery,items.pv];if(items.outdoor)ordered.push(items.outdoor);el('cards').replaceChildren(...ordered);
 }
 function renderCinemaFields(box,s){
  const fields=document.createElement('div');fields.className='cinemaFields';
@@ -110,7 +164,7 @@ function renderCinemaFields(box,s){
  const volumeLabel=document.createElement('label');text(volumeLabel,'Lautst\u00e4rke: '+(volume.raw===null?'Nicht eingerichtet':volume.text));fields.append(volumeLabel);
  if(control&&typeof volume.raw==='number'){
   const range=document.createElement('input');range.type='range';range.min=String(control.min);range.max=String(control.max);range.step=String(control.step);range.value=String(volume.raw);range.disabled=busy;range.setAttribute('aria-label','Cinema 40 Lautstaerke');
-  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;const unit=String(volume.text).replace(/[-+]?\d+(?:[.,]\d+)?/,'').trim();text(volumeLabel,'Lautst\u00e4rke: '+range.value+(unit?' '+unit:''));});
+  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(volumeLabel,'Lautst\u00e4rke: '+sliderText(range.value,control,volume.text));});
   range.addEventListener('change',()=>{editing=false;send('CinemaVolume',Number(range.value));});
   range.addEventListener('blur',()=>{if(editing){editing=false;render();}});fields.append(range);
  }else if(s.VolumeReason){

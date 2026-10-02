@@ -1,5 +1,5 @@
 <?php
-// Nach Modulupdate auf 0.6 einmal in einem NEUEN temporaeren Skript ausfuehren.
+// Nach Modulupdate auf 0.8 einmal in einem NEUEN temporaeren Skript ausfuehren.
 if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausfuehren.'); }
 $root = 55503; $master = 52627; $link = 29867; $volume = 45376;
 $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
@@ -17,7 +17,7 @@ if (!IPS_VariableExists($volume) || !in_array(IPS_GetVariable($volume)['Variable
     throw new RuntimeException('Lautstaerkevariable 45376 fehlt oder ist keine Zahl. Nichts umgestellt.');
 }
 $generated = [];
-foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10] as $view) {
+foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10, 11] as $view) {
     $partLink = @IPS_GetObjectIDByIdent('SVHSTileLink_' . $view, $root);
     $part = @IPS_GetObjectIDByIdent('SVHSTile_' . $view, $root);
     if ($partLink === false && $part === false) { continue; }
@@ -30,6 +30,7 @@ foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10] as $view) {
     $generated[] = ['link' => $partLink, 'instance' => $part];
 }
 IPS_SetProperty($master, 'View', 0);
+if (array_key_exists('SeparateDetails', $config)) { IPS_SetProperty($master, 'SeparateDetails', false); }
 IPS_SetProperty($master, 'ActiveView', true);
 IPS_SetProperty($master, 'CinemaVolume', $volume);
 if (!IPS_ApplyChanges($master)) { throw new RuntimeException('Zentrale Konfiguration konnte nicht uebernommen werden.'); }

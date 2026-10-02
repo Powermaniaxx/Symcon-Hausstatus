@@ -44,6 +44,10 @@
         {
           "caption": "Wetter",
           "value": 10
+        },
+        {
+          "caption": "Markise und Dachfenster",
+          "value": 11
         }
       ]
     },
@@ -51,6 +55,11 @@
       "type": "SelectInstance",
       "name": "ConfigSource",
       "caption": "Zentrale Konfiguration (0 = eigene Einstellungen)"
+    },
+    {
+      "type": "CheckBox",
+      "name": "SeparateDetails",
+      "caption": "Bewegung, Temperaturen und Wetter in eigenen Kacheln anzeigen (danach Detailkacheln einrichten)"
     },
     {
       "type": "Label",
@@ -268,6 +277,46 @@
       "type": "SelectVariable",
       "name": "CinemaVolume",
       "caption": "Cinema 40 - Lautstaerke (45376; Regler aus Darstellung oder Profil)"
+    },
+    {
+      "type": "CheckBox",
+      "name": "OutdoorEnabled",
+      "caption": "Markise und Dachfenster bedienen (vorhandene Variablenaktionen verwenden)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "AwningPosition",
+      "caption": "Markise - Position"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "AwningAuto",
+      "caption": "Markise - Automatik"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "AwningStatus",
+      "caption": "Markise - Status"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "RoofPosition",
+      "caption": "Dachfenster - Position"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "RoofAuto",
+      "caption": "Dachfenster - Automatik"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "RoofNight",
+      "caption": "Dachfenster - ueber Nacht"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "RoofStatus",
+      "caption": "Dachfenster - Status"
     }
   ],
   "actions": [

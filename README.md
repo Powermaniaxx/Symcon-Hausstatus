@@ -1,99 +1,88 @@
-# Sven Hausstatus 0.7
+# Sven Hausstatus 0.8
 
-PHP-Modul fuer Symcon ab 9.0 mit HTML-SDK. Es zeigt Hausstatus, Temperaturen, Wetter, PV und Bewegungsmelder an und bietet konfigurierbare Bedienung fuer Licht, Cinema 40 und die Haustuer. Die Kommunikation verwendet die Anmeldung der Kachelvisualisierung. Keine WebHooks oder gespeicherten Kennwoerter.
+Symcon-Modul ab Version 9.0 mit HTML-Bedienung. Zentrale Instanz: 52627. Kachel-Basis: 55503. Hausstatus-Link: 29867. Vorhandene Quellen und Bedienoptionen bleiben in der zentralen Instanz konfiguriert.
 
-## Aenderung in 0.7
+## Aenderungen in 0.8
 
-Anwesenheit und Alarm stehen immer zuerst, die Haustuer immer direkt danach. Diese Reihenfolge gilt auch mobil. Letzte Oeffnung und letzte Schliessung stehen direkt im oberen Haustuerbereich unter den Bedienelementen. Der bisherige separate Haustuerbereich unten entfaellt. Werte und ihre Aktualisierung kommen weiterhin aus denselben konfigurierten Variablen. In der optionalen einzelnen Haustueransicht stehen die Zeitpunkte beim Schlossstatus. Die Cinema-Bedienung liest jetzt auch moderne Variablendarstellungen ueber IPS_GetVariablePresentation. Ein leeres klassisches Profil verhindert deshalb den Lautstaerkeregler nicht mehr, wenn eine gueltige Schieberegler-Darstellung vorhanden ist. Lautstaerke: 45376 (Master Volume, Float mit Aktion). Quelle: 16889 (Input Source, Integer mit Aktion). Die Grenzen und Schritte werden aus der aktuellen Darstellung oder dem Legacy-Profil gelesen. Ohne passende Daten zeigt die Kachel einen konkreten Grund. Keine festen dB-Grenzen werden geraten und keine AVR-Variablendarstellungen ueberschrieben.
+Anwesenheit und Alarm stehen zuerst, Haustuer direkt danach, auch mobil. Schlossstatus und Tuerkontakt werden jetzt unabhaengig angezeigt: Verriegelt/Aufgeschlossen kommt von 14438, Offen/Geschlossen von 47467. Ein offener Tuerkontakt ersetzt den Schlossstatus nicht mehr. Letzte Oeffnung und Schliessung stehen weiterhin im Haustuerbereich. Freigabe und Sicherheitsfrage bleiben Bestandteil der Tueroeffnung.
 
-## Aktuelle Einrichtung: gemeinsame kompakte Kachel
+Der obere Bereich nutzt gleiche Kartenbreiten, Abstaende, Ueberschriften, Bedienelementhoehen und gemeinsame Zeilenhoehen. Mobil stehen Anwesenheit/Alarm und Haustuer jeweils ueber die gesamte Breite. Licht und Cinema stehen nebeneinander, auf sehr schmalen Anzeigen untereinander.
 
-Bei bereits funktionierender gemeinsamer Kachel nur die Moduldateien aktualisieren und Instanz 52627 einmal uebernehmen. Kein Einrichtungsskript erneut ausfuehren und Skript 49024 nicht ersetzen. Falls noch Einzelkacheln angezeigt werden, docs/Kacheln_zusammenfassen_KOMPLETT.php in einem neuen temporaeren Symcon-Skript einmal ausfuehren. Instanz 52627 bleibt zentrale Konfiguration.
+Markise und Dachfenster stehen zusammen in einem Block. Er zeigt Position, Status und Automatik, beim Dachfenster zusaetzlich Ueber Nacht. Positionsregler verwenden die aktuellen Grenzen und Schritte aus der Variablendarstellung oder dem Legacy-Profil. Prozentwerte werden nur fuer die Anzeige umgerechnet; an die vorhandene Aktion geht der urspruengliche Variablenwert. Ohne passende Variable oder Aktion bleibt das Element eine Anzeige mit Begruendung. Es werden keine Positionswerte, Motor-Richtungen oder Aktionswerte geraten.
 
-## Aktualisierung der vorhandenen Installation
+Bewegung, Temperaturen und Wetter koennen als drei eigene Kacheln eingerichtet werden. Der zentrale Hausstatus blendet diese Detailbereiche dann aus. Bereits mit 0.5 erzeugte Detailinstanzen werden wiederverwendet; weitere vorhandene Raum- und Geraetekacheln unter 55503 werden nicht ausgeblendet, geloescht oder ersetzt.
 
-Das ZIP enthaelt direkt library.json, den Ordner HausstatusBedienung und docs. ZIP entpacken. Im bestehenden Repository https://github.com/Powermaniaxx/Symcon-Hausstatus library.json und HausstatusBedienung durch die neuen Dateien ersetzen und die Aenderungen committen. Weder die ZIP-Datei selbst hochladen noch eine zusaetzliche Ordnerebene erstellen. library.json muss im Hauptverzeichnis liegen und Version 0.7 / Build 7 anzeigen. README.md kann ebenfalls ersetzt werden.
+## Bestehende Installation aktualisieren
 
-In Symcon unter Kern-Instanzen Modules / Module Control auf Aktualisierung pruefen klicken und anschliessend beim Repository den Update-Button ausfuehren. Bei einem Haken erkennt Symcon auf dem ausgewaehlten Repository-Zweig keinen neueren Commit. Dann pruefen, ob die neuen Dateien wirklich auf genau diesem Zweig gespeichert wurden. Zum Abgleich das Zahnrad am Repository verwenden.
+ZIP entpacken. Im Repository https://github.com/Powermaniaxx/Symcon-Hausstatus library.json und den Ordner HausstatusBedienung durch die neuen Dateien ersetzen und committen. README.md und docs koennen ebenfalls aktualisiert werden. Keine ZIP-Datei und keine zusaetzliche Ordnerstufe hochladen. library.json liegt im Hauptverzeichnis und zeigt Version 0.8, Build 8.
 
-Bestehende Instanz 52627 behalten. Danach diese Instanz oeffnen und Aenderungen uebernehmen, anschliessend die Kachelansicht neu laden. Das Einrichtungsskript nicht erneut ausfuehren und die Instanz nicht neu anlegen. Die Kachel nutzt weiterhin Kategorie 55503 und Link 29867; die alte Visualisierung wird nicht bearbeitet. Der Aktualisieren-Button in der HTML-Kachel holt lediglich aktuelle Werte, keine Moduldateien. Der nun unten rechts platzierte Aktualisieren-Button ueberlappt die native Ueberschrift nicht mehr. Sein Tooltip zeigt in dieser Version Hausstatus 0.7.
+In Symcon Module Control das Repository aktualisieren. Danach Instanz 52627 oeffnen und Aenderungen uebernehmen. Bestehende Instanz und Quellen behalten. Der Aktualisieren-Button in der Kachel holt Werte, keine neuen Moduldateien; sein Tooltip zeigt Hausstatus 0.8.
 
-Wenn die Aktualisierung scheitert, die Fehlermeldung und die Repository-Zeile in Module Control festhalten. Keine Daten oder Instanzen loeschen.
+Fuer die gewuenschte Aufteilung anschliessend docs/Hausstatus_Detailkacheln_0_8_KOMPLETT.php vollstaendig in ein NEUES temporaeres PHP-Skript kopieren und einmal manuell ausfuehren. Nicht Skript 49024, das Lichtskript oder ein anderes vorhandenes Skript damit ersetzen. Dieses Skript laesst Hausstatus sichtbar, richtet Bewegung/Temperaturen/Wetter als eigene Kacheln ein und blendet nur die frueher vom Modul erzeugten anderen Einzelkacheln aus. Die vorhandenen Raum- und Geraetebereiche werden in seiner Ausgabe aufgefuehrt. Keine Geraete werden dabei geschaltet.
 
-## Meldungen und Darstellung
+Das erstmalige Einrichtungsskript docs/Einrichten_Kachel_KOMPLETT.php fuer diese vorhandene Installation nicht erneut ausfuehren. Die alte Visualisierung unter 30848 wird nicht bearbeitet. Die neue Einrichtung verwendet ausschliesslich 55503.
 
-Befehl uebergeben wird nach drei Sekunden ausgeblendet. Das bedeutet, dass die Bedienaktion bearbeitet bzw. an das Aktionsskript weitergegeben wurde; es bestaetigt nicht automatisch den physischen Geraetezustand. Dieser wird weiterhin aus der Statusvariable gelesen. Fehler und fehlende Rueckmeldungen bleiben sichtbar. Ein neuer Befehl verwirft den vorherigen Ausblend-Timer. Die interne Ueberschrift Hausstatus entfaellt, da die native Kachel bereits so heisst. Das mobile Raster hat zwei Spalten.
+## Quellen fuer Markise, Dachfenster und Haustuer
 
-## Haustuer
+Die Vorgaben stammen aus der gespeicherten bisherigen Visualisierung. In 52627 sind sie aenderbar.
 
-In Instanz 52627 Tueroeffnung mit Sicherheitsfrage aktivieren. Vorgabe: Integer-Bedienvariable 30053, Boolean-Freigabe 33983 und Tuerkontakt 47467. Die Freigabe wird direkt mit Freigeben aktiviert und mit Sperren zurueckgenommen. Freigeben allein sendet keinen Oeffnungsbefehl. Ein vorhandenes Aktionsskript der Freigabevariable wird verwendet; bei einer einfachen Boolean-Merkvariable wird nur deren Wert gesetzt. Der Oeffnen-Wert wird eindeutig aus dem Variablenprofil ermittelt; das Modul verwendet nicht ungeprueft den Geraetewert 2. Es ruft ueber RequestAction das vorhandene benutzerdefinierte Aktionsskript dieser Bedienvariable auf.
+| Quelle | ID |
+| --- | ---: |
+| Schlossstatus | 14438 |
+| Tuerkontakt | 47467 |
+| Tuerfreigabe | 33983 |
+| Tuer-Bedienvariable | 30053 |
+| Letzte Oeffnung | 19534 |
+| Letzte Schliessung | 55355 |
+| Markise Position | 20434 |
+| Markise Automatik | 44425 |
+| Markise Status | 35313 |
+| Dachfenster Position | 37131 |
+| Dachfenster Automatik | 30082 |
+| Dachfenster ueber Nacht | 44013 |
+| Dachfenster Status | 25259 |
 
-Die Frage lautet Haustuer wirklich oeffnen? Abbrechen sendet keinen Oeffnungsbefehl. Die Bestaetigung ist einmalig und 20 Sekunden gueltig. Vor Ausfuehrung werden die Freigabe und Konfiguration erneut geprueft. Andere native Tuerbedienelemente und eigenstaendig ausgefuehrte Skripte erhalten dadurch keine Sicherheitsfrage. Ein PHP-Skript kann alleine keinen Dialog in der Visualisierung anzeigen.
+Positionsquellen muessen Integer-/Float-Variablen mit Bedienaktion und gueltiger Schieberegler-Darstellung oder Legacy-Profil sein. Automatikquellen muessen Boolean-Variablen mit Bedienaktion sein. Falls eine alte ID stattdessen eine Instanz oder ein Skript bezeichnet, im Quellenfeld die tatsaechliche Bedienvariable auswaehlen. Das Modul schaltet ueber RequestAction und nutzt damit vorhandene Geraete- oder benutzerdefinierte Aktionen. Es ersetzt keine vorhandene Markisen- oder Dachfensterautomatik. OutdoorEnabled schaltet die Bedienung in dieser Kachel frei oder sperrt sie.
 
-## Bewegungsmelder und 24-Stunden-Verlauf
+## Tuerbedienung
 
-Vorbelegt sind Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Praesenz 37345 und Terrasse 34118. Fuer Schlafzimmer Praesenz und Keller die passenden Boolean-Variablen in der Liste auswaehlen. Weitere Melder lassen sich hinzufuegen.
+DoorEnabled aktiviert Tuerfreigabe und Tueroeffnung. Freigeben allein sendet keinen Oeffnungsbefehl. Das Modul nutzt die Boolean-Freigabevariable 33983; eine vorhandene Aktion wird aufgerufen, eine reine Merkvariable nur gesetzt. Die Integer-Bedienvariable 30053 muss ein vorhandenes benutzerdefiniertes Aktionsskript und im Legacy-Profil eine eindeutige Oeffnen-Assoziation besitzen. Der Oeffnen-Wert wird aus diesem Profil gelesen, nicht fest angenommen.
 
-Archiv 0 bedeutet automatische Auswahl bei genau einem Archive Control. Bei mehreren Archiven das gewuenschte Archiv explizit waehlen. Die aktivierte Option MotionLogging aktiviert die Archivierung der ausgewaehlten Boolean-Variablen. Vorhandene Daten bleiben erhalten. Das Abschalten dieser Option deaktiviert bereits vorhandene Archivierungen nicht.
+Tuer oeffnen zeigt eine Sicherheitsfrage. Abbrechen sendet keinen Befehl. Die Bestaetigung ist einmalig, fuer die anfragende Anzeige bestimmt und 20 Sekunden gueltig. Freigabe und Plan werden vor der Ausfuehrung erneut geprueft. Ein als offen gemeldeter Tuerkontakt sperrt die Oeffnung. Andere native Tuerbedienelemente oder selbst ausgefuehrte Skripte bekommen dadurch keine zusaetzliche Frage.
 
-Die Anzeige zeigt aktuellen Zustand, Bewegungsphasen als Balken und aufklappbare Zeitpunkte aller archivierten Zustandswechsel der letzten 24 Stunden. Uhrzeiten erscheinen in Europe/Berlin. Dauerhaft erkannte Praesenz bleibt als Balken sichtbar. Nicht archivierte Vergangenheit kann nicht rekonstruiert werden. Erfasst werden Sensorzustaende, nicht jede einzelne koerperliche Bewegung. Das Archiv schreibt asynchron; der Verlauf kann kurz hinter dem aktuellen Zustand liegen. Archivdaten werden 30 Sekunden zwischengespeichert, bei Sensormeldungen neu abgefragt. Ein Abfragelimit von 10000 Eintraegen pro Sensor wird angezeigt.
+## Cinema und Licht
 
-## Weitere Quellen und Bedienung
+CinemaVolume: 45376, Master Volume, Float mit Aktion. CinemaSource: 16889, Input Source, Integer mit Aktion. In bestehenden Instanzen bleiben die gewaehlten IDs erhalten; bei leerem Quellenfeld 16889 auswaehlen. Statusvorgabe: 45754. CinemaControl ist die vorhandene schaltbare Boolean-Power-Variable. CinemaEnabled aktiviert die Bedienung.
 
-Alle Quellen sind in der Instanz konfigurierbar. Vorgaben: Anwesenheit 12936, Schlossstatus 14438, Alarm innen 14477, Wohnzimmerlicht Status 57731, Helligkeit 31102, Cinema Status 45754, PV aktuell 55194 und Tagesenergie 50290. Cinema-Control und Anzahl Geraetewarnungen muessen ausgewaehlt werden. Ein unbekannter Wert wird nicht als Alles OK ausgegeben. Die Raumtemperaturen lassen sich in der Liste aendern. Die bisherige Vorgabe fuer Buerokeller 17053 muss bei Bedarf korrigiert werden.
+Moderne Schieberegler-Darstellungen und Aufzaehlungen werden ueber IPS_GetVariablePresentation gelesen. Klassische Profile funktionieren ebenfalls. Der Lautstaerkeregler nutzt native Grenzen, Schritte und Einheit. Fehlen geeignete Daten, zeigt die Kachel den Grund. Schritt 0 bedeutet bei Float einen kontinuierlichen Regler. Ein Befehl wird erst beim Loslassen gesendet. Die Quellenwahl verwendet ausschliesslich hinterlegte Integer-Optionen.
 
-Cinema-Bedienung braucht eine schaltbare Boolean-Variable. Die zuvor genannte AVR-ID 10950 ist vor Ort auf Typ und Aktion zu pruefen. Statusanzeige und Bedienvariable koennen verschieden sein.
+LichtEnabled aktiviert die Lichtbedienung. Bei aktiver Lichtautomatik docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php als vollstaendigen Ersatz fuer Skript 33054 verwenden und danach 33054 als LightCommandScript waehlen. Falls die live verwendete Automatik inzwischen geaendert wurde, diese Aenderungen zuvor abgleichen. Ein setzt den manuellen Modus und Weiss; Aus setzt die vorhandene 30-Minuten-Sperre. Das Modul simuliert keine Fernbedienungstastendruecke und schreibt keinen erfundenen Automatikzustand.
 
-Lichtbedienung ist anfangs deaktiviert. Bei aktiver Lichtautomatik zuerst ein Licht-Bedienskript anbinden, das den manuellen Befehl ausfuehrt UND der Automatik den manuellen Eingriff meldet. Direkte Hue-Bedienung erzeugt keinen Tastendruck auf den Fernbedienungsvariablen 19469 / 56892. Der vollstaendige Anschluss ist in docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php enthalten. Damit den kompletten Inhalt des bestehenden Skripts 33054 ersetzen, speichern und einmal manuell ausfuehren. Anschliessend in Instanz 52627 genau Skript 33054 als Licht-Bedienskript waehlen und Aenderungen uebernehmen. Ohne ausgewaehltes Bedienskript bleiben die Lichtbuttons gesperrt. Die Erweiterung basiert auf deiner gespeicherten Lichtautomatik 3.2; falls dein live verwendetes Skript spaeter geaendert wurde, vor dem Ersetzen diese Aenderungen abgleichen.
+## Bewegung, Temperaturen und Wetter
 
-Das ausgewaehlte Licht-Bedienskript bekommt ueber IPS_RunScriptEx folgende Parameter: $_IPS['COMMAND'] ist Light oder Brightness, $_IPS['VALUE'] ist Boolean fuer Licht bzw. Integer 1 bis 100 fuer Helligkeit und $_IPS['SOURCE'] ist HausstatusBedienung. Die Moduldateien schreiben keinen erfundenen Automatik-Zustand und simulieren keinen Fernbedienungstastendruck.
+Vorgaben fuer Bewegung: Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Praesenz 37345, Terrasse 34118, Schlafzimmer Praesenz 22412 und Keller 16931. Eigene Eintraege und Auswahlen bleiben erhalten. Das Detail-Einrichtungsskript ergaenzt nur bekannte, bisher leere Schlafzimmer-/Keller-Eintraege, wenn die jeweilige Boolean-Variable existiert.
 
-## Erstinstallation
+MotionArchive 0 waehlt bei genau einem Archive Control dieses Archiv. Bei mehreren Archiven das gewuenschte waehlen. MotionLogging aktiviert die Archivierung der ausgewaehlten Boolean-Variablen; sein Abschalten beendet bestehende Archivierungen nicht. Angezeigt werden aktueller Zustand, Bewegungsphasen und aufklappbare Zustandswechsel der vergangenen 24 Stunden in Europe/Berlin. Nicht aufgezeichnete Vergangenheit kann nicht rekonstruiert werden. Das Archiv schreibt asynchron. Pro Melder werden maximal 10000 Eintraege abgefragt und ein erreichtes Limit angezeigt.
 
-Nur fuer eine noch nicht vorhandene Installation: Repository in Module Control hinzufuegen und docs/Einrichten_Kachel_KOMPLETT.php in einem neuen temporaeren Symcon-Skript einmal ausfuehren. Dieses richtet die Kachel ein und stoppt den alten Aktualisierungstimer 49024. Bei der bestehenden Instanz 52627 diesen Schritt ueberspringen.
+Temperaturen verwenden die bestehende konfigurierbare Rooms-Liste. Wetter nutzt Wetterzustand, Wind, Regen, Warnstufe, Sonnenaufgang und Sonnenuntergang. Weitere vorhandene Raumsteuerungen bleiben in den bestehenden nativen Raumkacheln verfuegbar; die Temperaturkachel ersetzt diese nicht.
 
-## Pruefung
+## Weitere vorhandene Inhalte
 
-JSON und JavaScript-Syntax sowie die Bedienlogik im simulierten DOM wurden geprueft: Darstellung, Unicode, Textbehandlung, Aktionen, Fehler, Rueckmeldungen, automatisches Ausblenden, Abbrechen und Bestaetigen der Tuerfrage, Zuordnung zur anfragenden Anzeige und Bewegungsintervalle. Ein lokaler PHP-/Symcon-Laufzeittest war nicht verfuegbar. Die neue Version muss nach Installation in Symcon geprueft werden.
+Der obere Hausstatus enthaelt weiterhin Geraetewarnungen, PV, Wohnzimmerlicht und Cinema. BatteryWarnings muss die Integer-Variable Anzahl Geraetewarnungen aus dem Batteriewaechter sein, nicht das Skript selbst. Bei fehlender Quelle zeigt das Modul Nicht eingerichtet statt Alles OK. PV verwendet 55194 und 50290.
 
-## Schnittstellen
+Die neue Aufteilung betrifft nur dieses Modul und seine eigenen Links. Raumsteuerungen, weitere Licht- und Heizungsgeraete, Wasserbett, weitere Medienfunktionen und vorhandene PV-Details werden nicht aus ihren bestehenden Bereichen entfernt. Ob ausserhalb der gespeicherten bisherigen Fassung weitere live ergaenzte Inhalte existieren, konnte hier nicht vollstaendig inventarisiert werden; das Skript laesst fremde vorhandene Objekte stehen.
+
+## Meldungen und alternative Ansichten
+
+Befehl uebergeben verschwindet nach drei Sekunden. Es bestaetigt die Uebergabe an die Aktion, nicht automatisch den physischen Geraetezustand. Fehler bleiben sichtbar. Werte werden durch Quellenmeldungen und regelmaessig aktualisiert.
+
+Optional: docs/Kacheln_zusammenfassen_KOMPLETT.php stellt alle Detailbereiche wieder innerhalb der gemeinsamen Kachel dar. docs/Kacheln_trennen_KOMPLETT.php teilt auch den oberen Hausstatus in Einzelkacheln auf. Fuer die jetzt gewuenschte Darstellung stattdessen Hausstatus_Detailkacheln_0_8_KOMPLETT.php verwenden. View, ConfigSource und ActiveView bestimmen lokale Ansicht, zentrale Konfiguration und Aktivierung. Alle Quellen und Bedienoptionen bleiben in 52627.
+
+## Pruefung und Grenzen
+
+JSON und JavaScript-Syntax sowie die Bedienlogik wurden in einem simulierten DOM geprueft: unabhaengige Schloss-/Kontaktzustaende, Reihenfolge, Einzelauswahl der Detailbereiche, Tuerfrage, Befehlsrueckmeldungen, Kinoquelle, Float-Regler und unveraenderte Rohwerte bei Prozentanzeigen. Die CSS-Regeln wurden auf passende Kartenbreiten und Umbruchregeln geprueft. Eine echte Browserdarstellung, PHP-/Symcon-Laufzeit und physische Geraete waren lokal nicht verfuegbar. Neue Quellen und Befehle muessen vor Ort geprueft werden.
 
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/
-https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/module-control/
-https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/
-
-
-## Einrichtungshinweise zu 0.6
-
-Die Tuer zeigt bei gesperrter Bedienung den konkreten Grund. Bei Tuerfreigabe aus zuerst in der Hausstatus-Kachel Freigeben waehlen. Nur falls die Moduloption Tueroeffnung aktiviert ist und die Bedienvariable 30053 ein vorhandenes benutzerdefiniertes Aktionsskript und eine eindeutige Oeffnen-Assoziation hat, wird danach der Button freigegeben. Bleibt er gesperrt, die angezeigte Begruendung pruefen. Die Freigabe wird nur durch ausdrueckliches Freigeben eingeschaltet; eine Aenderung der Freigabe verwirft laufende Oeffnungsbestaetigungen.
-
-Geraetewarnungen: Im Feld die Integer-Variable Anzahl Geraetewarnungen auswaehlen. Dein gespeicherter zentraler Batteriewaechter erzeugt diese Variable als Kind seines Skripts. Nicht den Waechter selbst und nicht die String-Variable Letzte Geraetemeldung waehlen. Die konkrete ID ist unbekannt. Ohne Quelle wird Nicht eingerichtet angezeigt.
-
-Lichtbefehle der Kachel setzen jetzt den manuellen Modus innerhalb der Lichtautomatik selbst. Ein schaltet auf Weiss 100 Prozent, der Regler schaltet manuell mit der gewaehlten Helligkeit ein. Aus aktiviert die vorhandene 30-Minuten-Sperre. Timer, Fernbedienung und Kachel verwenden dieselbe Semaphore. Der neue Befehlseinstieg verarbeitet keine manuell ausgefuehrte Einrichtung als Schaltbefehl.
-
-
-## Optionale Einzelkacheln
-
-Nur wenn einzelne Kacheln gewuenscht sind: docs/Kacheln_trennen_KOMPLETT.php in ein NEUES temporaeres Symcon-Skript kopieren, speichern und einmal manuell ausfuehren. Dieses verwendet Basis 55503 und die bestehende zentrale Instanz 52627. Es legt getrennte Kacheln fuer Anwesenheit und Alarm gemeinsam, Haustuer mit Freigabe und Oeffnung gemeinsam, Geraete, Wohnzimmerlicht, Cinema 40, PV-Anlage, Bewegungsmelder, Raumtemperaturen und Wetter an. Der bisherige Sammelkachel-Link 29867 wird erst nach erfolgreicher Einrichtung ausgeblendet. Alle Objekte bleiben erhalten. Andere bereits vorhandene Kacheln werden nicht bearbeitet.
-
-Die neuen Instanzen lesen ihre Quellen und Bedienoptionen aus 52627. Auch Quelle und Lautstaerke dort auswaehlen. Aenderungen uebernehmen in 52627 uebernimmt anschliessend die abhaengigen Kacheln neu, damit ihre Quellenmeldungen registriert werden. Erneute Ausfuehrung des Aufteilungsskripts verwendet dieselben Identifikatoren und erzeugt keine weiteren Duplikate. View und ConfigSource sind lokale Einstellungen der jeweiligen Kachel; Quellenfelder in einer abhaengigen Instanz werden nicht verwendet. Ein Selbstverweis oder mehrere verkettete Konfigurationsquellen wird abgelehnt.
-
-CinemaSource ist mit 0 vorbelegt. CinemaVolume verwendet die bestaetigte ID 45376. Die bestaetigte Cinema-Quelle ist 16889. In bestehenden Instanzen diese Variable im Quellenfeld auswaehlen, falls das Feld noch leer ist. Die Quelle wird mit dem formatierten Variablenwert angezeigt. Eine Auswahl erscheint bei einer schaltbaren Integer-Variable mit Optionen in der Aufzaehlungsdarstellung oder Legacy-Profil-Assoziationen; eine String-Statusvariable bleibt eine Anzeige. Lautstaerke wird in der von Symcon gelieferten Einheit angezeigt. Ein Regler erscheint bei schaltbarer Integer-/Float-Variable mit gueltigen Grenzen in der aktuellen Schieberegler-Darstellung oder im Legacy-Profil. Grenzen und Schrittweite werden auch vor dem Befehl geprueft. Schritt 0 wird bei Float als kontinuierlicher Regler behandelt. Es wird weder ein fester Prozentbereich angenommen noch eine Lautstaerkequelle aus einem anderen AVR geraten.
-
-Das Aufteilungsskript ordnet die Warnanzahl automatisch zu, wenn genau eine Integer-Variable namens Anzahl Geraetewarnungen (mit Umlaut) als Kind eines PHP-Skripts existiert und bisher keine Quelle ausgewaehlt war. Bei mehreren Treffern oder fehlender Variable erfolgt keine Zuordnung; das Skript meldet dies. Der Batteriewaechter wird dadurch nicht ausgefuehrt.
-
-
-## Kompakte gemeinsame Kachel ab 0.6
-
-Die Gesamtdarstellung hat oben einen gemeinsamen Bereich fuer Anwesenheit und Alarm, kompakte Statusfelder fuer Geraete/PV und darunter getrennte Bedienbereiche fuer Haustuer, Licht und Cinema. Es gibt keine gestreckten gleich hohen Statuskarten. Mobil stehen Anwesenheit und Alarm zuerst, danach die Haustuer, dann Licht und Cinema und anschliessend Geraete und PV. Bei besonders schmalen Ansichten stehen Licht und Cinema untereinander.
-
-Nur beim Wechsel von Einzelkacheln zur Gesamtansicht docs/Kacheln_zusammenfassen_KOMPLETT.php als neues temporaeres Skript einmal manuell ausfuehren. Beim bestehenden Gesamt-Hausstatus entfaellt dieser Schritt. Es blendet den bisherigen Link 29867 zur zentralen Instanz 52627 wieder ein, setzt die Gesamtansicht und blendet ausschliesslich die mit dem Aufteilungsskript erzeugten Links aus. Die ausgeblendeten Ansichtsinstanzen bleiben erhalten; ihre Aktualisierungstimer werden angehalten. Bei erneuter Anwendung des Aufteilungsskripts werden die Instanzen samt Timern wieder aktiviert. Fremde native Kacheln werden nicht bearbeitet.
-
-Der Cinema-Lautstaerkeregler wird angezeigt, sobald in 52627 die passende schaltbare Lautstaerkevariable mit gueltiger Schieberegler-Darstellung oder Legacy-Profil ausgewaehlt ist. Beim Ziehen wird der gewaehlte Wert angezeigt; der Befehl wird beim Loslassen gesendet. Die bestaetigte Lautstaerkevariable ist 45376. Wenn die Variable oder gueltige Profilgrenzen fehlen, wird kein erfundener Regler angezeigt. Zum Ermitteln der noch fehlenden IDs kann docs/Cinema_Variablen_pruefen_KOMPLETT.php einmal manuell ausgefuehrt werden. Dieses liest nur und aendert keine Geraete.
-
-## Darstellungen ab 0.7
-
-Dokumentation der verwendeten API und Parameter:
 https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenverwaltung/ips-getvariablepresentation/
 https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/presentations/slider/
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/darstellungen/aufzaehlung/

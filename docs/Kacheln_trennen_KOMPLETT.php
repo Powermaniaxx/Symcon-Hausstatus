@@ -1,5 +1,5 @@
 <?php
-// Nach Modulupdate auf 0.5 in einem NEUEN temporaeren Skript manuell ausfuehren.
+// Nach Modulupdate auf 0.8 in einem NEUEN temporaeren Skript manuell ausfuehren.
 // Bestehende Konfiguration 52627 bleibt erhalten und ist Quelle aller neuen Kacheln.
 // Erneute Ausfuehrung verwendet dieselben Objekte. Es werden keine Objekte geloescht.
 if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausfuehren.'); }
@@ -9,14 +9,14 @@ $oldLink = 29867;
 $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
 $views = [1 => 'Anwesenheit und Alarm', 2 => 'Haustuer', 4 => 'Geraete',
     5 => 'Wohnzimmerlicht', 6 => 'Cinema 40', 7 => 'PV-Anlage',
-    8 => 'Bewegungsmelder', 9 => 'Raumtemperaturen', 10 => 'Wetter'];
+    8 => 'Bewegungsmelder', 9 => 'Raumtemperaturen', 10 => 'Wetter', 11 => 'Markise und Dachfenster'];
 if (!IPS_ObjectExists($root) || IPS_GetObject($root)['ObjectType'] !== 0) { throw new RuntimeException('Basis 55503 fehlt.'); }
 if (!IPS_InstanceExists($master) || IPS_GetInstance($master)['ModuleInfo']['ModuleID'] !== $module) {
     throw new RuntimeException('Zentrale Hausstatus-Instanz 52627 fehlt oder hat ein anderes Modul.');
 }
 $config = json_decode(IPS_GetConfiguration($master), true);
 if (!isset($config['View'], $config['ConfigSource']) || $config['ConfigSource'] !== 0) {
-    throw new RuntimeException('Zuerst Modul auf 0.5 aktualisieren. Instanz 52627 muss eigene Einstellungen verwenden.');
+    throw new RuntimeException('Zuerst Modul auf 0.8 aktualisieren. Instanz 52627 muss eigene Einstellungen verwenden.');
 }
 if (!IPS_LinkExists($oldLink) || IPS_GetObject($oldLink)['ParentID'] !== $root
     || IPS_GetLink($oldLink)['TargetID'] !== $master) {
