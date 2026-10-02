@@ -46,7 +46,7 @@ Dieses Skript muss den Befehl ausfuehren UND der Lichtautomatik den manuellen Ei
 
 Die Anzeige wird bei Aenderung konfigurierter Variablen aktualisiert, zusaetzlich alle 30 Sekunden. Ein Button sendet einen ausdruecklichen Ein- oder Aus-Befehl. Der Status wird aus der Geraetevariable gelesen; ein abgesendeter Befehl wird nicht als bestaetigter Geraetezustand ausgegeben. Die Helligkeit wird erst beim Loslassen des Reglers gesendet. Befehle akzeptieren nur die vorgesehenen Typen und Werte. Fehlende Aktionen deaktivieren die entsprechenden Bedienelemente.
 
-Tuerschloss und Tuerfreigabe sind in dieser Version Anzeigen. Weitere Bedienung ist nicht implementiert. Der Buerokeller hat als bisherige Vorgabe 17053, dieselbe Thermostatquelle wie im gelieferten Kachel-Skript; bei einer anderen tatsaechlichen Quelle die Liste korrigieren.
+Die neue Tueroeffnung ruft nach einer Sicherheitsfrage das bestehende Aktionsskript der Integer-Bedienvariable 30053 auf. Die bestehende Boolean-Freigabe 33983 muss aktiv sein. Die Bestaetigung ist einmalig und 20 Sekunden gueltig; vor der Ausfuehrung wird die Freigabe erneut geprueft. Andere native Tuerbedienelemente erhalten dadurch keine Sicherheitsfrage. Der Buerokeller hat als bisherige Vorgabe 17053, dieselbe Thermostatquelle wie im gelieferten Kachel-Skript; bei einer anderen tatsaechlichen Quelle die Liste korrigieren.
 
 ## Pruefung
 
@@ -57,3 +57,16 @@ JSON-Dateien und JavaScript-Syntax sind geprueft. Die JavaScript-Bedienlogik wur
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/
 https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/module-control/
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/struktur/
+
+
+## Aktualisierung auf 0.2
+
+ZIP entpacken und library.json sowie den Ordner HausstatusBedienung im bestehenden GitHub-Repository ersetzen und committen. Anschliessend in Symcon Module Control das Modul aktualisieren. Vorhandene Instanz 52627 behalten; das alte Einrichtungsskript nicht erneut ausfuehren. In Instanz 52627 Tueroeffnung aktivieren und Bedienvariable 30053 pruefen. Bestehende Freigabe 33983 wird weiter benoetigt.
+
+Die interne Ueberschrift entfaellt, weil die Kachel bereits Hausstatus heisst.
+
+Bewegungsmelder: Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Praesenz 37345, Terrasse 34118 sind vorbelegt. Fuer Schlafzimmer Praesenz und Keller die Boolean-Variablen auswaehlen; deren IDs sind noch unbekannt. Weitere Melder koennen zur Liste hinzugefuegt werden. Bei mehreren Archiven das gewuenschte Archiv explizit auswaehlen. Die aktivierte Option MotionLogging schaltet die Archivierung der ausgewaehlten Boolean-Variablen ein; vorhandene Daten bleiben erhalten. Deaktivieren der Option schaltet bestehende Archivierung nicht aus.
+
+Die Anzeige zeigt den aktuellen Zustand, einen Balkenverlauf und aufklappbare Zeitpunkte aller Zustandswechsel der letzten 24 Stunden in Europe/Berlin. Dauerhaft erkannte Praesenz bleibt als Balken sichtbar. Nicht archivierte Vergangenheit kann nicht nachtraeglich rekonstruiert werden. Aufgezeichnet werden Sensorzustaende, nicht jede einzelne koerperliche Bewegung. Archivdaten werden maximal alle 30 Sekunden erneut geladen (bei Sensormeldungen frueher); das Archiv schreibt asynchron. Ein Abfragelimit von 10000 Eintraegen pro Sensor wird kenntlich gemacht.
+
+Validierung: JavaScript-Syntax und Bedienlogik mit Mock-DOM geprueft. Kein lokaler PHP-/Symcon-Laufzeittest verfuegbar; die neue Version muss nach Installation in Symcon geprueft werden.

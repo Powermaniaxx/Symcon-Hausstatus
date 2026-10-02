@@ -3,15 +3,20 @@
 <style>
 *{box-sizing:border-box}body{margin:0;color:inherit;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{padding:8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}.card,.section{padding:12px;border-radius:12px;border:1px solid #8883;background:#8881}.card.on{background:#2da05025}.card.warn{background:#dc961e29}.card.danger{background:#d23c3c29}.card.info{background:#3c78d229}.icon{font-size:23px;margin-bottom:6px}.label{font-size:10px;text-transform:uppercase;opacity:.65}.value{font-size:17px;font-weight:600;margin-top:4px;overflow-wrap:anywhere}.small{font-size:11px;opacity:.65;margin-top:4px}.section{margin-top:10px}.section h2{font-size:14px;margin:0 0 6px}.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #8882}.row span:first-child{opacity:.7}.row span:last-child{text-align:right;overflow-wrap:anywhere;max-width:65%}button{border:1px solid #8885;border-radius:8px;padding:8px 10px;min-height:38px;font:inherit;color:inherit;background:#8882;cursor:pointer}button:disabled{opacity:.35;cursor:default}button:focus-visible,input:focus-visible{outline:2px solid #3c78d2}.buttons{display:flex;gap:6px;margin-top:10px}.buttons button{flex:1}input[type=range]{width:100%;margin:12px 0 2px;accent-color:#3c78d2}#message{padding:8px;border-radius:8px;margin-top:8px;background:#dc961e29}#message:empty{display:none}.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.head strong{font-size:16px}
 @media(max-width:600px){main{padding:3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.card{padding:8px;min-width:0}.icon{font-size:20px}.value{font-size:14px}.section{padding:9px}.row{font-size:12px}button{font-size:12px;padding:7px}.label{font-size:10px}}
+.motionTrack{position:relative;height:18px;background:#8882;border-radius:4px;overflow:hidden;margin:6px 0}.motionBar{position:absolute;top:0;height:100%;background:#00b99d;min-width:2px}.motionItem{margin:12px 0}.motionLog{max-height:180px;overflow:auto}.motionScale{display:flex;justify-content:space-between;font-size:10px;opacity:.65}dialog{color:inherit;background:Canvas;border:1px solid #8885;border-radius:12px;padding:18px;width:min(340px,90%)}dialog::backdrop{background:#0006}dialog p{line-height:1.4}.confirm-open{background:#d23c3c25}dialog h2{margin:0;font-size:17px}
 </style></head><body><main>
-<div class="head"><strong>Hausstatus</strong><button id="refresh" type="button" aria-label="Werte aktualisieren">&#8635;</button></div>
+<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren">&#8635;</button></div>
 <div class="grid" id="cards"></div>
 <div id="message" role="status" aria-live="polite"></div>
+<section class="section"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section"><h2>Wetter</h2><div id="weather"></div></section>
 <section class="section"><h2>Haust&uuml;r</h2><div id="door"></div></section>
-</main><script>
+</main>
+<dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
+<script>
 let state=/*INITIAL_STATE*/null;
+let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false;
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
@@ -39,7 +44,9 @@ function render(){
  const doorOpen=s.DoorContact.raw===1||s.DoorContact.raw===true;
  const lock=s.Lock.raw;
  card('lock',doorOpen?'\u{1f6aa}':lock===1?'\u{1f512}':'\u{1f513}','Haust\u00fcr',doorOpen?'T\u00fcr offen':lock===1?'Verriegelt':lock===2?'Aufgeschlossen':'Unbekannt',doorOpen?'danger':lock===1?'on':lock===2?'warn':'');
- card('permission','\u{1f510}','T\u00fcr \u00f6ffnen',boolValue(s.DoorPermission,'Freigegeben','Gesperrt'),s.DoorPermission.raw===true?'danger':s.DoorPermission.raw===false?'on':'');
+ const permission=card('permission','\u{1f510}','T\u00fcr \u00f6ffnen',boolValue(s.DoorPermission,'Freigegeben','Gesperrt'),s.DoorPermission.raw===true?'danger':s.DoorPermission.raw===false?'on':'');
+ const doorButton=document.createElement('button');doorButton.type='button';text(doorButton,'T\u00fcr \u00f6ffnen');doorButton.disabled=!s.Controls.Door||busy;doorButton.style.marginTop='10px';doorButton.addEventListener('click',prepareDoor);permission.append(doorButton);
+
  card('alarm','\u{1f6e1}','Alarm innen',boolValue(s.Alarm),kind(s.Alarm));
  const warnings=s.BatteryWarnings.raw;
  card('battery','\u{1f50b}','Ger\u00e4te',Number.isInteger(warnings)?warnings>0?`${warnings} Warnung(en)`:'Alles OK':'Unbekannt',Number.isInteger(warnings)?warnings>0?'danger':'on':'');
@@ -54,9 +61,29 @@ function render(){
  light.append(range,level);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',boolValue(s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);
  const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);
+ renderMotion(s.Motion);
  rows('rooms',s.Rooms.map(r=>[r.name,r.value]));
  rows('weather',[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regen',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  rows('door',[['Letzte \u00d6ffnung',s.DoorOpened.text],['Letzte Schlie\u00dfung',s.DoorClosed.text]]);
+}
+function motionTime(t){return new Date(t*1000).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function renderMotion(m){
+ el('motion').replaceChildren();if(!m)return;
+ for(const sensor of m.sensors){
+  const box=document.createElement('div');box.className='motionItem';
+  const title=document.createElement('div');text(title,sensor.name+' \u2014 '+(sensor.current===true?'Bewegung erkannt':sensor.current===false?'Keine Bewegung':'Unbekannt'));box.append(title);
+  const track=document.createElement('div');track.className='motionTrack';track.setAttribute('aria-label','Bewegungszeiten '+sensor.name);
+  const h=sensor.history, entries=h.entries.filter(e=>e.time>=m.start&&e.time<=m.end).slice().sort((a,b)=>a.time-b.time);
+  let active=h.previous,begin=m.start;
+  const bar=(a,b)=>{if(b<=a)return;const n=document.createElement('div');n.className='motionBar';n.style.left=((a-m.start)/86400*100)+'%';n.style.width=((b-a)/86400*100)+'%';n.title=motionTime(a)+' bis '+motionTime(b);track.append(n);};
+  for(const e of entries){if(active===true)bar(begin,e.time);active=e.active;begin=e.time;}if(active===true)bar(begin,m.end);
+  box.append(track);const scale=document.createElement('div');scale.className='motionScale';for(const t of [m.start,m.end]){const n=document.createElement('span');text(n,motionTime(t));scale.append(n);}box.append(scale);
+  if(h.note){const n=document.createElement('div');n.className='small';text(n,h.note);box.append(n);}
+  const detail=document.createElement('details'),summary=document.createElement('summary');text(summary,'Zeitpunkte anzeigen ('+entries.length+' Zustandswechsel)');detail.append(summary);
+  const log=document.createElement('div');log.className='motionLog';
+  if(!entries.length){const n=document.createElement('div');text(n,'Keine aufgezeichneten Zustandswechsel in diesem Zeitraum.');log.append(n);}
+  for(const e of entries.slice().reverse()){const n=document.createElement('div');n.className='row';text(n,motionTime(e.time)+' \u2014 '+(e.active?'Bewegung erkannt':'Keine Bewegung'));log.append(n);}detail.append(log);box.append(detail);el('motion').append(box);
+ }
 }
 function send(command,value){
  if(busy)return;
@@ -74,11 +101,28 @@ function handleMessage(data){
  // Background updates are not an acknowledgement of the requested hardware state.
  if(!busy&&!editing)render();
 }
+function prepareDoor(){
+ if(busy)return;
+ if(typeof requestAction!=='function'){text(el('message'),'Bedienung nur in Symcon verf\u00fcgbar.');return;}
+ doorRequest=Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('');doorToken=null;
+ send('DoorConfirm',{request:doorRequest});
+}
+function closeDoorDialog(){clearTimeout(doorExpiryTimer);doorToken=null;doorRequest=null;if(el('doorDialog').open)el('doorDialog').close();render();}
+el('doorCancel').addEventListener('click',closeDoorDialog);
+el('doorDialog').addEventListener('cancel',closeDoorDialog);
+el('doorYes').addEventListener('click',()=>{if(!doorToken)return;const value={request:doorRequest,token:doorToken};closeDoorDialog();send('DoorOpen',value);});
 el('refresh').addEventListener('click',()=>{if(typeof requestAction==='function')requestAction('Refresh',null);});
 // Enable acknowledgement handling separately so background messages cannot unblock a command.
 const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
+ if(message?.doorConfirmation){
+  const c=message.doorConfirmation;if(c.request!==doorRequest)return;
+  finish();doorToken=c.token;const remaining=(c.ttl??20)*1000;
+  if(remaining<=0){closeDoorDialog();text(el('message'),'Bestaetigung abgelaufen.');render();return;}
+  text(el('message'),'');el('doorDialog').showModal();el('doorCancel').focus();
+  clearTimeout(doorExpiryTimer);doorExpiryTimer=setTimeout(()=>{closeDoorDialog();text(el('message'),'Best\u00e4tigung abgelaufen. Bitte erneut beginnen.');render();},Math.min(remaining,20000));return;
+ }
  if(message?.commandDone){finish();text(el('message'),message.error||'Befehl \u00fcbergeben.');if(message.state)state=message.state;render();return;}
  receiveState(data);
 };

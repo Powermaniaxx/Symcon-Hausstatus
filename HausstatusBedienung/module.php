@@ -5,7 +5,7 @@ class HausstatusBedienung extends IPSModuleStrict
 {
     private const SOURCES = [
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
-        'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
+        'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
         'LightState' => 57731, 'Brightness' => 31102, 'CinemaState' => 45754,
         'CinemaControl' => 0, 'PVPower' => 55194, 'PVEnergy' => 50290,
         'Weather' => 43788, 'Wind' => 29921, 'Rain' => 54690, 'Warning' => 37768,
@@ -19,6 +19,10 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
+        $this->RegisterPropertyInteger('MotionArchive', 0);
+        $this->RegisterPropertyBoolean('MotionLogging', true);
+        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Praesenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Praesenz","Variable":0},{"Name":"Keller","Variable":0}]');
+        $this->RegisterPropertyBoolean('DoorEnabled', false);
         $this->RegisterPropertyBoolean('LightEnabled', false);
         $this->RegisterPropertyBoolean('CinemaEnabled', false);
         $this->RegisterPropertyInteger('LightCommandScript', 0);
@@ -30,13 +34,28 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         parent::ApplyChanges();
         $this->SetVisualizationType(1);
+        $this->SetBuffer('DoorChallenges', '{}');
         foreach ($this->GetMessageList() as $id => $messages) {
             foreach ($messages as $message) { $this->UnregisterMessage($id, $message); }
         }
         foreach ($this->GetReferenceList() as $id) { $this->UnregisterReference($id); }
+        
+        $this->SetBuffer('MotionCache', '');
+        $archive = $this->MotionArchive();
+        if ($archive > 0) { $this->RegisterReference($archive); }
+        if ($archive > 0 && $this->ReadPropertyBoolean('MotionLogging')) {
+            foreach ($this->MotionSensors() as $sensor) {
+                $id = $sensor['Variable'];
+                if (IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0) {
+                    try { AC_SetLoggingStatus($archive, $id, true); }
+                    catch (Throwable $e) { $this->SendDebug('Bewegungsarchiv', $e->getMessage(), 0); }
+                }
+            }
+        }
         $ids = [];
         foreach (array_keys(self::SOURCES) as $name) { $ids[] = $this->ReadPropertyInteger($name); }
         foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
+        foreach ($this->MotionSensors() as $sensor) { $ids[] = $sensor['Variable']; }
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
@@ -55,7 +74,12 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
-        if ($Message === VM_UPDATE || $Message === VM_DELETE) { $this->Refresh(); }
+        if ($Message === VM_UPDATE || $Message === VM_DELETE) {
+            foreach ($this->MotionSensors() as $sensor) {
+                if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
+            }
+            $this->Refresh();
+        }
     }
 
     public function Refresh(): void
@@ -83,7 +107,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema'], true)) {
+        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'DoorConfirm', 'DoorOpen'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -92,7 +116,12 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
-            if ($Ident === 'Cinema') {
+            if ($Ident === 'DoorConfirm') {
+                $this->PrepareDoor($Value);
+                return;
+            } elseif ($Ident === 'DoorOpen') {
+                $this->OpenDoor($Value);
+            } elseif ($Ident === 'Cinema') {
                 if (!$this->ReadPropertyBoolean('CinemaEnabled')) { throw new RuntimeException('Cinema-Bedienung ist deaktiviert.'); }
                 if (!is_bool($Value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
                 $id = $this->ReadPropertyInteger('CinemaControl');
@@ -121,6 +150,95 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'error' => $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE));
         } finally {
             IPS_SemaphoreLeave($key);
+        }
+    }
+
+
+    private function DoorPlan(): array
+    {
+        if (!$this->ReadPropertyBoolean('DoorEnabled')) {
+            throw new RuntimeException('Tueroeffnung ist im Modul deaktiviert.');
+        }
+        $permissionID = $this->ReadPropertyInteger('DoorPermission');
+        if (!IPS_VariableExists($permissionID)
+            || IPS_GetVariable($permissionID)['VariableType'] !== 0
+            || GetValueBoolean($permissionID) !== true) {
+            throw new RuntimeException('Tuer oeffnen ist gesperrt. Zuerst die vorhandene Tuerfreigabe aktivieren.');
+        }
+        $contact = $this->Read($this->ReadPropertyInteger('DoorContact'))['raw'];
+        if ($contact === true || $contact === 1) {
+            throw new RuntimeException('Die Tuer ist bereits offen.');
+        }
+        $id = $this->ReadPropertyInteger('DoorControl');
+        $this->ValidateAction($id, 1);
+        $v = IPS_GetVariable($id);
+        // Use the existing custom door script, never write directly to the lock.
+        $script = (int)$v['VariableCustomAction'];
+        if ($script <= 0 || !IPS_ScriptExists($script)) {
+            throw new RuntimeException('Die Tuer-Bedienvariable muss ein vorhandenes Aktionsskript besitzen.');
+        }
+        $profileName = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
+        if ($profileName === '' || !IPS_VariableProfileExists($profileName)) {
+            throw new RuntimeException('Das Variablenprofil fuer die Tuerbedienung fehlt.');
+        }
+        $values = [];
+        foreach (IPS_GetVariableProfile($profileName)['Associations'] as $association) {
+            $name = trim(strip_tags((string)$association['Name']));
+            $name = strtolower(str_replace(["\u{d6}", "\u{f6}", "\u{dc}", "\u{fc}"], ['Oe', 'oe', 'Ue', 'ue'], $name));
+            if (in_array($name, ['oeffnen', 'tuer oeffnen', 'open'], true)) {
+                $value = $association['Value'];
+                if (is_numeric($value) && (float)$value === (float)(int)$value) { $values[] = (int)$value; }
+            }
+        }
+        if (count($values) !== 1) {
+            throw new RuntimeException('Die Aktion Oeffnen ist im Tuerprofil nicht eindeutig. Kein Befehl gesendet.');
+        }
+        return ['id' => $id, 'value' => $values[0], 'script' => $script, 'permission' => $permissionID];
+    }
+
+    private function DoorAvailable(): bool
+    {
+        try { $this->DoorPlan(); return true; } catch (Throwable $e) { return false; }
+    }
+
+    private function PrepareDoor(mixed $Value): void
+    {
+        if (!is_array($Value) || !isset($Value['request']) || !is_string($Value['request'])
+            || !preg_match('/^[a-zA-Z0-9-]{16,64}$/D', $Value['request'])) {
+            throw new InvalidArgumentException('Ungueltige Bestaetigungsanfrage.');
+        }
+        $plan = $this->DoorPlan();
+        $pending = json_decode($this->GetBuffer('DoorChallenges'), true) ?: [];
+        $pending = array_filter($pending, static fn(array $entry): bool => $entry['expires'] > time());
+        if (count($pending) >= 10) { throw new RuntimeException('Bitte kurz warten und erneut versuchen.'); }
+        $token = bin2hex(random_bytes(24));
+        $expires = time() + 20;
+        $pending[$Value['request']] = ['token' => $token, 'expires' => $expires, 'plan' => $plan];
+        $this->SetBuffer('DoorChallenges', json_encode($pending, JSON_THROW_ON_ERROR));
+        $this->UpdateVisualizationValue(json_encode(['doorConfirmation' => [
+            'request' => $Value['request'], 'token' => $token, 'expires' => $expires, 'ttl' => 20
+        ]], JSON_THROW_ON_ERROR));
+    }
+
+    private function OpenDoor(mixed $Value): void
+    {
+        if (!is_array($Value) || !isset($Value['request'], $Value['token'])
+            || !is_string($Value['request']) || !is_string($Value['token'])
+            || strlen($Value['request']) > 64 || strlen($Value['token']) !== 48) {
+            throw new InvalidArgumentException('Bestaetigung fehlt.');
+        }
+        $pending = json_decode($this->GetBuffer('DoorChallenges'), true) ?: [];
+        $entry = $pending[$Value['request']] ?? null;
+        if (!$entry || $entry['expires'] <= time() || !hash_equals($entry['token'], $Value['token'])) {
+            throw new RuntimeException('Bestaetigung fehlt oder ist abgelaufen. Bitte erneut Tuer oeffnen waehlen.');
+        }
+        // Consume first; even a failing action must not be replayed.
+        unset($pending[$Value['request']]);
+        $this->SetBuffer('DoorChallenges', json_encode($pending, JSON_THROW_ON_ERROR));
+        $plan = $this->DoorPlan();
+        if ($plan !== $entry['plan']) { throw new RuntimeException('Tuerkonfiguration wurde geaendert. Bitte erneut bestaetigen.'); }
+        if (!RequestAction($plan['id'], $plan['value'])) {
+            throw new RuntimeException('Das Tuer-Aktionsskript konnte nicht ausgefuehrt werden.');
         }
     }
 
@@ -159,10 +277,63 @@ class HausstatusBedienung extends IPSModuleStrict
         } catch (Throwable $e) { return ['raw' => null, 'text' => 'Unbekannt']; }
     }
 
+    private function MotionSensors(): array
+    {
+        $list = json_decode($this->ReadPropertyString('MotionSensors'), true);
+        if (!is_array($list)) { return []; }
+        return array_values(array_filter($list, static fn($v): bool => is_array($v)
+            && isset($v['Name'], $v['Variable']) && is_string($v['Name']) && is_int($v['Variable'])));
+    }
+
+    private function MotionArchive(): int
+    {
+        $id = $this->ReadPropertyInteger('MotionArchive');
+        if ($id > 0) { return IPS_InstanceExists($id) ? $id : 0; }
+        $ids = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
+        return count($ids) === 1 ? $ids[0] : 0;
+    }
+
+    private function MotionState(): array
+    {
+        $now = time(); $start = $now - 86400;
+        $cache = json_decode($this->GetBuffer('MotionCache'), true);
+        if (!is_array($cache) || ($cache['time'] ?? 0) < $now - 30) {
+            $cache = ['time' => $now, 'history' => []];
+            $archive = $this->MotionArchive();
+            foreach ($this->MotionSensors() as $sensor) {
+                $id = $sensor['Variable'];
+                $history = ['entries' => [], 'previous' => null, 'note' => ''];
+                try {
+                    if ($id <= 0 || !IPS_VariableExists($id) || IPS_GetVariable($id)['VariableType'] !== 0) {
+                        throw new RuntimeException('Boolean-Bewegungsvariable auswaehlen.');
+                    }
+                    if ($archive <= 0) { throw new RuntimeException('Archiv auswaehlen: kein eindeutiges Archiv gefunden.'); }
+                    if (!AC_GetLoggingStatus($archive, $id)) { throw new RuntimeException('Archivierung ist nicht aktiviert.'); }
+                    $values = AC_GetLoggedValues($archive, $id, $start, $now, 10000);
+                    foreach ($values as $v) { $history['entries'][] = ['time' => (int)$v['TimeStamp'], 'active' => (bool)$v['Value']]; }
+                    $previous = AC_GetLoggedValues($archive, $id, 0, $start - 1, 1);
+                    if ($previous) { $history['previous'] = (bool)$previous[0]['Value']; }
+                    if (count($values) >= 10000) { $history['note'] = 'Abfragelimit erreicht: Verlauf moeglicherweise unvollstaendig.'; }
+                    elseif (!$values && !$previous) { $history['note'] = 'Noch keine Archivdaten. Aufzeichnung beginnt mit Aktivierung.'; }
+                } catch (Throwable $e) { $history['note'] = $e->getMessage(); }
+                $cache['history'][(string)$id] = $history;
+            }
+            $this->SetBuffer('MotionCache', json_encode($cache, JSON_THROW_ON_ERROR));
+        }
+        $result = ['start' => $start, 'end' => $now, 'sensors' => []];
+        foreach ($this->MotionSensors() as $sensor) {
+            $id = $sensor['Variable'];
+            $result['sensors'][] = ['name' => $sensor['Name'], 'current' => $this->Read($id)['raw'],
+                'history' => $cache['history'][(string)$id] ?? ['entries' => [], 'previous' => null, 'note' => 'Noch keine Daten.']];
+        }
+        return $result;
+    }
+
     private function State(): array
     {
         $state = [];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ReadPropertyInteger($name)); }
+        $state['Motion'] = $this->MotionState();
         $state['Rooms'] = [];
         foreach ($this->Rooms() as $room) {
             $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];
@@ -170,6 +341,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $script = $this->ReadPropertyInteger('LightCommandScript');
         $scriptOK = $script > 0 && IPS_ScriptExists($script);
         $state['Controls'] = [
+            'Door' => $this->DoorAvailable(),
             'Light' => $this->ReadPropertyBoolean('LightEnabled')
                 && ($script > 0 ? $scriptOK : $this->HasAction($this->ReadPropertyInteger('LightState'), 0)),
             'Brightness' => $this->ReadPropertyBoolean('LightEnabled')

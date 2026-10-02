@@ -2,6 +2,20 @@
   "elements": [
     {
       "type": "Label",
+      "caption": "Tueroeffnung: erst bestehende Freigabe aktivieren, dann im Hausstatus bestaetigen. Es wird das Aktionsskript der gewaehlten Tuer-Bedienvariable aufgerufen."
+    },
+    {
+      "type": "CheckBox",
+      "name": "DoorEnabled",
+      "caption": "Tuer oeffnen mit Sicherheitsfrage aktivieren"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "DoorControl",
+      "caption": "Tuer-Bedienvariable mit Aktionsskript und Aktion Oeffnen"
+    },
+    {
+      "type": "Label",
       "caption": "Hausstatus mit HTML-Bedienung. Alle Quellen sind frei waehlbar."
     },
     {
@@ -142,6 +156,44 @@
         },
         {
           "caption": "Temperaturvariable",
+          "name": "Variable",
+          "width": "auto",
+          "add": 0,
+          "edit": {
+            "type": "SelectVariable"
+          }
+        }
+      ]
+    },
+    {
+      "type": "SelectInstance",
+      "name": "MotionArchive",
+      "caption": "Bewegungsarchiv (0 = automatisch bei genau einem Archiv)"
+    },
+    {
+      "type": "CheckBox",
+      "name": "MotionLogging",
+      "caption": "Archivierung fuer ausgewaehlte Bewegungsmelder aktivieren"
+    },
+    {
+      "type": "List",
+      "name": "MotionSensors",
+      "caption": "Bewegungsmelder mit 24-Stunden-Verlauf",
+      "rowCount": 6,
+      "add": true,
+      "delete": true,
+      "columns": [
+        {
+          "caption": "Melder",
+          "name": "Name",
+          "width": "220px",
+          "add": "Bewegungsmelder",
+          "edit": {
+            "type": "ValidationTextBox"
+          }
+        },
+        {
+          "caption": "Boolean-Variable",
           "name": "Variable",
           "width": "auto",
           "add": 0,
