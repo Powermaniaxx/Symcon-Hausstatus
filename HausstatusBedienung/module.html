@@ -4,6 +4,10 @@
 *{box-sizing:border-box}body{margin:0;color:inherit;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{padding:56px 8px 8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}.grid.single{grid-template-columns:1fr}.cinemaFields{margin-top:12px}.cinemaFields label{display:block;margin:8px 0 4px}select{width:100%;font:inherit;padding:8px;border:1px solid #8885;border-radius:8px;color:inherit;background:Canvas}.card,.section{padding:12px;border-radius:12px;border:1px solid #8883;background:#8881}.card.on{background:#2da05025}.card.warn{background:#dc961e29}.card.danger{background:#d23c3c29}.card.info{background:#3c78d229}.icon{font-size:23px;margin-bottom:6px}.label{font-size:10px;text-transform:uppercase;opacity:.65}.value{font-size:17px;font-weight:600;margin-top:4px;overflow-wrap:anywhere}.small{font-size:11px;opacity:.65;margin-top:4px}.section{margin-top:10px}.section h2{font-size:14px;margin:0 0 6px}.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #8882}.row span:first-child{opacity:.7}.row span:last-child{text-align:right;overflow-wrap:anywhere;max-width:65%}button{border:1px solid #8885;border-radius:8px;padding:8px 10px;min-height:38px;font:inherit;color:inherit;background:#8882;cursor:pointer}button:disabled{opacity:.35;cursor:default}button:focus-visible,input:focus-visible{outline:2px solid #3c78d2}.buttons{display:flex;gap:6px;margin-top:10px}.buttons button{flex:1}input[type=range]{width:100%;margin:12px 0 2px;accent-color:#3c78d2}#message{padding:8px;border-radius:8px;margin-top:8px;background:#dc961e29}#message:empty{display:none}.head{display:flex;align-items:center;justify-content:flex-end;margin-top:10px}.head strong{font-size:16px}
 @media(max-width:600px){main{padding:56px 3px 3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.card{padding:8px;min-width:0}.icon{font-size:20px}.value{font-size:14px}.section{padding:9px}.row{font-size:12px}button{font-size:12px;padding:7px}.label{font-size:10px}}
 .motionTrack{position:relative;height:18px;background:#8882;border-radius:4px;overflow:hidden;margin:6px 0}.motionBar{position:absolute;top:0;height:100%;background:#00b99d;min-width:2px}.motionItem{margin:12px 0}.motionLog{max-height:180px;overflow:auto}.motionScale{display:flex;justify-content:space-between;font-size:10px;opacity:.65}dialog{color:inherit;background:Canvas;border:1px solid #8885;border-radius:12px;padding:18px;width:min(340px,90%)}dialog::backdrop{background:#0006}dialog p{line-height:1.4}.confirm-open{background:#d23c3c25}dialog h2{margin:0;font-size:17px}
+
+.dashboard{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:start}.dashboard>.overview-status{grid-column:span 3}.dashboard>#card-battery{grid-column:span 1}.dashboard>#card-pv{grid-column:span 2}.dashboard>.overview-door,.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 2}.overview-group{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.overview-group h2{margin:0 0 10px;font-size:12px;font-weight:600}.overview-status .group-content{display:grid;grid-template-columns:1fr 1fr;gap:12px}.overview-group .card{border:0;padding:0;background:none}.overview-status .icon{display:none}.overview-status .value{font-size:17px}.overview-status .card.on .value{color:#258145}.overview-status #card-alarm.on .value{color:#bf3828}.overview-door .group-content{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.overview-door #card-lock{display:grid;grid-template-columns:auto 1fr;gap:0 8px;align-items:center}.overview-door #card-lock .icon{grid-row:span 2;font-size:19px;margin:0}.overview-door #card-lock .value{font-size:17px}.overview-door #card-permission .icon{display:none}.overview-door #card-permission .value{font-size:13px;font-weight:500}.overview-door .buttons{margin-top:6px}.overview-door #card-permission>button{width:100%;margin-top:6px!important}.dashboard>.card{min-width:0}.dashboard>#card-light,.dashboard>#card-cinema{padding:12px}.dashboard .icon{font-size:19px;margin-bottom:3px}.dashboard .buttons{margin-top:7px}.dashboard .cinemaFields{margin-top:7px}.dashboard .cinemaFields label{font-size:12px;margin:6px 0 3px}.dashboard input[type=range]{margin:8px 0 0}.dashboard>#card-battery .value,.dashboard>#card-pv .value{font-size:15px}.dashboard select{padding:6px;font-size:12px}.dashboard #card-pv .small{line-height:1.3}
+@media(max-width:850px){.dashboard{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.dashboard>.overview-status{grid-column:span 2}.dashboard>#card-battery,.dashboard>#card-pv{grid-column:span 1}.dashboard>.overview-door{grid-column:span 2}.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 1}.overview-door .group-content{grid-template-columns:1fr 1fr;gap:10px}.dashboard>.card,.overview-group,.dashboard>#card-light,.dashboard>#card-cinema{padding:9px}.overview-group h2{margin-bottom:7px}.dashboard .value{font-size:14px}.dashboard button{min-height:36px;font-size:12px;padding:6px 8px}.overview-door #card-permission .label{font-size:9px}.overview-door #card-lock .value{font-size:15px}}
+@media(max-width:340px){.dashboard>#card-light,.dashboard>#card-cinema{grid-column:span 2}.overview-door .group-content{grid-template-columns:1fr}}
 </style></head><body><main>
 
 <div class="grid" id="cards"></div>
@@ -12,7 +16,7 @@
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
 <section class="section" id="doorSection"><h2>Haust&uuml;r</h2><div id="door"></div></section>
-<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.5">&#8635;</button></div>
+<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.6">&#8635;</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -78,8 +82,16 @@ function render(){
 function applyView(view){
  const keys={1:['presence','alarm'],2:['lock','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[]};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
- el('cards').hidden=[8,9,10].includes(view);el('cards').className=view===0||view===1||view===2?'grid':'grid single';
+ if(view===0)groupOverview();
+ el('cards').hidden=[8,9,10].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10],['doorSection',2]])el(id).hidden=view!==0&&view!==v;
+}
+function groupOverview(){
+ const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
+ const group=(name,title,keys)=>{const box=document.createElement('section');box.className='overview-group '+name;const h=document.createElement('h2');text(h,title);box.append(h);const inside=document.createElement('div');inside.className='group-content';for(const key of keys)inside.append(items[key]);box.append(inside);return box;};
+ const status=group('overview-status','Anwesenheit und Alarm',['presence','alarm']);
+ const door=group('overview-door','Haust\u00fcr',['lock','permission']);
+ el('cards').replaceChildren(status,items.battery,items.pv,door,items.light,items.cinema);
 }
 function renderCinemaFields(box,s){
  const fields=document.createElement('div');fields.className='cinemaFields';
@@ -96,7 +108,7 @@ function renderCinemaFields(box,s){
  const volumeLabel=document.createElement('label');text(volumeLabel,'Lautst\u00e4rke: '+(volume.raw===null?'Nicht eingerichtet':volume.text));fields.append(volumeLabel);
  if(control&&typeof volume.raw==='number'){
   const range=document.createElement('input');range.type='range';range.min=String(control.min);range.max=String(control.max);range.step=String(control.step);range.value=String(volume.raw);range.disabled=busy;range.setAttribute('aria-label','Cinema 40 Lautstaerke');
-  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;});
+  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;const unit=String(volume.text).replace(/[-+]?\d+(?:[.,]\d+)?/,'').trim();text(volumeLabel,'Lautst\u00e4rke: '+range.value+(unit?' '+unit:''));});
   range.addEventListener('change',()=>{editing=false;send('CinemaVolume',Number(range.value));});
   range.addEventListener('blur',()=>{if(editing){editing=false;render();}});fields.append(range);
  }

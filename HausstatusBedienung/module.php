@@ -7,7 +7,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
         'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
         'LightState' => 57731, 'Brightness' => 31102, 'CinemaState' => 45754,
-        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'PVPower' => 55194, 'PVEnergy' => 50290,
+        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 45376, 'PVPower' => 55194, 'PVEnergy' => 50290,
         'Weather' => 43788, 'Wind' => 29921, 'Rain' => 54690, 'Warning' => 37768,
         'Sunrise' => 33479, 'Sunset' => 16488,
         'DoorOpened' => 19534, 'DoorClosed' => 55355
@@ -20,6 +20,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('View', 0);
+        $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyInteger('ConfigSource', 0);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
@@ -35,6 +36,16 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        if (!$this->ReadPropertyBoolean('ActiveView')) {
+            $this->SetTimerInterval('Refresh', 0);
+            $this->SetBuffer('DoorChallenges', '{}');
+            foreach ($this->GetMessageList() as $id => $messages) {
+                foreach ($messages as $message) { $this->UnregisterMessage($id, $message); }
+            }
+            $this->SetStatus(102);
+            $this->SetSummary('Ansicht pausiert');
+            return;
+        }
         $this->SetVisualizationType(1);
         $this->SetBuffer('DoorChallenges', '{}');
         foreach ($this->GetMessageList() as $id => $messages) {
@@ -116,6 +127,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function RequestAction(string $Ident, mixed $Value): void
     {
+        if (!$this->ReadPropertyBoolean('ActiveView')) { throw new RuntimeException('Diese Ansicht ist pausiert. Bitte die gemeinsame Hausstatus-Kachel verwenden.'); }
         if ($Ident === 'Refresh') {
             $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
             return;

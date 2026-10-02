@@ -58,6 +58,7 @@ foreach ($views as $view => $name) {
     IPS_SetName($id, $name);
     IPS_SetHidden($id, true);
     IPS_SetProperty($id, 'View', $view);
+    IPS_SetProperty($id, 'ActiveView', true);
     IPS_SetProperty($id, 'ConfigSource', $master);
     if (!IPS_ApplyChanges($id)) { throw new RuntimeException('Konfiguration konnte nicht uebernommen werden: ' . $name); }
     $link = @IPS_GetObjectIDByIdent('SVHSTileLink_' . $view, $root);
