@@ -262,12 +262,12 @@
     {
       "type": "SelectVariable",
       "name": "CinemaSource",
-      "caption": "Cinema 40 - Quelle (Anzeige; Auswahl bei Integer-Aktion mit Profil)"
+      "caption": "Cinema 40 - Quelle (16889; Auswahl aus Darstellung oder Profil)"
     },
     {
       "type": "SelectVariable",
       "name": "CinemaVolume",
-      "caption": "Cinema 40 - Lautstaerke (Regler nutzt Profilgrenzen und Einheit)"
+      "caption": "Cinema 40 - Lautstaerke (45376; Regler aus Darstellung oder Profil)"
     }
   ],
   "actions": [

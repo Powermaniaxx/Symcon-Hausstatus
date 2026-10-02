@@ -17,6 +17,12 @@ foreach (array_keys($parents) as $parent) {
         $action = (int)$v['VariableCustomAction'] > 0 ? (int)$v['VariableCustomAction'] : (int)$v['VariableAction'];
         echo $id . ' | ' . IPS_GetName($id) . ' | Typ ' . $v['VariableType']
             . ' | ' . GetValueFormatted($id) . ' | Aktion ' . $action . ' | Profil ' . $profile . PHP_EOL;
+        if (function_exists('IPS_GetVariablePresentation')) {
+            $presentation = IPS_GetVariablePresentation($id);
+            if ($id === 45376 || $id === 16889 || $id === (int)IPS_GetProperty($master, 'CinemaVolume') || $id === (int)IPS_GetProperty($master, 'CinemaSource')) {
+                echo '  Darstellung: ' . json_encode($presentation, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+            }
+        }
         if ($profile !== '' && IPS_VariableProfileExists($profile)) {
             $p = IPS_GetVariableProfile($profile);
             echo '  Grenzen: ' . $p['MinValue'] . ' bis ' . $p['MaxValue'] . ', Schritt ' . $p['StepSize'] . PHP_EOL;

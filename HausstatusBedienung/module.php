@@ -212,8 +212,24 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $id = $this->ConfigInteger('CinemaSource');
         if (!$this->ConfigBoolean('CinemaEnabled') || !$this->HasAction($id, 1)) { return []; }
+        $presentation = $this->VariablePresentation($id);
+        if (($presentation['PRESENTATION'] ?? '') === '{52D9E126-D7D2-2CBB-5E62-4CF7BA7C5D82}') {
+            $options = $presentation['OPTIONS'] ?? [];
+            if (is_string($options)) { $options = json_decode($options, true); }
+            $result = [];
+            foreach (is_array($options) ? $options : [] as $option) {
+                if (!is_array($option) || !isset($option['Value'], $option['Caption'])) { continue; }
+                $value = $option['Value'];
+                if ((is_int($value) || is_float($value)) && is_finite((float)$value)
+                    && (float)$value === (float)(int)$value) {
+                    $result[(int)$value] = ['value' => (int)$value, 'name' => strip_tags((string)$option['Caption'])];
+                }
+            }
+            return array_values($result);
+        }
+        if (!in_array($presentation['PRESENTATION'] ?? '', ['', '{4153A8D4-5C33-C65F-C1F3-7B61AAF99B1C}'], true)) { return []; }
         $v = IPS_GetVariable($id);
-        $name = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
+        $name = $presentation['PROFILE'] ?? ($v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile']);
         if ($name === '' || !IPS_VariableProfileExists($name)) { return []; }
         $result = [];
         foreach (IPS_GetVariableProfile($name)['Associations'] as $a) {
@@ -227,35 +243,65 @@ class HausstatusBedienung extends IPSModuleStrict
     private function SetCinemaSource(mixed $Value): void
     {
         if (!is_int($Value) || !in_array($Value, array_column($this->CinemaSourceOptions(), 'value'), true)) {
-            throw new RuntimeException('Quelle ist nicht als schaltbare Profil-Auswahl eingerichtet.');
+            throw new RuntimeException('Quelle ist nicht als schaltbare Auswahl eingerichtet.');
         }
         if (!RequestAction($this->ConfigInteger('CinemaSource'), $Value)) { throw new RuntimeException('Quellenwahl fehlgeschlagen.'); }
     }
 
-    private function CinemaVolumeControl(): ?array
+    private function VariablePresentation(int $id): array
+    {
+        try { return IPS_GetVariablePresentation($id); }
+        catch (Throwable $e) { $this->SendDebug('Variablendarstellung', $e->getMessage(), 0); return []; }
+    }
+
+    private function CinemaVolumePlan(): array
     {
         $id = $this->ConfigInteger('CinemaVolume');
-        if (!$this->ConfigBoolean('CinemaEnabled') || !IPS_VariableExists($id)) { return null; }
+        if (!$this->ConfigBoolean('CinemaEnabled')) { throw new RuntimeException('Cinema-Bedienung ist im Modul deaktiviert.'); }
+        if ($id <= 0 || !IPS_VariableExists($id)) { throw new RuntimeException('Lautstaerkevariable fehlt.'); }
         $v = IPS_GetVariable($id); $type = (int)$v['VariableType'];
-        if (!in_array($type, [1, 2], true) || !$this->HasAction($id, $type)) { return null; }
-        $name = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
-        if ($name === '' || !IPS_VariableProfileExists($name)) { return null; }
-        $p = IPS_GetVariableProfile($name); $min = (float)$p['MinValue']; $max = (float)$p['MaxValue'];
-        if (!is_finite($min) || !is_finite($max) || $max <= $min) { return null; }
-        if ($type === 1 && (floor($min) !== $min || floor($max) !== $max)) { return null; }
-        $step = (float)$p['StepSize'];
-        if ($step <= 0) { $step = $type === 1 ? 1 : 0.5; }
-        if ($type === 1) { $step = max(1, ceil($step)); }
+        if (!in_array($type, [1, 2], true)) { throw new RuntimeException('Lautstaerke muss eine Integer- oder Float-Variable sein.'); }
+        if (!$this->HasAction($id, $type)) { throw new RuntimeException('Die Lautstaerkevariable hat keine aktive Bedienaktion.'); }
+        $presentation = $this->VariablePresentation($id);
+        $kind = $presentation['PRESENTATION'] ?? '';
+        if ($kind === '{6B9CAEEC-5958-C223-30F7-BD36569FC57A}') {
+            $min = $presentation['MIN'] ?? null; $max = $presentation['MAX'] ?? null;
+            $step = $presentation['STEP_SIZE'] ?? 0;
+        } elseif (in_array($kind, ['', '{4153A8D4-5C33-C65F-C1F3-7B61AAF99B1C}'], true)) {
+            $name = $presentation['PROFILE'] ?? ($v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile']);
+            if ($name === '' || !IPS_VariableProfileExists($name)) {
+                throw new RuntimeException('In der Lautstaerkevariable sind keine Reglergrenzen hinterlegt.');
+            }
+            $p = IPS_GetVariableProfile($name);
+            $min = $p['MinValue']; $max = $p['MaxValue']; $step = $p['StepSize'];
+        } else {
+            throw new RuntimeException('Die Lautstaerkevariable verwendet keine Schieberegler-Darstellung.');
+        }
+        if (!is_numeric($min) || !is_numeric($max) || !is_numeric($step)
+            || !is_finite((float)$min) || !is_finite((float)$max) || !is_finite((float)$step)
+            || (float)$max <= (float)$min || (float)$step < 0) {
+            throw new RuntimeException('Die Lautstaerkedarstellung hat ungueltige Reglergrenzen.');
+        }
+        $min = (float)$min; $max = (float)$max; $step = (float)$step;
+        if ($type === 1 && (floor($min) !== $min || floor($max) !== $max || floor($step) !== $step)) {
+            throw new RuntimeException('Reglergrenzen und Schrittweite passen nicht zum Integer-Typ.');
+        }
+        // Step 0 means no fixed increment in Symcon, not an invented 0.5 dB step.
+        $step = $step > 0 ? $step : ($type === 1 ? 1 : 'any');
         return ['min' => $min, 'max' => $max, 'step' => $step, 'type' => $type];
     }
 
     private function SetCinemaVolume(mixed $Value): void
     {
-        $control = $this->CinemaVolumeControl();
-        if ($control === null || (!is_int($Value) && !is_float($Value)) || !is_finite((float)$Value)
+        $control = $this->CinemaVolumePlan();
+        if ((!is_int($Value) && !is_float($Value)) || !is_finite((float)$Value)
             || $Value < $control['min'] || $Value > $control['max']
             || ($control['type'] === 1 && floor($Value) !== (float)$Value)) {
-            throw new RuntimeException('Lautstaerke liegt ausserhalb des konfigurierten Variablenprofils.');
+            throw new RuntimeException('Lautstaerke liegt ausserhalb der konfigurierten Reglergrenzen.');
+        }
+        if (is_numeric($control['step'])) {
+            $steps = ((float)$Value - $control['min']) / $control['step'];
+            if (abs($steps - round($steps)) > 0.000001) { throw new RuntimeException('Lautstaerke passt nicht zur konfigurierten Schrittweite.'); }
         }
         $value = $control['type'] === 1 ? (int)$Value : (float)$Value;
         if (!RequestAction($this->ConfigInteger('CinemaVolume'), $value)) { throw new RuntimeException('Lautstaerkeaktion fehlgeschlagen.'); }
@@ -265,7 +311,8 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $id = $this->ConfigInteger('DoorPermission');
         return $this->ConfigBoolean('DoorEnabled') && $id > 0
-            && IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0;
+            && IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0
+            && (int)IPS_GetVariable($id)['VariableCustomAction'] !== 1;
     }
 
     private function SetDoorPermission(mixed $Value): void
@@ -386,6 +433,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         if ($id <= 0 || !IPS_VariableExists($id)) { return false; }
         $v = IPS_GetVariable($id);
+        if ((int)$v['VariableCustomAction'] === 1) { return false; }
         $action = (int)$v['VariableCustomAction'] > 0 ? (int)$v['VariableCustomAction'] : (int)$v['VariableAction'];
         return (int)$v['VariableType'] === $type && $action > 0;
     }
@@ -471,7 +519,10 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['CinemaOptions'] = $this->CinemaSourceOptions();
-        $state['VolumeControl'] = $this->CinemaVolumeControl();
+        $state['VolumeControl'] = null;
+        $state['VolumeReason'] = '';
+        try { $state['VolumeControl'] = $this->CinemaVolumePlan(); }
+        catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
         foreach ($this->Rooms() as $room) {
             $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];
