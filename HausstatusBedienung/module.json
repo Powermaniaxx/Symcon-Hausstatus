@@ -1,0 +1,14 @@
+{
+  "id": "{9E33E109-4881-4E78-9906-38CAC2F1E210}",
+  "name": "HausstatusBedienung",
+  "type": 3,
+  "vendor": "Sven",
+  "aliases": [
+    "Hausstatus mit Bedienung"
+  ],
+  "url": "",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "SVHS"
+}

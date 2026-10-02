@@ -1,0 +1,162 @@
+{
+  "elements": [
+    {
+      "type": "Label",
+      "caption": "Hausstatus mit HTML-Bedienung. Alle Quellen sind frei waehlbar."
+    },
+    {
+      "type": "Label",
+      "caption": "Bei aktiver Lichtautomatik: zuerst ein Licht-Bedienskript waehlen, das manuelle Befehle an die Automatik meldet. Direkte Bedienung meldet keinen Hue-Tastendruck."
+    },
+    {
+      "type": "CheckBox",
+      "name": "LightEnabled",
+      "caption": "Lichtbedienung aktivieren"
+    },
+    {
+      "type": "SelectScript",
+      "name": "LightCommandScript",
+      "caption": "Licht-Bedienskript fuer die Automatik (optional)"
+    },
+    {
+      "type": "CheckBox",
+      "name": "CinemaEnabled",
+      "caption": "Cinema-40-Bedienung aktivieren"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Presence",
+      "caption": "Anwesenheit"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Lock",
+      "caption": "Schlossstatus"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "DoorContact",
+      "caption": "Tuerkontakt (1 = offen)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "DoorPermission",
+      "caption": "Tuerfreigabe"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Alarm",
+      "caption": "Alarm innen"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "BatteryWarnings",
+      "caption": "Anzahl Geraetewarnungen (optional)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "LightState",
+      "caption": "Wohnzimmerlicht - Status und direkte Schaltaktion"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Brightness",
+      "caption": "Wohnzimmerlicht - Helligkeit 1 bis 100"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "CinemaState",
+      "caption": "Cinema 40 - Status (Boolean)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "CinemaControl",
+      "caption": "Cinema 40 - schaltbare Power-Variable (Boolean)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "PVPower",
+      "caption": "PV aktuelle Leistung"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "PVEnergy",
+      "caption": "PV Energie heute"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Weather",
+      "caption": "Wetter"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Wind",
+      "caption": "Wind"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Rain",
+      "caption": "Regen"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Warning",
+      "caption": "Wetterwarnung"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Sunrise",
+      "caption": "Sonnenaufgang"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "Sunset",
+      "caption": "Sonnenuntergang"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "DoorOpened",
+      "caption": "Letzte Tueroeffnung"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "DoorClosed",
+      "caption": "Letzte Tuerschliessung"
+    },
+    {
+      "type": "List",
+      "name": "Rooms",
+      "caption": "Raumtemperaturen",
+      "rowCount": 9,
+      "add": true,
+      "delete": true,
+      "columns": [
+        {
+          "caption": "Raum",
+          "name": "Name",
+          "width": "200px",
+          "add": "Raum",
+          "edit": {
+            "type": "ValidationTextBox"
+          }
+        },
+        {
+          "caption": "Temperaturvariable",
+          "name": "Variable",
+          "width": "auto",
+          "add": 0,
+          "edit": {
+            "type": "SelectVariable"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Werte aktualisieren",
+      "onClick": "SVHS_Refresh($id);"
+    }
+  ]
+}
