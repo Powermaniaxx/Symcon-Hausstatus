@@ -107,7 +107,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'DoorConfirm', 'DoorOpen'], true)) {
+        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'DoorConfirm', 'DoorOpen', 'DoorPermission'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -116,7 +116,9 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
-            if ($Ident === 'DoorConfirm') {
+            if ($Ident === 'DoorPermission') {
+                $this->SetDoorPermission($Value);
+            } elseif ($Ident === 'DoorConfirm') {
                 $this->PrepareDoor($Value);
                 return;
             } elseif ($Ident === 'DoorOpen') {
@@ -134,14 +136,11 @@ class HausstatusBedienung extends IPSModuleStrict
                     throw new InvalidArgumentException('Helligkeit muss zwischen 1 und 100 liegen.');
                 }
                 $script = $this->ReadPropertyInteger('LightCommandScript');
-                if ($script > 0) {
-                    if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
-                    // The selected script performs the command AND informs the light automation.
-                    IPS_RunScriptEx($script, ['COMMAND' => $Ident, 'VALUE' => $Value, 'SOURCE' => 'HausstatusBedienung']);
-                } else {
-                    $id = $this->ReadPropertyInteger($Ident === 'Light' ? 'LightState' : 'Brightness');
-                    $this->ValidateAction($id, $Ident === 'Light' ? 0 : 1);
-                    RequestAction($id, $Value);
+                if ($script <= 0) { throw new RuntimeException('Zuerst Lichtautomatik 3.3 als Licht-Bedienskript auswaehlen.'); }
+                if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
+                // The selected script performs the command AND informs the light automation.
+                if (!IPS_RunScriptEx($script, ['COMMAND' => $Ident, 'VALUE' => $Value, 'SOURCE' => 'HausstatusBedienung'])) {
+                    throw new RuntimeException('Licht-Bedienskript konnte nicht gestartet werden.');
                 }
             }
             $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->State()], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
@@ -153,6 +152,29 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+
+    private function CanSetDoorPermission(): bool
+    {
+        $id = $this->ReadPropertyInteger('DoorPermission');
+        return $this->ReadPropertyBoolean('DoorEnabled') && $id > 0
+            && IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0;
+    }
+
+    private function SetDoorPermission(mixed $Value): void
+    {
+        if (!is_bool($Value) || !$this->CanSetDoorPermission()) {
+            throw new RuntimeException('Tuerfreigabe ist deaktiviert oder keine Boolean-Variable.');
+        }
+        $id = $this->ReadPropertyInteger('DoorPermission');
+        if ($this->HasAction($id, 0)) {
+            if (!RequestAction($id, $Value)) { throw new RuntimeException('Freigabeaktion fehlgeschlagen.'); }
+        } else {
+            // This is the explicitly selected permission flag, not the lock actuator.
+            SetValueBoolean($id, $Value);
+        }
+        // Any pending opening confirmation is invalid after a permission command.
+        $this->SetBuffer('DoorChallenges', '{}');
+    }
 
     private function DoorPlan(): array
     {
@@ -198,7 +220,12 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function DoorAvailable(): bool
     {
-        try { $this->DoorPlan(); return true; } catch (Throwable $e) { return false; }
+        return $this->DoorReason() === '';
+    }
+
+    private function DoorReason(): string
+    {
+        try { $this->DoorPlan(); return ''; } catch (Throwable $e) { return $e->getMessage(); }
     }
 
     private function PrepareDoor(mixed $Value): void
@@ -333,6 +360,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $state = [];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ReadPropertyInteger($name)); }
+        $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->MotionState();
         $state['Rooms'] = [];
         foreach ($this->Rooms() as $room) {
@@ -341,11 +369,12 @@ class HausstatusBedienung extends IPSModuleStrict
         $script = $this->ReadPropertyInteger('LightCommandScript');
         $scriptOK = $script > 0 && IPS_ScriptExists($script);
         $state['Controls'] = [
+            'DoorPermission' => $this->CanSetDoorPermission(),
             'Door' => $this->DoorAvailable(),
             'Light' => $this->ReadPropertyBoolean('LightEnabled')
-                && ($script > 0 ? $scriptOK : $this->HasAction($this->ReadPropertyInteger('LightState'), 0)),
+                && $scriptOK,
             'Brightness' => $this->ReadPropertyBoolean('LightEnabled')
-                && ($script > 0 ? $scriptOK : $this->HasAction($this->ReadPropertyInteger('Brightness'), 1)),
+                && $scriptOK,
             'Cinema' => $this->ReadPropertyBoolean('CinemaEnabled')
                 && $this->HasAction($this->ReadPropertyInteger('CinemaControl'), 0)
         ];

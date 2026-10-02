@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Tueroeffnung: erst bestehende Freigabe aktivieren, dann im Hausstatus bestaetigen. Es wird das Aktionsskript der gewaehlten Tuer-Bedienvariable aufgerufen."
+      "caption": "Tueroeffnung: Freigeben, danach Tuer oeffnen und Sicherheitsfrage bestaetigen. Die Freigabe selbst oeffnet keine Tuer. Oeffnen ruft das vorhandene Aktionsskript der Bedienvariable auf."
     },
     {
       "type": "CheckBox",
@@ -20,7 +20,7 @@
     },
     {
       "type": "Label",
-      "caption": "Bei aktiver Lichtautomatik: zuerst ein Licht-Bedienskript waehlen, das manuelle Befehle an die Automatik meldet. Direkte Bedienung meldet keinen Hue-Tastendruck."
+      "caption": "Licht: docs/Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php ersetzt Skript 33054. Danach dieses Skript als Licht-Bedienskript auswaehlen. Ohne ausgewaehltes Skript bleiben Lichtbuttons gesperrt."
     },
     {
       "type": "CheckBox",
@@ -30,7 +30,7 @@
     {
       "type": "SelectScript",
       "name": "LightCommandScript",
-      "caption": "Licht-Bedienskript fuer die Automatik (optional)"
+      "caption": "Lichtautomatik 33054 (zuerst auf Version 3.3 aktualisieren)"
     },
     {
       "type": "CheckBox",
@@ -65,7 +65,7 @@
     {
       "type": "SelectVariable",
       "name": "BatteryWarnings",
-      "caption": "Anzahl Geraetewarnungen (optional)"
+      "caption": "Integer-Variable Anzahl Geraetewarnungen unter Batteriewaechter"
     },
     {
       "type": "SelectVariable",
