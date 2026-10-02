@@ -5,7 +5,7 @@
 @media(max-width:600px){main{padding:3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.card{padding:8px;min-width:0}.icon{font-size:20px}.value{font-size:14px}.section{padding:9px}.row{font-size:12px}button{font-size:12px;padding:7px}.label{font-size:10px}}
 .motionTrack{position:relative;height:18px;background:#8882;border-radius:4px;overflow:hidden;margin:6px 0}.motionBar{position:absolute;top:0;height:100%;background:#00b99d;min-width:2px}.motionItem{margin:12px 0}.motionLog{max-height:180px;overflow:auto}.motionScale{display:flex;justify-content:space-between;font-size:10px;opacity:.65}dialog{color:inherit;background:Canvas;border:1px solid #8885;border-radius:12px;padding:18px;width:min(340px,90%)}dialog::backdrop{background:#0006}dialog p{line-height:1.4}.confirm-open{background:#d23c3c25}dialog h2{margin:0;font-size:17px}
 </style></head><body><main>
-<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren">&#8635;</button></div>
+<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.3">&#8635;</button></div>
 <div class="grid" id="cards"></div>
 <div id="message" role="status" aria-live="polite"></div>
 <section class="section"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
@@ -17,9 +17,13 @@
 <script>
 let state=/*INITIAL_STATE*/null;
 let doorRequest=null,doorToken=null,doorExpiryTimer=null;
-let busy=false, pendingTimer=null, timeoutTimer=null, editing=false;
+let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
+function showStatus(value,temporary=false){
+ clearTimeout(messageTimer);messageTimer=null;text(el('message'),value);
+ if(temporary)messageTimer=setTimeout(()=>{text(el('message'),'');messageTimer=null;},3000);
+}
 function card(key,icon,label,value,kind=''){
  const box=document.createElement('div');box.className='card '+kind;box.id='card-'+key;
  for(const [cls,val] of [['icon',icon],['label',label],['value',value]]){const d=document.createElement('div');d.className=cls;text(d,val);box.append(d);}
@@ -87,15 +91,15 @@ function renderMotion(m){
 }
 function send(command,value){
  if(busy)return;
- if(typeof requestAction!=='function'){text(el('message'),'Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
- busy=true;editing=false;text(el('message'),'Befehl wird gesendet ...');render();
- timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;text(el('message'),'Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
- try{requestAction(command,value);pendingTimer=setTimeout(()=>requestAction('Refresh',null),1200);}catch(e){finish();text(el('message'),'Befehl konnte nicht gesendet werden.');render();}
+ if(typeof requestAction!=='function'){showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
+ busy=true;editing=false;showStatus('Befehl wird gesendet ...');render();
+ timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
+ try{requestAction(command,value);pendingTimer=setTimeout(()=>requestAction('Refresh',null),1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
 }
 function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;}
 function handleMessage(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
- if(message?.error){finish();text(el('message'),message.error);render();return;}
+ if(message?.error){finish();showStatus(message.error);render();return;}
  if(!message?.Controls)return;
  state=message;
  // Background updates are not an acknowledgement of the requested hardware state.
@@ -103,7 +107,7 @@ function handleMessage(data){
 }
 function prepareDoor(){
  if(busy)return;
- if(typeof requestAction!=='function'){text(el('message'),'Bedienung nur in Symcon verf\u00fcgbar.');return;}
+ if(typeof requestAction!=='function'){showStatus('Bedienung nur in Symcon verf\u00fcgbar.');return;}
  doorRequest=Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('');doorToken=null;
  send('DoorConfirm',{request:doorRequest});
 }
@@ -119,11 +123,11 @@ handleMessage=function(data){
  if(message?.doorConfirmation){
   const c=message.doorConfirmation;if(c.request!==doorRequest)return;
   finish();doorToken=c.token;const remaining=(c.ttl??20)*1000;
-  if(remaining<=0){closeDoorDialog();text(el('message'),'Bestaetigung abgelaufen.');render();return;}
-  text(el('message'),'');el('doorDialog').showModal();el('doorCancel').focus();
-  clearTimeout(doorExpiryTimer);doorExpiryTimer=setTimeout(()=>{closeDoorDialog();text(el('message'),'Best\u00e4tigung abgelaufen. Bitte erneut beginnen.');render();},Math.min(remaining,20000));return;
+  if(remaining<=0){closeDoorDialog();showStatus('Bestaetigung abgelaufen.');render();return;}
+  showStatus('');el('doorDialog').showModal();el('doorCancel').focus();
+  clearTimeout(doorExpiryTimer);doorExpiryTimer=setTimeout(()=>{closeDoorDialog();showStatus('Best\u00e4tigung abgelaufen. Bitte erneut beginnen.');render();},Math.min(remaining,20000));return;
  }
- if(message?.commandDone){finish();text(el('message'),message.error||'Befehl \u00fcbergeben.');if(message.state)state=message.state;render();return;}
+ if(message?.commandDone){finish();showStatus(message.error||'Befehl \u00fcbergeben.',!message.error);if(message.state)state=message.state;render();return;}
  receiveState(data);
 };
 render();

@@ -1,72 +1,55 @@
-# Sven Hausstatus 0.1
+# Sven Hausstatus 0.3
 
-Eigenes PHP-Modul fuer Symcon ab 9.0 mit HTML-SDK. Es stellt den Hausstatus dar und bietet Wohnzimmerlicht Ein/Aus, einen Helligkeitsregler von 1 bis 100 Prozent und Cinema 40 Ein/Aus. Es erstellt keinen WebHook und speichert keine Kennwoerter. Die Kommunikation nutzt die Anmeldung der Kachelvisualisierung.
+PHP-Modul fuer Symcon ab 9.0 mit HTML-SDK. Es zeigt Hausstatus, Temperaturen, Wetter, PV und Bewegungsmelder an und bietet konfigurierbare Bedienung fuer Licht, Cinema 40 und die Haustuer. Die Kommunikation verwendet die Anmeldung der Kachelvisualisierung. Keine WebHooks oder gespeicherten Kennwoerter.
 
-## Installation ueber GitHub und Module Control
+## Aktualisierung der vorhandenen Installation
 
-1. ZIP entpacken. Der Ordner `SvenHausstatus` enthaelt `library.json`, `HausstatusBedienung` und `docs`.
-2. Ein Git-Repository fuer das Modul anlegen. Den INHALT des Ordners `SvenHausstatus` dort hochladen: `library.json` muss direkt im Hauptverzeichnis des Repositories liegen. Es darf keine zusaetzliche Ordnerebene darueber geben.
-3. In Symcon unter Kern-Instanzen die Instanz `Modules` / `Module Control` oeffnen. Ueber `+` die Repository-Adresse hinzufuegen. Das Repository ist in diesem Paket noch nicht veroeffentlicht; es gibt daher noch keine fertige Installations-URL.
-4. Den kompletten Inhalt von `docs/Einrichten_Kachel_KOMPLETT.php` in ein NEUES temporaeres PHP-Skript in Symcon kopieren, speichern und einmal ausfuehren. Das Skript meldet die neue Instanz-ID.
-5. Die neue Instanz oeffnen. Quellen kontrollieren. Bedienung getrennt fuer Licht und Cinema aktivieren. Kachelansicht neu laden.
+Das ZIP enthaelt direkt library.json, den Ordner HausstatusBedienung und docs. ZIP entpacken. Im bestehenden Repository https://github.com/Powermaniaxx/Symcon-Hausstatus library.json und HausstatusBedienung durch die neuen Dateien ersetzen und die Aenderungen committen. Weder die ZIP-Datei selbst hochladen noch eine zusaetzliche Ordnerebene erstellen. library.json muss im Hauptverzeichnis liegen und Version 0.3 / Build 3 anzeigen. README.md kann ebenfalls ersetzt werden.
 
-Die Einrichtung verwendet die vorhandene Kategorie 55503 und den Link 29867. Der Link wird auf die neue Instanz umgestellt. Damit wird die bisherige HTML-Variable nicht mehr fuer diese Kachel verwendet. Nach erfolgreicher Einrichtung stoppt das Skript ausschliesslich den Timer des bisherigen Kachel-Skripts 49024. Die alte Visualisierung unter 30848 wird nicht bearbeitet. Die Instanz wird ausgeblendet, damit sie nicht zusaetzlich zum vorhandenen Link als zweite Kachel erscheint; zum Bearbeiten ggf. ausgeblendete Objekte in der Konsole anzeigen.
+In Symcon unter Kern-Instanzen Modules / Module Control auf Aktualisierung pruefen klicken und anschliessend beim Repository den Update-Button ausfuehren. Bei einem Haken erkennt Symcon auf dem ausgewaehlten Repository-Zweig keinen neueren Commit. Dann pruefen, ob die neuen Dateien wirklich auf genau diesem Zweig gespeichert wurden. Zum Abgleich das Zahnrad am Repository verwenden.
 
-## Vorbelegte Variablen
+Bestehende Instanz 52627 behalten. Danach diese Instanz oeffnen und Aenderungen uebernehmen, anschliessend die Kachelansicht neu laden. Das Einrichtungsskript nicht erneut ausfuehren und die Instanz nicht neu anlegen. Die Kachel nutzt weiterhin Kategorie 55503 und Link 29867; die alte Visualisierung wird nicht bearbeitet. Der Aktualisieren-Button in der HTML-Kachel holt lediglich aktuelle Werte, keine Moduldateien. Sein Tooltip zeigt in dieser Version Hausstatus 0.3.
 
-| Funktion | Vorgabe |
-|---|---:|
-| Anwesenheit | 12936 |
-| Schlossstatus | 14438 |
-| Tuerkontakt | 47467 |
-| Tuerfreigabe | 33983 |
-| Alarm innen | 14477 |
-| Wohnzimmerlicht Status / Schalten | 57731 |
-| Wohnzimmerlicht Helligkeit | 31102 |
-| Cinema Status | 45754 |
-| Cinema schaltbare Power-Variable | 0, bewusst auszuwaehlen |
-| Anzahl Geraetewarnungen | 0, optional auszuwaehlen |
-| PV aktuell / heute | 55194 / 50290 |
+Wenn die Aktualisierung scheitert, die Fehlermeldung und die Repository-Zeile in Module Control festhalten. Keine Daten oder Instanzen loeschen.
 
-Alle Variablen sowie die Raumtemperaturen koennen in der Konfiguration geaendert werden. Die ID 10950 wurde zuvor fuer den AVR genannt, die ID 45754 fuer den Status. Es ist nicht live geprueft, ob 10950 eine schaltbare Boolean-Variable ist. Diese deshalb in Symcon pruefen und dann als Cinema-Control auswaehlen. Eine Instanz-ID oder eine Variable ohne Aktion ist ungeeignet; das Modul lehnt sie ab. Ungueltige Statusquellen werden als unbekannt angezeigt.
+## Meldungen und Darstellung
 
-## Lichtautomatik und manuelle Bedienung
+Befehl uebergeben wird nach drei Sekunden ausgeblendet. Das bedeutet, dass die Bedienaktion bearbeitet bzw. an das Aktionsskript weitergegeben wurde; es bestaetigt nicht automatisch den physischen Geraetezustand. Dieser wird weiterhin aus der Statusvariable gelesen. Fehler und fehlende Rueckmeldungen bleiben sichtbar. Ein neuer Befehl verwirft den vorherigen Ausblend-Timer. Die interne Ueberschrift Hausstatus entfaellt, da die native Kachel bereits so heisst. Das mobile Raster hat zwei Spalten.
 
-Die Lichtbedienung ist anfangs deaktiviert. Der direkte Aufruf der Hue-Lichtvariablen erzeugt keinen Tastendruck auf den Fernbedienungsvariablen 19469 / 56892. Die bisherige Lichtautomatik erkennt einen solchen Befehl daher nicht automatisch als manuellen Eingriff. Ohne Anschluss an die Automatik koennte das Licht spaeter wieder automatisch umgeschaltet werden.
+## Haustuer
 
-Fuer diesen Anschluss besitzt das Modul das Feld `Licht-Bedienskript fuer die Automatik`. Das ausgewaehlte Skript bekommt ueber `IPS_RunScriptEx` diese Parameter:
+In Instanz 52627 Tueroeffnung mit Sicherheitsfrage aktivieren. Vorgabe: Integer-Bedienvariable 30053, Boolean-Freigabe 33983 und Tuerkontakt 47467. Die Freigabe muss bereits aktiv sein. Der Oeffnen-Wert wird eindeutig aus dem Variablenprofil ermittelt; das Modul verwendet nicht ungeprueft den Geraetewert 2. Es ruft ueber RequestAction das vorhandene benutzerdefinierte Aktionsskript dieser Bedienvariable auf.
 
-- `$_IPS['COMMAND']`: `Light` oder `Brightness`.
-- `$_IPS['VALUE']`: Boolean fuer Licht oder Integer 1 bis 100 fuer Helligkeit.
-- `$_IPS['SOURCE']`: `HausstatusBedienung`.
+Die Frage lautet Haustuer wirklich oeffnen? Abbrechen sendet keinen Oeffnungsbefehl. Die Bestaetigung ist einmalig und 20 Sekunden gueltig. Vor Ausfuehrung werden die Freigabe und Konfiguration erneut geprueft. Andere native Tuerbedienelemente und eigenstaendig ausgefuehrte Skripte erhalten dadurch keine Sicherheitsfrage. Ein PHP-Skript kann alleine keinen Dialog in der Visualisierung anzeigen.
 
-Dieses Skript muss den Befehl ausfuehren UND der Lichtautomatik den manuellen Eingriff melden. Das Modul schreibt absichtlich keinen erfundenen JSON-Zustand in die Automatik und simuliert keinen Fernbedienungstastendruck. Ein passendes Bedienskript ist noch nicht enthalten; dafuer wird die aktuelle vollstaendige Lichtautomatik benoetigt. Bei aktiver Morgen-/Nachtlichtautomatik die Lichtbedienung erst nach diesem Anschluss aktivieren. Cinema kann unabhaengig davon eingerichtet werden.
+## Bewegungsmelder und 24-Stunden-Verlauf
 
-## Verhalten und Grenzen
+Vorbelegt sind Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Praesenz 37345 und Terrasse 34118. Fuer Schlafzimmer Praesenz und Keller die passenden Boolean-Variablen in der Liste auswaehlen. Weitere Melder lassen sich hinzufuegen.
 
-Die Anzeige wird bei Aenderung konfigurierter Variablen aktualisiert, zusaetzlich alle 30 Sekunden. Ein Button sendet einen ausdruecklichen Ein- oder Aus-Befehl. Der Status wird aus der Geraetevariable gelesen; ein abgesendeter Befehl wird nicht als bestaetigter Geraetezustand ausgegeben. Die Helligkeit wird erst beim Loslassen des Reglers gesendet. Befehle akzeptieren nur die vorgesehenen Typen und Werte. Fehlende Aktionen deaktivieren die entsprechenden Bedienelemente.
+Archiv 0 bedeutet automatische Auswahl bei genau einem Archive Control. Bei mehreren Archiven das gewuenschte Archiv explizit waehlen. Die aktivierte Option MotionLogging aktiviert die Archivierung der ausgewaehlten Boolean-Variablen. Vorhandene Daten bleiben erhalten. Das Abschalten dieser Option deaktiviert bereits vorhandene Archivierungen nicht.
 
-Die neue Tueroeffnung ruft nach einer Sicherheitsfrage das bestehende Aktionsskript der Integer-Bedienvariable 30053 auf. Die bestehende Boolean-Freigabe 33983 muss aktiv sein. Die Bestaetigung ist einmalig und 20 Sekunden gueltig; vor der Ausfuehrung wird die Freigabe erneut geprueft. Andere native Tuerbedienelemente erhalten dadurch keine Sicherheitsfrage. Der Buerokeller hat als bisherige Vorgabe 17053, dieselbe Thermostatquelle wie im gelieferten Kachel-Skript; bei einer anderen tatsaechlichen Quelle die Liste korrigieren.
+Die Anzeige zeigt aktuellen Zustand, Bewegungsphasen als Balken und aufklappbare Zeitpunkte aller archivierten Zustandswechsel der letzten 24 Stunden. Uhrzeiten erscheinen in Europe/Berlin. Dauerhaft erkannte Praesenz bleibt als Balken sichtbar. Nicht archivierte Vergangenheit kann nicht rekonstruiert werden. Erfasst werden Sensorzustaende, nicht jede einzelne koerperliche Bewegung. Das Archiv schreibt asynchron; der Verlauf kann kurz hinter dem aktuellen Zustand liegen. Archivdaten werden 30 Sekunden zwischengespeichert, bei Sensormeldungen neu abgefragt. Ein Abfragelimit von 10000 Eintraegen pro Sensor wird angezeigt.
+
+## Weitere Quellen und Bedienung
+
+Alle Quellen sind in der Instanz konfigurierbar. Vorgaben: Anwesenheit 12936, Schlossstatus 14438, Alarm innen 14477, Wohnzimmerlicht Status 57731, Helligkeit 31102, Cinema Status 45754, PV aktuell 55194 und Tagesenergie 50290. Cinema-Control und Anzahl Geraetewarnungen muessen ausgewaehlt werden. Ein unbekannter Wert wird nicht als Alles OK ausgegeben. Die Raumtemperaturen lassen sich in der Liste aendern. Die bisherige Vorgabe fuer Buerokeller 17053 muss bei Bedarf korrigiert werden.
+
+Cinema-Bedienung braucht eine schaltbare Boolean-Variable. Die zuvor genannte AVR-ID 10950 ist vor Ort auf Typ und Aktion zu pruefen. Statusanzeige und Bedienvariable koennen verschieden sein.
+
+Lichtbedienung ist anfangs deaktiviert. Bei aktiver Lichtautomatik zuerst ein Licht-Bedienskript anbinden, das den manuellen Befehl ausfuehrt UND der Automatik den manuellen Eingriff meldet. Direkte Hue-Bedienung erzeugt keinen Tastendruck auf den Fernbedienungsvariablen 19469 / 56892. Ein passender Adapter zur bestehenden Automatik ist noch nicht enthalten.
+
+Das ausgewaehlte Licht-Bedienskript bekommt ueber IPS_RunScriptEx folgende Parameter: $_IPS['COMMAND'] ist Light oder Brightness, $_IPS['VALUE'] ist Boolean fuer Licht bzw. Integer 1 bis 100 fuer Helligkeit und $_IPS['SOURCE'] ist HausstatusBedienung. Die Moduldateien schreiben keinen erfundenen Automatik-Zustand und simulieren keinen Fernbedienungstastendruck.
+
+## Erstinstallation
+
+Nur fuer eine noch nicht vorhandene Installation: Repository in Module Control hinzufuegen und docs/Einrichten_Kachel_KOMPLETT.php in einem neuen temporaeren Symcon-Skript einmal ausfuehren. Dieses richtet die Kachel ein und stoppt den alten Aktualisierungstimer 49024. Bei der bestehenden Instanz 52627 diesen Schritt ueberspringen.
 
 ## Pruefung
 
-JSON-Dateien und JavaScript-Syntax sind geprueft. Die JavaScript-Bedienlogik wurde mit einem simulierten DOM getestet: Darstellung, Textbehandlung, gesendete Aktionen, gesperrte Controls, Fehler, Befehl-Rueckmeldung und Unicode. Kein PHP-Laufzeittest und kein Test in einem echten Symcon-System waren in der Arbeitsumgebung moeglich. Version 0.1 ist deshalb fuer die erste Einrichtung und den Test auf deinem System vorgesehen.
+JSON und JavaScript-Syntax sowie die Bedienlogik im simulierten DOM wurden geprueft: Darstellung, Unicode, Textbehandlung, Aktionen, Fehler, Rueckmeldungen, automatisches Ausblenden, Abbrechen und Bestaetigen der Tuerfrage, Zuordnung zur anfragenden Anzeige und Bewegungsintervalle. Ein lokaler PHP-/Symcon-Laufzeittest war nicht verfuegbar. Die neue Version muss nach Installation in Symcon geprueft werden.
 
-## Dokumentation der verwendeten Symcon-Schnittstellen
+## Schnittstellen
 
 https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/
 https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/module-control/
-https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/struktur/
-
-
-## Aktualisierung auf 0.2
-
-ZIP entpacken und library.json sowie den Ordner HausstatusBedienung im bestehenden GitHub-Repository ersetzen und committen. Anschliessend in Symcon Module Control das Modul aktualisieren. Vorhandene Instanz 52627 behalten; das alte Einrichtungsskript nicht erneut ausfuehren. In Instanz 52627 Tueroeffnung aktivieren und Bedienvariable 30053 pruefen. Bestehende Freigabe 33983 wird weiter benoetigt.
-
-Die interne Ueberschrift entfaellt, weil die Kachel bereits Hausstatus heisst.
-
-Bewegungsmelder: Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Praesenz 37345, Terrasse 34118 sind vorbelegt. Fuer Schlafzimmer Praesenz und Keller die Boolean-Variablen auswaehlen; deren IDs sind noch unbekannt. Weitere Melder koennen zur Liste hinzugefuegt werden. Bei mehreren Archiven das gewuenschte Archiv explizit auswaehlen. Die aktivierte Option MotionLogging schaltet die Archivierung der ausgewaehlten Boolean-Variablen ein; vorhandene Daten bleiben erhalten. Deaktivieren der Option schaltet bestehende Archivierung nicht aus.
-
-Die Anzeige zeigt den aktuellen Zustand, einen Balkenverlauf und aufklappbare Zeitpunkte aller Zustandswechsel der letzten 24 Stunden in Europe/Berlin. Dauerhaft erkannte Praesenz bleibt als Balken sichtbar. Nicht archivierte Vergangenheit kann nicht nachtraeglich rekonstruiert werden. Aufgezeichnet werden Sensorzustaende, nicht jede einzelne koerperliche Bewegung. Archivdaten werden maximal alle 30 Sekunden erneut geladen (bei Sensormeldungen frueher); das Archiv schreibt asynchron. Ein Abfragelimit von 10000 Eintraegen pro Sensor wird kenntlich gemacht.
-
-Validierung: JavaScript-Syntax und Bedienlogik mit Mock-DOM geprueft. Kein lokaler PHP-/Symcon-Laufzeittest verfuegbar; die neue Version muss nach Installation in Symcon geprueft werden.
+https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/
