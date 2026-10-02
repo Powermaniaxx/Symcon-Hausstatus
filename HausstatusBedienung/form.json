@@ -1,6 +1,62 @@
 {
   "elements": [
     {
+      "type": "Select",
+      "name": "View",
+      "caption": "Kachelansicht",
+      "options": [
+        {
+          "caption": "Gesamter Hausstatus",
+          "value": 0
+        },
+        {
+          "caption": "Anwesenheit und Alarm",
+          "value": 1
+        },
+        {
+          "caption": "Haustuer und Tuerbedienung",
+          "value": 2
+        },
+        {
+          "caption": "Geraete",
+          "value": 4
+        },
+        {
+          "caption": "Wohnzimmerlicht",
+          "value": 5
+        },
+        {
+          "caption": "Cinema 40",
+          "value": 6
+        },
+        {
+          "caption": "PV-Anlage",
+          "value": 7
+        },
+        {
+          "caption": "Bewegungsmelder",
+          "value": 8
+        },
+        {
+          "caption": "Raumtemperaturen",
+          "value": 9
+        },
+        {
+          "caption": "Wetter",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "type": "SelectInstance",
+      "name": "ConfigSource",
+      "caption": "Zentrale Konfiguration (0 = eigene Einstellungen)"
+    },
+    {
+      "type": "Label",
+      "caption": "Bei zentraler Konfiguration die Quellen und Bedienoptionen dort einstellen. Die folgenden lokalen Quellenfelder werden dann nicht verwendet."
+    },
+    {
       "type": "Label",
       "caption": "Tueroeffnung: Freigeben, danach Tuer oeffnen und Sicherheitsfrage bestaetigen. Die Freigabe selbst oeffnet keine Tuer. Oeffnen ruft das vorhandene Aktionsskript der Bedienvariable auf."
     },
@@ -202,6 +258,16 @@
           }
         }
       ]
+    },
+    {
+      "type": "SelectVariable",
+      "name": "CinemaSource",
+      "caption": "Cinema 40 - Quelle (Anzeige; Auswahl bei Integer-Aktion mit Profil)"
+    },
+    {
+      "type": "SelectVariable",
+      "name": "CinemaVolume",
+      "caption": "Cinema 40 - Lautstaerke (Regler nutzt Profilgrenzen und Einheit)"
     }
   ],
   "actions": [

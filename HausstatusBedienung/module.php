@@ -7,7 +7,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
         'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
         'LightState' => 57731, 'Brightness' => 31102, 'CinemaState' => 45754,
-        'CinemaControl' => 0, 'PVPower' => 55194, 'PVEnergy' => 50290,
+        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'PVPower' => 55194, 'PVEnergy' => 50290,
         'Weather' => 43788, 'Wind' => 29921, 'Rain' => 54690, 'Warning' => 37768,
         'Sunrise' => 33479, 'Sunset' => 16488,
         'DoorOpened' => 19534, 'DoorClosed' => 55355
@@ -19,6 +19,8 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
+        $this->RegisterPropertyInteger('View', 0);
+        $this->RegisterPropertyInteger('ConfigSource', 0);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
         $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Praesenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Praesenz","Variable":0},{"Name":"Keller","Variable":0}]');
@@ -43,7 +45,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->SetBuffer('MotionCache', '');
         $archive = $this->MotionArchive();
         if ($archive > 0) { $this->RegisterReference($archive); }
-        if ($archive > 0 && $this->ReadPropertyBoolean('MotionLogging')) {
+        if ($this->HasMotionView() && $archive > 0 && $this->ConfigBoolean('MotionLogging')) {
             foreach ($this->MotionSensors() as $sensor) {
                 $id = $sensor['Variable'];
                 if (IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0) {
@@ -53,9 +55,15 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         $ids = [];
-        foreach (array_keys(self::SOURCES) as $name) { $ids[] = $this->ReadPropertyInteger($name); }
-        foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
-        foreach ($this->MotionSensors() as $sensor) { $ids[] = $sensor['Variable']; }
+        foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
+        if (in_array($this->ReadPropertyInteger('View'), [0, 9], true)) {
+            foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
+        }
+        if ($this->HasMotionView()) {
+            foreach ($this->MotionSensors() as $sensor) { $ids[] = $sensor['Variable']; }
+        }
+        $source = $this->ReadPropertyInteger('ConfigSource');
+        if ($source > 0 && IPS_InstanceExists($source)) { $this->RegisterReference($source); }
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
@@ -63,13 +71,18 @@ class HausstatusBedienung extends IPSModuleStrict
                 $this->RegisterMessage($id, VM_DELETE);
             }
         }
-        $script = $this->ReadPropertyInteger('LightCommandScript');
+        $script = $this->ConfigInteger('LightCommandScript');
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
         $this->SetTimerInterval('Refresh', 30000);
         $this->SetStatus(102);
         $this->SetSummary('Hausstatus mit HTML-Bedienung');
         $this->SetBuffer('LastState', '');
         $this->Refresh();
+        if ($this->ReadPropertyInteger('ConfigSource') === 0) {
+            foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $child) {
+                if ($child !== $this->InstanceID && IPS_GetProperty($child, 'ConfigSource') === $this->InstanceID) { IPS_ApplyChanges($child); }
+            }
+        }
     }
 
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -107,7 +120,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->UpdateVisualizationValue(json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'DoorConfirm', 'DoorOpen', 'DoorPermission'], true)) {
+        if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -123,19 +136,23 @@ class HausstatusBedienung extends IPSModuleStrict
                 return;
             } elseif ($Ident === 'DoorOpen') {
                 $this->OpenDoor($Value);
+            } elseif ($Ident === 'CinemaSource') {
+                $this->SetCinemaSource($Value);
+            } elseif ($Ident === 'CinemaVolume') {
+                $this->SetCinemaVolume($Value);
             } elseif ($Ident === 'Cinema') {
-                if (!$this->ReadPropertyBoolean('CinemaEnabled')) { throw new RuntimeException('Cinema-Bedienung ist deaktiviert.'); }
+                if (!$this->ConfigBoolean('CinemaEnabled')) { throw new RuntimeException('Cinema-Bedienung ist deaktiviert.'); }
                 if (!is_bool($Value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
-                $id = $this->ReadPropertyInteger('CinemaControl');
+                $id = $this->ConfigInteger('CinemaControl');
                 $this->ValidateAction($id, 0);
                 RequestAction($id, $Value);
             } else {
-                if (!$this->ReadPropertyBoolean('LightEnabled')) { throw new RuntimeException('Lichtbedienung ist deaktiviert.'); }
+                if (!$this->ConfigBoolean('LightEnabled')) { throw new RuntimeException('Lichtbedienung ist deaktiviert.'); }
                 if ($Ident === 'Light' && !is_bool($Value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
                 if ($Ident === 'Brightness' && (!is_int($Value) || $Value < 1 || $Value > 100)) {
                     throw new InvalidArgumentException('Helligkeit muss zwischen 1 und 100 liegen.');
                 }
-                $script = $this->ReadPropertyInteger('LightCommandScript');
+                $script = $this->ConfigInteger('LightCommandScript');
                 if ($script <= 0) { throw new RuntimeException('Zuerst Lichtautomatik 3.3 als Licht-Bedienskript auswaehlen.'); }
                 if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
                 // The selected script performs the command AND informs the light automation.
@@ -153,10 +170,89 @@ class HausstatusBedienung extends IPSModuleStrict
     }
 
 
+    private function ConfigValue(string $name): mixed
+    {
+        $source = $this->ReadPropertyInteger('ConfigSource');
+        if ($source === 0) { return IPS_GetProperty($this->InstanceID, $name); }
+        if ($source === $this->InstanceID || !IPS_InstanceExists($source)
+            || IPS_GetInstance($source)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+            || IPS_GetProperty($source, 'ConfigSource') !== 0) {
+            throw new RuntimeException('Zentrale Hausstatus-Konfiguration fehlt oder ist ungueltig.');
+        }
+        return IPS_GetProperty($source, $name);
+    }
+
+    private function ConfigInteger(string $name): int { return (int)$this->ConfigValue($name); }
+    private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
+    private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
+    private function HasMotionView(): bool { return in_array($this->ReadPropertyInteger('View'), [0, 8], true); }
+
+    private function SourceNames(): array
+    {
+        $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
+            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
+            6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => [],
+            10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset']];
+        return $views[$this->ReadPropertyInteger('View')] ?? array_keys(self::SOURCES);
+    }
+
+    private function CinemaSourceOptions(): array
+    {
+        $id = $this->ConfigInteger('CinemaSource');
+        if (!$this->ConfigBoolean('CinemaEnabled') || !$this->HasAction($id, 1)) { return []; }
+        $v = IPS_GetVariable($id);
+        $name = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
+        if ($name === '' || !IPS_VariableProfileExists($name)) { return []; }
+        $result = [];
+        foreach (IPS_GetVariableProfile($name)['Associations'] as $a) {
+            if (is_numeric($a['Value']) && (float)$a['Value'] === (float)(int)$a['Value']) {
+                $result[] = ['value' => (int)$a['Value'], 'name' => strip_tags((string)$a['Name'])];
+            }
+        }
+        return $result;
+    }
+
+    private function SetCinemaSource(mixed $Value): void
+    {
+        if (!is_int($Value) || !in_array($Value, array_column($this->CinemaSourceOptions(), 'value'), true)) {
+            throw new RuntimeException('Quelle ist nicht als schaltbare Profil-Auswahl eingerichtet.');
+        }
+        if (!RequestAction($this->ConfigInteger('CinemaSource'), $Value)) { throw new RuntimeException('Quellenwahl fehlgeschlagen.'); }
+    }
+
+    private function CinemaVolumeControl(): ?array
+    {
+        $id = $this->ConfigInteger('CinemaVolume');
+        if (!$this->ConfigBoolean('CinemaEnabled') || !IPS_VariableExists($id)) { return null; }
+        $v = IPS_GetVariable($id); $type = (int)$v['VariableType'];
+        if (!in_array($type, [1, 2], true) || !$this->HasAction($id, $type)) { return null; }
+        $name = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
+        if ($name === '' || !IPS_VariableProfileExists($name)) { return null; }
+        $p = IPS_GetVariableProfile($name); $min = (float)$p['MinValue']; $max = (float)$p['MaxValue'];
+        if (!is_finite($min) || !is_finite($max) || $max <= $min) { return null; }
+        if ($type === 1 && (floor($min) !== $min || floor($max) !== $max)) { return null; }
+        $step = (float)$p['StepSize'];
+        if ($step <= 0) { $step = $type === 1 ? 1 : 0.5; }
+        if ($type === 1) { $step = max(1, ceil($step)); }
+        return ['min' => $min, 'max' => $max, 'step' => $step, 'type' => $type];
+    }
+
+    private function SetCinemaVolume(mixed $Value): void
+    {
+        $control = $this->CinemaVolumeControl();
+        if ($control === null || (!is_int($Value) && !is_float($Value)) || !is_finite((float)$Value)
+            || $Value < $control['min'] || $Value > $control['max']
+            || ($control['type'] === 1 && floor($Value) !== (float)$Value)) {
+            throw new RuntimeException('Lautstaerke liegt ausserhalb des konfigurierten Variablenprofils.');
+        }
+        $value = $control['type'] === 1 ? (int)$Value : (float)$Value;
+        if (!RequestAction($this->ConfigInteger('CinemaVolume'), $value)) { throw new RuntimeException('Lautstaerkeaktion fehlgeschlagen.'); }
+    }
+
     private function CanSetDoorPermission(): bool
     {
-        $id = $this->ReadPropertyInteger('DoorPermission');
-        return $this->ReadPropertyBoolean('DoorEnabled') && $id > 0
+        $id = $this->ConfigInteger('DoorPermission');
+        return $this->ConfigBoolean('DoorEnabled') && $id > 0
             && IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0;
     }
 
@@ -165,7 +261,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (!is_bool($Value) || !$this->CanSetDoorPermission()) {
             throw new RuntimeException('Tuerfreigabe ist deaktiviert oder keine Boolean-Variable.');
         }
-        $id = $this->ReadPropertyInteger('DoorPermission');
+        $id = $this->ConfigInteger('DoorPermission');
         if ($this->HasAction($id, 0)) {
             if (!RequestAction($id, $Value)) { throw new RuntimeException('Freigabeaktion fehlgeschlagen.'); }
         } else {
@@ -178,20 +274,20 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function DoorPlan(): array
     {
-        if (!$this->ReadPropertyBoolean('DoorEnabled')) {
+        if (!$this->ConfigBoolean('DoorEnabled')) {
             throw new RuntimeException('Tueroeffnung ist im Modul deaktiviert.');
         }
-        $permissionID = $this->ReadPropertyInteger('DoorPermission');
+        $permissionID = $this->ConfigInteger('DoorPermission');
         if (!IPS_VariableExists($permissionID)
             || IPS_GetVariable($permissionID)['VariableType'] !== 0
             || GetValueBoolean($permissionID) !== true) {
             throw new RuntimeException('Tuer oeffnen ist gesperrt. Zuerst die vorhandene Tuerfreigabe aktivieren.');
         }
-        $contact = $this->Read($this->ReadPropertyInteger('DoorContact'))['raw'];
+        $contact = $this->Read($this->ConfigInteger('DoorContact'))['raw'];
         if ($contact === true || $contact === 1) {
             throw new RuntimeException('Die Tuer ist bereits offen.');
         }
-        $id = $this->ReadPropertyInteger('DoorControl');
+        $id = $this->ConfigInteger('DoorControl');
         $this->ValidateAction($id, 1);
         $v = IPS_GetVariable($id);
         // Use the existing custom door script, never write directly to the lock.
@@ -284,7 +380,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function Rooms(): array
     {
-        $list = json_decode($this->ReadPropertyString('Rooms'), true);
+        $list = json_decode($this->ConfigString('Rooms'), true);
         if (!is_array($list)) { return []; }
         $result = [];
         foreach ($list as $room) {
@@ -306,7 +402,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function MotionSensors(): array
     {
-        $list = json_decode($this->ReadPropertyString('MotionSensors'), true);
+        $list = json_decode($this->ConfigString('MotionSensors'), true);
         if (!is_array($list)) { return []; }
         return array_values(array_filter($list, static fn($v): bool => is_array($v)
             && isset($v['Name'], $v['Variable']) && is_string($v['Name']) && is_int($v['Variable'])));
@@ -314,7 +410,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function MotionArchive(): int
     {
-        $id = $this->ReadPropertyInteger('MotionArchive');
+        $id = $this->ConfigInteger('MotionArchive');
         if ($id > 0) { return IPS_InstanceExists($id) ? $id : 0; }
         $ids = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
         return count($ids) === 1 ? $ids[0] : 0;
@@ -358,25 +454,27 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function State(): array
     {
-        $state = [];
-        foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ReadPropertyInteger($name)); }
+        $state = ['View' => $this->ReadPropertyInteger('View')];
+        foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
         $state['DoorReason'] = $this->DoorReason();
-        $state['Motion'] = $this->MotionState();
+        $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
+        $state['CinemaOptions'] = $this->CinemaSourceOptions();
+        $state['VolumeControl'] = $this->CinemaVolumeControl();
         $state['Rooms'] = [];
         foreach ($this->Rooms() as $room) {
             $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];
         }
-        $script = $this->ReadPropertyInteger('LightCommandScript');
+        $script = $this->ConfigInteger('LightCommandScript');
         $scriptOK = $script > 0 && IPS_ScriptExists($script);
         $state['Controls'] = [
             'DoorPermission' => $this->CanSetDoorPermission(),
             'Door' => $this->DoorAvailable(),
-            'Light' => $this->ReadPropertyBoolean('LightEnabled')
+            'Light' => $this->ConfigBoolean('LightEnabled')
                 && $scriptOK,
-            'Brightness' => $this->ReadPropertyBoolean('LightEnabled')
+            'Brightness' => $this->ConfigBoolean('LightEnabled')
                 && $scriptOK,
-            'Cinema' => $this->ReadPropertyBoolean('CinemaEnabled')
-                && $this->HasAction($this->ReadPropertyInteger('CinemaControl'), 0)
+            'Cinema' => $this->ConfigBoolean('CinemaEnabled')
+                && $this->HasAction($this->ConfigInteger('CinemaControl'), 0)
         ];
         return $state;
     }

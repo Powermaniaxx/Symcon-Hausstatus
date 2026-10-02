@@ -1,18 +1,18 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-*{box-sizing:border-box}body{margin:0;color:inherit;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{padding:56px 8px 8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}.card,.section{padding:12px;border-radius:12px;border:1px solid #8883;background:#8881}.card.on{background:#2da05025}.card.warn{background:#dc961e29}.card.danger{background:#d23c3c29}.card.info{background:#3c78d229}.icon{font-size:23px;margin-bottom:6px}.label{font-size:10px;text-transform:uppercase;opacity:.65}.value{font-size:17px;font-weight:600;margin-top:4px;overflow-wrap:anywhere}.small{font-size:11px;opacity:.65;margin-top:4px}.section{margin-top:10px}.section h2{font-size:14px;margin:0 0 6px}.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #8882}.row span:first-child{opacity:.7}.row span:last-child{text-align:right;overflow-wrap:anywhere;max-width:65%}button{border:1px solid #8885;border-radius:8px;padding:8px 10px;min-height:38px;font:inherit;color:inherit;background:#8882;cursor:pointer}button:disabled{opacity:.35;cursor:default}button:focus-visible,input:focus-visible{outline:2px solid #3c78d2}.buttons{display:flex;gap:6px;margin-top:10px}.buttons button{flex:1}input[type=range]{width:100%;margin:12px 0 2px;accent-color:#3c78d2}#message{padding:8px;border-radius:8px;margin-top:8px;background:#dc961e29}#message:empty{display:none}.head{display:flex;align-items:center;justify-content:flex-end;margin-top:10px}.head strong{font-size:16px}
+*{box-sizing:border-box}body{margin:0;color:inherit;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{padding:56px 8px 8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}.grid.single{grid-template-columns:1fr}.cinemaFields{margin-top:12px}.cinemaFields label{display:block;margin:8px 0 4px}select{width:100%;font:inherit;padding:8px;border:1px solid #8885;border-radius:8px;color:inherit;background:Canvas}.card,.section{padding:12px;border-radius:12px;border:1px solid #8883;background:#8881}.card.on{background:#2da05025}.card.warn{background:#dc961e29}.card.danger{background:#d23c3c29}.card.info{background:#3c78d229}.icon{font-size:23px;margin-bottom:6px}.label{font-size:10px;text-transform:uppercase;opacity:.65}.value{font-size:17px;font-weight:600;margin-top:4px;overflow-wrap:anywhere}.small{font-size:11px;opacity:.65;margin-top:4px}.section{margin-top:10px}.section h2{font-size:14px;margin:0 0 6px}.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #8882}.row span:first-child{opacity:.7}.row span:last-child{text-align:right;overflow-wrap:anywhere;max-width:65%}button{border:1px solid #8885;border-radius:8px;padding:8px 10px;min-height:38px;font:inherit;color:inherit;background:#8882;cursor:pointer}button:disabled{opacity:.35;cursor:default}button:focus-visible,input:focus-visible{outline:2px solid #3c78d2}.buttons{display:flex;gap:6px;margin-top:10px}.buttons button{flex:1}input[type=range]{width:100%;margin:12px 0 2px;accent-color:#3c78d2}#message{padding:8px;border-radius:8px;margin-top:8px;background:#dc961e29}#message:empty{display:none}.head{display:flex;align-items:center;justify-content:flex-end;margin-top:10px}.head strong{font-size:16px}
 @media(max-width:600px){main{padding:56px 3px 3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.card{padding:8px;min-width:0}.icon{font-size:20px}.value{font-size:14px}.section{padding:9px}.row{font-size:12px}button{font-size:12px;padding:7px}.label{font-size:10px}}
 .motionTrack{position:relative;height:18px;background:#8882;border-radius:4px;overflow:hidden;margin:6px 0}.motionBar{position:absolute;top:0;height:100%;background:#00b99d;min-width:2px}.motionItem{margin:12px 0}.motionLog{max-height:180px;overflow:auto}.motionScale{display:flex;justify-content:space-between;font-size:10px;opacity:.65}dialog{color:inherit;background:Canvas;border:1px solid #8885;border-radius:12px;padding:18px;width:min(340px,90%)}dialog::backdrop{background:#0006}dialog p{line-height:1.4}.confirm-open{background:#d23c3c25}dialog h2{margin:0;font-size:17px}
 </style></head><body><main>
 
 <div class="grid" id="cards"></div>
 <div id="message" role="status" aria-live="polite"></div>
-<section class="section"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
-<section class="section"><h2>R&auml;ume</h2><div id="rooms"></div></section>
-<section class="section"><h2>Wetter</h2><div id="weather"></div></section>
-<section class="section"><h2>Haust&uuml;r</h2><div id="door"></div></section>
-<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.4">&#8635;</button></div>
+<section class="section" id="motionSection"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
+<section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
+<section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
+<section class="section" id="doorSection"><h2>Haust&uuml;r</h2><div id="door"></div></section>
+<div class="head"><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.5">&#8635;</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -67,12 +67,40 @@ function render(){
  range.addEventListener('change',()=>{editing=false;send('Brightness',Number(range.value));});
  range.addEventListener('blur',()=>{if(editing){editing=false;render();}});
  light.append(range,level);
- const cinema=card('cinema','\u{1f50a}','Cinema 40',boolValue(s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);
+ const cinema=card('cinema','\u{1f50a}','Cinema 40',boolValue(s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);renderCinemaFields(cinema,s);
  const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);
  renderMotion(s.Motion);
  rows('rooms',s.Rooms.map(r=>[r.name,r.value]));
  rows('weather',[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regen',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
+ applyView(s.View??0);
  rows('door',[['Letzte \u00d6ffnung',s.DoorOpened.text],['Letzte Schlie\u00dfung',s.DoorClosed.text]]);
+}
+function applyView(view){
+ const keys={1:['presence','alarm'],2:['lock','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[]};
+ for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
+ el('cards').hidden=[8,9,10].includes(view);el('cards').className=view===0||view===1||view===2?'grid':'grid single';
+ for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10],['doorSection',2]])el(id).hidden=view!==0&&view!==v;
+}
+function renderCinemaFields(box,s){
+ const fields=document.createElement('div');fields.className='cinemaFields';
+ const sourceLabel=document.createElement('label');text(sourceLabel,'Quelle');fields.append(sourceLabel);
+ const source=s.CinemaSource??{raw:null,text:'Nicht eingerichtet'},options=s.CinemaOptions??[];
+ if(options.length){
+  const select=document.createElement('select');select.setAttribute('aria-label','Cinema 40 Quelle');select.disabled=busy;
+  if(!options.some(o=>o.value===source.raw)){const n=document.createElement('option');n.value='';text(n,'Aktuell: '+source.text);select.append(n);}
+  for(const o of options){const n=document.createElement('option');n.value=String(o.value);text(n,o.name);select.append(n);}
+  select.value=options.some(o=>o.value===source.raw)?String(source.raw):'';
+  select.addEventListener('change',()=>{if(select.value!=='')send('CinemaSource',Number(select.value));});fields.append(select);
+ }else{const n=document.createElement('div');text(n,source.raw===null?'Nicht eingerichtet':source.text);fields.append(n);}
+ const volume=s.CinemaVolume??{raw:null,text:'Nicht eingerichtet'},control=s.VolumeControl;
+ const volumeLabel=document.createElement('label');text(volumeLabel,'Lautst\u00e4rke: '+(volume.raw===null?'Nicht eingerichtet':volume.text));fields.append(volumeLabel);
+ if(control&&typeof volume.raw==='number'){
+  const range=document.createElement('input');range.type='range';range.min=String(control.min);range.max=String(control.max);range.step=String(control.step);range.value=String(volume.raw);range.disabled=busy;range.setAttribute('aria-label','Cinema 40 Lautstaerke');
+  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;});
+  range.addEventListener('change',()=>{editing=false;send('CinemaVolume',Number(range.value));});
+  range.addEventListener('blur',()=>{if(editing){editing=false;render();}});fields.append(range);
+ }
+ box.append(fields);
 }
 function motionTime(t){return new Date(t*1000).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function renderMotion(m){
