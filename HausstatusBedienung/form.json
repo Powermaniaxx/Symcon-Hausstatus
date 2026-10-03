@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.12 – Einstellungen"
+      "caption": "Hausstatus 0.13 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",

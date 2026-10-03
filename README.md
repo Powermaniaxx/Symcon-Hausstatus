@@ -1,10 +1,22 @@
-# Sven Hausstatus 0.12
+# Sven Hausstatus 0.13
 
-IP-Symcon-Modul ab Version 9.0. Dieses Update erweitert die bestehende Fassung 0.11. Zentrale Instanz: **52627**. Kachelbereich: **55503**. Hausstatus-Link: **29867**.
+IP-Symcon-Modul ab Version 9.0. Dieses Update korrigiert die Unterseiten der Fassung 0.12. Zentrale Instanz: **52627**. Kachelbereich: **55503**. Hausstatus-Link: **29867**.
+
+## 0.13: HTML auch auf geöffneten Unterseiten
+
+In 0.12 war bei allen Instanzen nur **SetVisualizationType(1)** gesetzt. Die HTML-Raumdarstellung war vorhanden, aber die Unterseiten hatten noch keine HTML-Vollbildunterstützung. Ab 0.13 verwenden alle Unterseiten **Typ 2**, den Symcon seit 9.0 für HTML in der Kachel und im Vollbild anbietet. **Die Startseite View 0 bleibt bei Typ 1. Ihr Aufbau, die Kacheln und die Bedienung bleiben gleich. Im kompakten Wetterblock kommt auf Wunsch nur eine Windzeile hinzu.** Sie liest weiterhin die konfigurierte Quelle **Wind**, standardmäßig **29921**, und zeigt deren formatierten Wert. Regenverlauf und Wetterdetail bleiben erhalten.
+
+**Aktualisieren:** Modul in Module Control laden und bei **52627 Änderungen übernehmen**. Die zentrale Instanz übernimmt dabei auch die vorhandenen zugeordneten HTML-Unterseiten. Danach die Visualisierung neu laden.
+
+**Wenn weiterhin eine Liste erscheint:** Im Darstellungseditor der betroffenen Kachel **Instanzspezifische Darstellung** auswählen und die Auswahl speichern. Eine vorhandene Auswahl **Liste** wird durch das Modulupdate nicht im Browser überschrieben. Die neu gestalteten Raumseiten sind über **Räume öffnen** in der Startseite erreichbar. Die bisherigen nativen Raumseiten verwenden ihre eigene Darstellung; das HTML-Modul verändert deren Layout nicht.
+
+Falls unklar bleibt, welche Rauminstanzen vorhanden sind, **docs/Raumseiten_pruefen_0_13_KOMPLETT.php** vollständig in ein **neues temporäres Skript** kopieren und einmal manuell ausführen. Es zeigt für jede eigene Rauminstanz ID, View, Raumfilter, Konfigurationsquelle, HTML-Vollbildtyp und Verknüpfungen. Die Prüfung verändert keine Objekte und sendet keine Gerätebefehle. Sie kann die gespeicherte Darstellungswahl der Visualisierung nicht auslesen. Das vorhandene vollständige **Wohnansicht_0_12_KOMPLETT.php** bleibt für fehlende eigene Raumseiten verwendbar; es ist für ein reines 0.13-Update nicht erforderlich.
+
+Offizielle Grundlage: [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [IPS_GetInstance](https://www.symcon.de/en/service/documentation/command-reference/management-instances/ips-getinstance/) und [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/).
 
 ## Neu in 0.12
 
-Die Startseite zeigt die PV-Anlage als kleine Kachel mit der **aktuellen Leistung** und **Details öffnen**. Die große zusätzliche PV-Detailkachel wird beim Übernehmen der zentralen Einstellungen ausgeblendet. Der Button öffnet dieselbe weiterhin aktive Detailansicht mit Erträgen, Wechselrichtern, OpenDTU, Messwerten und Bedienung. Alle bisherigen Quellen bleiben erhalten. **Der Wetterblock einschließlich Regenverlauf bleibt unverändert.**
+Die Startseite zeigt die PV-Anlage als kleine Kachel mit der **aktuellen Leistung** und **Details öffnen**. Die große zusätzliche PV-Detailkachel wird beim Übernehmen der zentralen Einstellungen ausgeblendet. Der Button öffnet dieselbe weiterhin aktive Detailansicht mit Erträgen, Wechselrichtern, OpenDTU, Messwerten und Bedienung. Alle bisherigen Quellen bleiben erhalten. **In 0.12 blieb der Wetterblock einschließlich Regenverlauf unverändert. 0.13 ergänzt die Windzeile auf der Startseite.**
 
 Raumseiten sind für die tägliche Bedienung gegliedert: **Licht und Raumklima zuerst**, anschließend Medien und weitere Geräte. Eine kurze Statuszeile zeigt verfügbare Temperatur, Bewegung und Luftfeuchte. Lampen erscheinen als kompakte Karten mit eindeutigen Namen, Schalter und Dimmer. Aktive Lampen werden zusätzlich durch Zustand und Farbe gekennzeichnet. Pro Gerät bleiben höchstens vier häufige Werte oder Bedienelemente sichtbar; technische Zusatzwerte stehen unter **Weitere Werte** beziehungsweise **Weitere Einstellungen**. Geräte ohne Alltagsfunktionen werden in einem gemeinsamen aufklappbaren Bereich zusammengefasst.
 
@@ -16,9 +28,9 @@ Die Anordnung setzt [Home Assistants Empfehlung für zusammengehörige Bereiche 
 
 ## Bestehende Installation aktualisieren
 
-1. In Symcon **Module Control** das Repository [Symcon-Hausstatus](https://github.com/Powermaniaxx/Symcon-Hausstatus) aktualisieren. **library.json** zeigt Version **0.12**, Build **12**. Der vollständige Modulordner enthält auch **NavigationSupport.php**.
+1. In Symcon **Module Control** das Repository [Symcon-Hausstatus](https://github.com/Powermaniaxx/Symcon-Hausstatus) aktualisieren. **library.json** zeigt Version **0.13**, Build **13**. Der vollständige Modulordner enthält auch **NavigationSupport.php**.
 2. Instanz **52627** öffnen und **Änderungen übernehmen**. Das blendet ausschließlich die korrekt zugeordnete eigene PV-Detailverknüpfung **SVHSTileLink_7** auf der Startseite aus. Die Instanz **SVHSTile_7** bleibt aktiv und ist über **Details öffnen** erreichbar. Ein anders belegter Link wird nicht verändert.
-3. Konfiguration schließen und die Visualisierung neu laden. Der Tooltip am Aktualisieren-Button zeigt **Hausstatus 0.12**. Bereits vorhandene eigene Raumseiten bekommen die neue Darstellung automatisch. Der eigene Bereich heißt jetzt **Räume**, sofern er bisher einen der ursprünglichen Namen „Raumsteuerung“ oder „Räume und Geräte“ trug. **Räume öffnen** führt direkt zu diesen HTML-Raumseiten.
+3. Konfiguration schließen und die Visualisierung neu laden. Der Tooltip am Aktualisieren-Button zeigt **Hausstatus 0.13**. Bereits vorhandene eigene Raumseiten bekommen die neue Darstellung automatisch. Der eigene Bereich heißt jetzt **Räume**, sofern er bisher einen der ursprünglichen Namen „Raumsteuerung“ oder „Räume und Geräte“ trug. **Räume öffnen** führt direkt zu diesen HTML-Raumseiten.
 4. Fehlen die eigenen Raumseiten oder die PV-Detailinstanz, **docs/Wohnansicht_0_12_KOMPLETT.php** vollständig in ein **neues temporäres PHP-Skript** kopieren und einmal manuell ausführen. Anschließend die zentrale Instanz übernehmen und die Visualisierung neu laden. Das vollständige Skript erhält bestehende Quellen, liest weitere Raumverknüpfungen ein und verwendet dieselben eigenen Kacheln und Links erneut.
 
 Die bestehenden nativen Raumseiten aus „Räume und Punkte“ bleiben erhalten; die neu gestalteten HTML-Seiten stehen im eigenen Bereich **Räume**. Quellen und Bedienfreigaben werden zentral in **52627** eingestellt. Bei fehlenden Thermostatsollwerten unter **09 · Temperaturen** pro Raum die vorhandene Sollvariable auswählen.

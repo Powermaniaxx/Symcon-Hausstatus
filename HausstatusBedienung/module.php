@@ -68,7 +68,9 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->SetSummary('Ansicht pausiert');
             return;
         }
-        $this->SetVisualizationType(1);
+        // Subpages opened via openObject also need the HTML renderer in fullscreen (Symcon 9).
+        // Keep the homepage presentation mode unchanged.
+        $this->SetVisualizationType($this->ReadPropertyInteger('View') === 0 ? 1 : 2);
         $this->SetBuffer('DoorChallenges', '{}');
         foreach ($this->GetMessageList() as $id => $messages) {
             foreach ($messages as $message) { $this->UnregisterMessage($id, $message); }

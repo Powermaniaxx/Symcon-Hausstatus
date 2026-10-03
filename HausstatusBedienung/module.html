@@ -62,7 +62,7 @@
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
-<div class="head"><button id="roomNavigation" type="button" hidden>Räume öffnen</button><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.12">&#8635; Aktualisieren</button></div>
+<div class="head"><button id="roomNavigation" type="button" hidden>Räume öffnen</button><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.13">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -164,7 +164,7 @@ function render(){
  renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
  if(s.View===9&&s.TemperatureRows?.length){const board=climateBoard(s.TemperatureRows);addClimateSteps(board,s.TemperatureRows);el('rooms').replaceChildren(board);el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';}
- rows('weather',s.View===0&&s.SeparateDetails===true?[['Wetter',s.Weather.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
+ rows('weather',s.View===0&&s.SeparateDetails===true?[['Wetter',s.Weather.text],['Wind',s.Wind.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
  const roomNav=el('roomNavigation');roomNav.hidden=s.View!==0||!Number.isInteger(s.RoomNavigationTarget)||s.RoomNavigationTarget<=0;roomNav.disabled=busy||typeof openObject!=='function';
