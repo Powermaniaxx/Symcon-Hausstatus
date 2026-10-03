@@ -56,6 +56,31 @@
 @media(max-width:720px){.roomPage .roomGroupGrid{grid-template-columns:1fr;gap:10px}.roomPage .roomGroup{padding:11px}.roomOverview{gap:6px}.roomMetric{font-size:12px;padding:6px 8px}.roomPage .roomGroup>h3{margin-bottom:9px}.roomPage .roomGroup-light .roomDeviceGrid{gap:7px}.roomPage .roomGroup-light .roomDevice{padding:8px}.deviceHeader>h4{font-size:13px}.roomPage .climateActual{font-size:23px}}
 .wifiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}.wifiCard{padding:12px;border:1px solid #8883;border-radius:12px;min-width:0}.wifiCard h3{margin:0 0 8px;font-size:14px}.wifiQR summary{cursor:pointer;padding:12px 0;min-height:44px}.wifiQR img{display:block;width:100%;max-width:260px;height:auto;aspect-ratio:auto;background:white;padding:12px;margin:4px auto 0}.networkMetrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 18px}
 .pageHeader{display:flex;gap:12px;align-items:center;margin:0 0 12px}.pageHeader h2{margin:0;font-size:19px;overflow-wrap:anywhere}.pageHeader button{min-height:44px}.roomChooser{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.roomChooser button{text-align:left;min-height:52px;padding:12px;font-weight:600}
+/* Compact room pages and the separate temperature tile; homepage styles stay intact. */
+.roomPage .roomGroupGrid{grid-template-columns:1fr;gap:10px}
+.roomPage .roomGroup{padding:10px;border-radius:10px;background:transparent}
+.roomPage .roomGroup-light .roomDeviceGrid{grid-template-columns:1fr;gap:6px}
+.roomPage .roomGroup-light .roomDevice{padding:7px 10px;border-radius:9px}
+.roomPage .roomGroup-light .deviceHeader{flex-wrap:nowrap;min-height:44px}
+.roomPage .roomGroup-light .deviceHeader>h4{flex:1;font-size:13px}
+.roomPage .roomItem{padding:4px 0}
+.roomPage .roomDetails>summary{padding:7px 0;font-size:11px;min-height:36px}
+.roomPage .roomOverview{gap:5px;margin-bottom:8px}
+.roomPage .roomMetric{font-size:11px;padding:4px 7px;gap:5px}
+.roomPage .climateSetpoints .row span:last-child,.roomPage .climateActual{font-size:16px}
+.roomPage .climateHeader>div,.roomPage .climateSetpoints,.roomPage .climateActual{padding:6px 8px}
+.roomPage .climateSetpoints input[type=range]{height:24px}
+.roomPage .temperatureSteps{gap:5px;margin-top:3px}
+.roomPage .temperatureSteps button{min-height:38px;font-size:18px}
+.compactTemperatures .climateBoard{margin:5px 0;border-radius:8px}
+.compactTemperatures .climateHeader>div,.compactTemperatures .climateSetpoints,.compactTemperatures .climateActual{padding:5px 7px}
+.compactTemperatures .climateName{padding:5px 7px;font-size:12px}
+.compactTemperatures .climateActual{font-size:16px}
+.compactTemperatures .roomItem>.row{font-size:12px}
+.compactTemperatures input[type=range]{height:24px;margin:3px 0 0}
+.compactTemperatures .temperatureSteps{gap:5px;margin-top:3px}
+.compactTemperatures .temperatureSteps button{min-height:38px;font-size:18px}
+@media(min-width:800px){.roomPage .roomGroupGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <section id="inlineRooms" hidden><div class="roomChooser" id="roomChooser"></div></section>
@@ -67,7 +92,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.16">&#8635; Aktualisieren</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.17">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -144,6 +169,7 @@ function render(){
  if(!state)return;
  el('cards').replaceChildren();
  const s=state;
+ document.body.classList.toggle('compactTemperatures',s.View===9);
  for(const [id,key,fallback] of [['motionTitle','MotionTitle','Bewegung – letzte 24 Stunden'],['temperatureTitle','TemperatureTitle','Räume'],['weatherTitle','WeatherTitle','Wetter'],['networkTitle','NetworkTitle','FritzBox']])if(el(id))text(el(id),displayText(key,fallback));
  card('presence','\u{1f3e0}','Anwesenheit',displayBool('Presence',s.Presence,'Zu Hause','Abwesend'),kind(s.Presence));
  const doorOpen=s.DoorContact.raw===1||s.DoorContact.raw===true;
@@ -389,7 +415,7 @@ function deviceItems(items){
  const roles=['switch','brightness','setpoint','source','volume','temperature','humidity','motion','presence','power','position','illuminance','control'];
  const rank=item=>{const i=roles.indexOf(item.role);return i<0?roles.length:i;};
  frequent.sort((a,b)=>rank(a)-rank(b));
- const primary=frequent.slice(0,4);
+ const primary=frequent.slice(0,2);
  if(!primary.length){const native=items.find(item=>item.control?.kind==='native');if(native)primary.push(native);}
  return {primary,secondary:items.filter(item=>!primary.includes(item))};
 }
