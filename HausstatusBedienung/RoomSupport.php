@@ -88,7 +88,12 @@ trait HausstatusRoomSupport
         $name = IPS_GetName($id);
         $name = ['ACTUAL_TEMPERATURE' => 'Temperatur', 'SET_POINT_TEMPERATURE' => 'Solltemperatur',
             'HUMIDITY' => 'Luftfeuchte', 'MOTION' => 'Bewegung', 'PRESENCE_DETECTION_STATE' => 'Präsenz',
-            'ILLUMINATION' => 'Helligkeit', 'LEVEL' => 'Position', 'STATE' => 'Status', 'POWER' => 'Ein/Aus'][$name] ?? $name;
+            'ILLUMINATION' => 'Umgebungshelligkeit', 'LEVEL' => 'Position', 'STATE' => 'Status', 'POWER' => 'Ein/Aus',
+            'CURRENT_ILLUMINATION' => 'Weiterer Helligkeitswert', 'ILLUMINATION_STATUS' => 'Helligkeitssensor – Status',
+            'CURRENT_ILLUMINATION_STATUS' => 'Weiterer Helligkeitssensor – Status', 'MOTION_DETECTION_ACTIVE' => 'Bewegungserkennung aktiv',
+            'PRESENCE_DETECTION_ACTIVE' => 'Präsenzerkennung aktiv', 'Master Volume' => 'Lautstärke',
+            'MainZone Power' => 'Ein/Aus', 'Input Source' => 'Quelle', 'Main Mute' => 'Stumm',
+            'Surround Mode' => 'Klangmodus', 'Surround Mode Display' => 'Aktueller Klangmodus'][$name] ?? $name;
         return $this->RoomLabel($name);
     }
 
@@ -262,8 +267,41 @@ trait HausstatusRoomSupport
         if (preg_match('/(?:übergang|farbtemperatur|^farbe$|batter|voltage|_status|detection_active|channel volume|minimum|maximum|kosten|energie|verbrauch|^min\b|^max\b)/iu', $label) === 1) { $primary = false; }
         if (($control['kind'] ?? '') === 'enum' && in_array($id, [16889], true)) { $primary = true; }
         if ($entry['type'] !== 2) { $primary = false; }
+        $role = $this->RoomItemRole($entry, $control);
+        if (in_array($this->ReadPropertyInteger('View'), [9, 12], true)) {
+            $primary = in_array($role, ['switch', 'brightness', 'setpoint', 'source', 'volume', 'temperature',
+                'humidity', 'motion', 'presence', 'illuminance', 'position', 'power', 'control'], true);
+        }
         return ['id' => $id, 'name' => $entry['name'], 'label' => $label, 'value' => $value, 'control' => $control, 'note' => $note,
-            'primary' => $primary, 'deviceKey' => $entry['deviceKey'] ?? ('source:' . $id), 'deviceName' => $entry['deviceName'] ?? $entry['name']];
+            'primary' => $primary, 'role' => $role, 'deviceKey' => $entry['deviceKey'] ?? ('source:' . $id), 'deviceName' => $entry['deviceName'] ?? $entry['name']];
+    }
+
+    private function RoomItemRole(array $entry, ?array $control): string
+    {
+        if ($entry['type'] !== 2 || !IPS_VariableExists($entry['id'])) { return 'other'; }
+        $id = $entry['id']; $type = IPS_GetVariable($id)['VariableType'];
+        $name = strtolower(IPS_GetName($id)); $ident = strtolower(IPS_GetObject($id)['ObjectIdent']);
+        $text = $name . ' ' . $ident . ' ' . strtolower($entry['name']);
+        $route = $control['route'] ?? '';
+        $roles = ['Light' => 'switch', 'Dining' => 'switch', 'Cinema' => 'switch', 'Brightness' => 'brightness',
+            'DiningBrightness' => 'brightness', 'CinemaVolume' => 'volume', 'CinemaSource' => 'source'];
+        if (isset($roles[$route])) { return $roles[$route]; }
+        if (in_array($id, [10950, 45754], true)) { return 'switch'; }
+        if (($entry['temperature'] ?? false) || $this->IsRoomSetpoint($entry)) { return 'setpoint'; }
+        if (preg_match('/(?:_status|detection_active|current_illumination|übergang|transition|farbtemperatur|colou?r.?temperature|channel volume|batter|voltage|minimum|maximum|\bmin\b|\bmax\b|kosten|energie|verbrauch)/iu', $text)) { return 'other'; }
+        if (preg_match('/(?:presence_detection_state|präsenz|praesenz)/iu', $text)) { return 'presence'; }
+        if (preg_match('/(?:\bmotion\b|bewegung)/iu', $text)) { return 'motion'; }
+        if (preg_match('/(?:illumination|umgebungshelligkeit)/iu', $text)) { return 'illuminance'; }
+        if (preg_match('/(?:brightness|helligkeit)/iu', $text)) { return 'brightness'; }
+        if (preg_match('/(?:actual_temperature|temperatur|temperature)/iu', $text)) { return 'temperature'; }
+        if (preg_match('/(?:humidity|luftfeuchte)/iu', $text)) { return 'humidity'; }
+        if (preg_match('/(?:master volume|lautstärke)/iu', $text)) { return 'volume'; }
+        if (preg_match('/(?:input source|\bquelle\b)/iu', $text)) { return 'source'; }
+        if (preg_match('/(?:position|\blevel\b)/iu', $text)) { return 'position'; }
+        if (preg_match('/(?:leistung|\bpower\b)/iu', $text) && in_array($type, [1, 2], true)) { return 'power'; }
+        if ($type === 0 && (in_array($name, ['status', 'state', 'on', 'power'], true)
+            || in_array($control['kind'] ?? '', ['bool', 'enum'], true))) { return 'switch'; }
+        return ($control['kind'] ?? '') === 'slider' ? 'control' : 'other';
     }
 
     private function SetRoomValue(mixed $payload): void

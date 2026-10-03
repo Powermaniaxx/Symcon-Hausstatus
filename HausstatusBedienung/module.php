@@ -3,12 +3,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/RoomSupport.php';
 require_once __DIR__ . '/ComfortSupport.php';
 require_once __DIR__ . '/RainSupport.php';
+require_once __DIR__ . '/NavigationSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
     use HausstatusRoomSupport;
     use HausstatusComfortSupport;
     use HausstatusRainSupport;
+    use HausstatusNavigationSupport;
     private const SOURCES = [
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
         'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
@@ -123,6 +125,10 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $script = $this->ConfigInteger('LightCommandScript');
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
+        $this->OrganizeHomepageDetails();
+        foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
+            if ($target > 0) { $this->RegisterReference($target); }
+        }
         $this->SetTimerInterval('Refresh', 30000);
         $this->SetStatus(102);
         $this->SetSummary('Hausstatus mit HTML-Bedienung');
@@ -732,6 +738,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['RoomSections'] = $this->RoomSections();
         $state['TemperatureRows'] = $this->TemperatureRows();
         $state['Dining'] = in_array($this->ReadPropertyInteger('View'), [0, 5], true) ? $this->DiningState() : null;
+        $state['PVDetailsTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->PVDetailsTarget() : 0;
+        $state['RoomNavigationTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {
                 $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];

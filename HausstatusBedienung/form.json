@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.11 – Einstellungen"
+      "caption": "Hausstatus 0.12 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -545,7 +545,7 @@
         },
         {
           "type": "Label",
-          "caption": "Raumseiten bündeln Werte pro Gerät. Häufige Bedienung bleibt sichtbar, weitere Einstellungen stehen unter Details. Alle bisherigen Quellen bleiben erreichbar."
+          "caption": "Raumseiten stellen Licht, Heizung und Medien zuerst dar. Lampen haben kompakte Schalter und Dimmer; Heizung zeigt Soll/Ist gemeinsam. Technische Werte bleiben unter Weitere Einstellungen. Die neuen Seiten stehen unter Räume und sind über Räume öffnen in der Übersicht erreichbar."
         },
         {
           "type": "List",
