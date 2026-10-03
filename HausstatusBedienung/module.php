@@ -1,10 +1,14 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/RoomSupport.php';
+require_once __DIR__ . '/ComfortSupport.php';
+require_once __DIR__ . '/RainSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
     use HausstatusRoomSupport;
+    use HausstatusComfortSupport;
+    use HausstatusRainSupport;
     private const SOURCES = [
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
         'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
@@ -31,6 +35,13 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyString('RoomFilter', '');
         $this->RegisterPropertyString('RoomEntries', $this->GetRoomDefaults());
         $this->RegisterPropertyBoolean('RoomControlsEnabled', true);
+        $this->RegisterPropertyInteger('DiningInstance', 54491);
+        $this->RegisterPropertyInteger('DiningState', 58764);
+        $this->RegisterPropertyInteger('DiningBrightness', 57302);
+        $this->RegisterPropertyBoolean('DiningEnabled', true);
+        $this->RegisterPropertyInteger('Raining', 54692);
+        $this->RegisterPropertyInteger('RainArchive', 0);
+        $this->RegisterPropertyBoolean('RainLogging', true);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
         $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Präsenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Präsenz","Variable":22412},{"Name":"Keller","Variable":16931}]');
@@ -63,6 +74,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach ($this->GetReferenceList() as $id) { $this->UnregisterReference($id); }
         
         $this->SetBuffer('MotionCache', '');
+        $this->SetBuffer('RainCache', '');
         $archive = $this->MotionArchive();
         if ($archive > 0) { $this->RegisterReference($archive); }
         if ($this->HasMotionView() && $archive > 0 && $this->ConfigBoolean('MotionLogging')) {
@@ -75,7 +87,24 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         $ids = [];
+        if ($this->HasRainView()) {
+            $rainID = $this->ConfigInteger('Raining');
+            $ids[] = $rainID;
+            $rainArchive = $this->RainArchive();
+            if ($rainArchive > 0) { $this->RegisterReference($rainArchive); }
+            if ($rainArchive > 0 && $this->ConfigBoolean('RainLogging') && IPS_VariableExists($rainID)
+                && IPS_GetVariable($rainID)['VariableType'] === 0) {
+                try { AC_SetLoggingStatus($rainArchive, $rainID, true); }
+                catch (Throwable $e) { $this->SendDebug('Regenarchiv', $e->getMessage(), 0); }
+            }
+        }
         foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
+        if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12], true)) {
+            try { foreach ($this->DiningSources() as $id) { if ($id > 0) { $ids[] = $id; } } } catch (Throwable $e) { /* Missing sources are explained in the tile. */ }
+        }
+        if ($this->ReadPropertyInteger('View') === 12) {
+            foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
+        }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
@@ -109,6 +138,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
+            if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
             }
@@ -186,6 +216,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function FreshState(): array
     {
         $this->SetBuffer('MotionCache', '');
+        $this->SetBuffer('RainCache', '');
         $state = $this->State();
         $this->SetBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         return $state;
@@ -233,7 +264,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -242,7 +273,9 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
-            if ($Ident === 'RoomValue') {
+            if (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
+                $this->SetDining($Ident, $Value);
+            } elseif ($Ident === 'RoomValue') {
                 $this->SetRoomValue($Value);
             } elseif (in_array($Ident, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
                 $this->SetOutdoor($Ident, $Value);
@@ -322,7 +355,7 @@ class HausstatusBedienung extends IPSModuleStrict
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => []];
         $view = $this->ReadPropertyInteger('View');
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
-            return array_values(array_diff(array_keys(self::SOURCES), $views[10]));
+            return array_keys(self::SOURCES);
         }
         return $views[$view] ?? array_keys(self::SOURCES);
     }
@@ -616,7 +649,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach ($list as $room) {
             if (is_array($room) && isset($room['Name'], $room['Variable'])
                 && is_string($room['Name']) && is_numeric($room['Variable'])) {
-                $result[] = ['Name' => $room['Name'], 'Variable' => (int)$room['Variable']];
+                $result[] = ['Name' => $room['Name'], 'Variable' => (int)$room['Variable'], 'Setpoint' => (int)($room['Setpoint'] ?? 0)];
             }
         }
         return $result;
@@ -688,6 +721,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
+        $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
         $state['Outdoor'] = in_array($this->ReadPropertyInteger('View'), [0, 11], true) ? $this->OutdoorState() : null;
         $state['CinemaOptions'] = $this->CinemaSourceOptions();
         $state['VolumeControl'] = null;
@@ -696,6 +730,8 @@ class HausstatusBedienung extends IPSModuleStrict
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
         $state['RoomSections'] = $this->RoomSections();
+        $state['TemperatureRows'] = $this->TemperatureRows();
+        $state['Dining'] = in_array($this->ReadPropertyInteger('View'), [0, 5], true) ? $this->DiningState() : null;
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {
                 $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];

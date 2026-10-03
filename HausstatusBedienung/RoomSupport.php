@@ -24,8 +24,22 @@ trait HausstatusRoomSupport
     private function SelectedRoomEntries(): array
     {
         $view = $this->ReadPropertyInteger('View');
+        if ($view === 9) { return $this->TemperatureEntries(); }
         if (!in_array($view, [7, 12], true)) { return []; }
         $filter = $view === 7 ? 'PV-Anlage' : $this->ReadPropertyString('RoomFilter');
+        $result = $this->ExpandedRoomEntries($filter);
+        if ($view === 12) {
+            $extra = $this->TemperatureEntries();
+            if ($filter === '' || $filter === 'Wohnzimmer') { $extra = array_merge($extra, $this->DiningEntries()); }
+            foreach ($extra as $entry) {
+                if (!array_filter($result, static fn(array $row): bool => $row['room'] === $entry['room'] && $row['id'] === $entry['id'])) { $result[] = $entry; }
+            }
+        }
+        return $result;
+    }
+
+    private function ExpandedRoomEntries(string $filter): array
+    {
         $result = []; $seen = [];
         foreach ($this->RoomEntries() as $entry) {
             if ($filter !== '' && $entry['Room'] !== $filter) { continue; }
@@ -58,8 +72,14 @@ trait HausstatusRoomSupport
             if (count($result) > $before) { return; }
         }
         $name = $prefix === '' ? $entry['Name'] : $prefix . ' · ' . $this->RoomVariableName($target);
+        $parent = $exists ? IPS_GetParent($target) : 0;
+        $device = $type === 1 ? $target : (IPS_InstanceExists($parent) ? $parent : $target);
+        $parts = explode(' · ', $prefix);
+        $deviceName = $prefix !== '' ? $this->RoomLabel((string)end($parts)) : ($device !== $target ? $this->RoomLabel(IPS_GetName($device)) : $entry['Name']);
+        if (in_array($target, [10950, 45754, 45376, 16889, 38002], true)) { $deviceName = 'Cinema 40'; }
         $result[] = ['room' => $entry['Room'], 'group' => $entry['Group'], 'name' => $name,
-            'id' => $target, 'type' => $type, 'operate' => ($entry['Operate'] ?? false) === true];
+            'id' => $target, 'type' => $type, 'operate' => ($entry['Operate'] ?? false) === true,
+            'deviceKey' => 'device:' . $device, 'deviceName' => $deviceName];
     }
 
     private function RoomVariableName(int $id): string
@@ -110,6 +130,11 @@ trait HausstatusRoomSupport
 
     private function RoomRoute(int $id): string
     {
+        try {
+            $dining = $this->DiningSources();
+            if ($id === $dining['state']) { return 'Dining'; }
+            if ($id > 0 && $id === $dining['brightness']) { return 'DiningBrightness'; }
+        } catch (Throwable $e) { /* Dining is optional outside its own card. */ }
         $routes = ['LightState' => 'Light', 'Brightness' => 'Brightness', 'CinemaVolume' => 'CinemaVolume',
             'CinemaSource' => 'CinemaSource', 'CinemaControl' => 'Cinema', 'CinemaState' => 'Cinema',
             'AwningPosition' => 'AwningPosition', 'AwningAuto' => 'AwningAuto',
@@ -162,6 +187,10 @@ trait HausstatusRoomSupport
         if ($this->RoomWebContent($id)) { return ['kind' => 'native', 'id' => $id]; }
         $route = $this->RoomRoute($id);
         $v = IPS_GetVariable($id); $type = (int)$v['VariableType'];
+        if (($entry['temperature'] ?? false) && !in_array($type, [1, 2], true)) { throw new RuntimeException('Solltemperatur benötigt eine Integer- oder Float-Variable.'); }
+        if (in_array($route, ['Dining', 'DiningBrightness'], true) && !$this->ConfigBoolean('DiningEnabled')) {
+            throw new RuntimeException('Esstisch-Bedienung ist deaktiviert.');
+        }
         if (in_array($route, ['Light', 'Brightness'], true)) {
             $script = $this->ConfigInteger('LightCommandScript');
             if (!$this->ConfigBoolean('LightEnabled') || !IPS_ScriptExists($script)) { throw new RuntimeException('Lichtbedienung und Bedienskript in 52627 einstellen.'); }
@@ -202,16 +231,15 @@ trait HausstatusRoomSupport
 
     private function RoomSections(): array
     {
+        if (!in_array($this->ReadPropertyInteger('View'), [7, 12], true)) { return []; }
         $sections = [];
+        $climateIDs = [];
+        foreach ($this->TemperatureSources() as $row) {
+            $climateIDs[] = $row['actualID']; foreach ($row['setpoints'] as $entry) { $climateIDs[] = $entry['id']; }
+        }
         foreach ($this->SelectedRoomEntries() as $entry) {
-            $id = $entry['id']; $control = null; $note = '';
-            $value = $entry['type'] === 2 ? ($this->RoomWebContent($id) ? ['raw' => null, 'text' => 'HTML-Ansicht'] : $this->Read($id))
-                : ['raw' => null, 'text' => IPS_ObjectExists($id) ? 'Native Bedienung' : 'Quelle fehlt'];
-            if ($entry['type'] === -1) { $note = 'Quelle ' . $id . ' ist nicht vorhanden.'; }
-            try { $control = $this->RoomControl($entry); }
-            catch (Throwable $e) { $note = $e->getMessage(); }
-            $sections[$entry['room']][$entry['group']][] = ['id' => $id, 'name' => $entry['name'],
-                'value' => $value, 'control' => $control, 'note' => $note];
+            if (in_array($entry['id'], $climateIDs, true)) { continue; }
+            $sections[$entry['room']][$entry['group']][] = $this->RoomItem($entry);
         }
         $result = [];
         foreach ($sections as $room => $groups) {
@@ -220,6 +248,22 @@ trait HausstatusRoomSupport
             $result[] = ['name' => $room, 'groups' => $list];
         }
         return $result;
+    }
+
+    private function RoomItem(array $entry): array
+    {
+        $id = $entry['id']; $control = null; $note = '';
+        $value = $entry['type'] === 2 ? ($this->RoomWebContent($id) ? ['raw' => null, 'text' => 'HTML-Ansicht'] : $this->Read($id))
+            : ['raw' => null, 'text' => IPS_ObjectExists($id) ? 'Native Bedienung' : 'Quelle fehlt'];
+        if ($entry['type'] === -1) { $note = 'Quelle ' . $id . ' ist nicht vorhanden.'; }
+        try { $control = $this->RoomControl($entry); } catch (Throwable $e) { $note = $e->getMessage(); }
+        $label = explode(' · ', $entry['name']); $label = end($label);
+        $primary = $control === null || in_array($control['kind'], ['bool', 'slider'], true);
+        if (preg_match('/(?:übergang|farbtemperatur|^farbe$|batter|voltage|_status|detection_active|channel volume|minimum|maximum|kosten|energie|verbrauch|^min\b|^max\b)/iu', $label) === 1) { $primary = false; }
+        if (($control['kind'] ?? '') === 'enum' && in_array($id, [16889], true)) { $primary = true; }
+        if ($entry['type'] !== 2) { $primary = false; }
+        return ['id' => $id, 'name' => $entry['name'], 'label' => $label, 'value' => $value, 'control' => $control, 'note' => $note,
+            'primary' => $primary, 'deviceKey' => $entry['deviceKey'] ?? ('source:' . $id), 'deviceName' => $entry['deviceName'] ?? $entry['name']];
     }
 
     private function SetRoomValue(mixed $payload): void
@@ -247,6 +291,7 @@ trait HausstatusRoomSupport
             if (!is_int($value) || $value < 1 || $value > 100) { throw new RuntimeException('Helligkeit muss von 1 bis 100 sein.'); }
         }
         $route = $control['route'] ?? '';
+        if ($route === 'Dining') { $this->SetDining($route, $value); return; }
         if (in_array($route, ['Light', 'Brightness'], true)) {
             if (!IPS_RunScriptEx($this->ConfigInteger('LightCommandScript'), ['COMMAND' => $route, 'VALUE' => $value, 'SOURCE' => 'HausstatusBedienung'])) {
                 throw new RuntimeException('Licht-Bedienskript konnte nicht gestartet werden.');

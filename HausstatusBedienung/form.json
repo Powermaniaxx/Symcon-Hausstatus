@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.10 – Einstellungen"
+      "caption": "Hausstatus 0.11 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -212,6 +212,34 @@
         {
           "type": "Label",
           "caption": "Für die vorhandene Automatik Skript 33054 mit der Fassung 3.3 verwenden. Ein/Aus und Helligkeit werden an dieses Skript übergeben."
+        },
+        {
+          "type": "Label",
+          "caption": "Esstisch · eigene Lichtgruppe unter Wohnzimmer"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "DiningInstance",
+          "caption": "Esstisch – Hue-Gruppe (54491)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DiningState",
+          "caption": "Esstisch – Status (58764)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DiningBrightness",
+          "caption": "Esstisch – Helligkeit (57302)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "DiningEnabled",
+          "caption": "Esstisch bedienen"
+        },
+        {
+          "type": "Label",
+          "caption": "Herz bleibt eine eigene Lampe. Esstisch verwendet die native Hue-Aktion und ist unabhängig von der Wohnzimmerautomatik."
         }
       ]
     },
@@ -421,8 +449,17 @@
               }
             },
             {
-              "caption": "Temperaturvariable",
+              "caption": "Isttemperatur",
               "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            },
+            {
+              "caption": "Solltemperatur (optional)",
+              "name": "Setpoint",
               "width": "auto",
               "add": 0,
               "edit": {
@@ -430,6 +467,10 @@
               }
             }
           ]
+        },
+        {
+          "type": "Label",
+          "caption": "Links Sollwerte einstellen, rechts Istwerte ablesen. Ohne ausgewählte Sollquelle werden passende Solltemperaturen aus den Raumgeräten oder vom selben Thermostat gesucht. Ohne passende Quelle bleibt die Isttemperatur sichtbar."
         }
       ]
     },
@@ -452,7 +493,7 @@
         {
           "type": "SelectVariable",
           "name": "Rain",
-          "caption": "Regen"
+          "caption": "Regenmenge"
         },
         {
           "type": "SelectVariable",
@@ -468,6 +509,26 @@
           "type": "SelectVariable",
           "name": "Sunset",
           "caption": "Sonnenuntergang"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "Raining",
+          "caption": "Regenstatus – RAINING (54692, Boolean)"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "RainArchive",
+          "caption": "Archiv für Regenverlauf (0 = automatisch)",
+          "moduleID": "{43192F0B-135B-4CE7-A0A7-1475603F3060}"
+        },
+        {
+          "type": "CheckBox",
+          "name": "RainLogging",
+          "caption": "Regenstatus archivieren"
+        },
+        {
+          "type": "Label",
+          "caption": "Startseite und Wetter zeigen Regenstatus und Regenphasen der letzten 24 Stunden. Vorhandene Archivdaten werden genutzt; eine noch nicht aufgezeichnete Vergangenheit lässt sich nicht nachträglich anzeigen."
         }
       ]
     },
@@ -484,7 +545,7 @@
         },
         {
           "type": "Label",
-          "caption": "Das Einrichtungsskript übernimmt bestehende Raumverknüpfungen. Variablen werden direkt angezeigt; bei Geräteinstanzen werden ihre sichtbaren Variablen ergänzt."
+          "caption": "Raumseiten bündeln Werte pro Gerät. Häufige Bedienung bleibt sichtbar, weitere Einstellungen stehen unter Details. Alle bisherigen Quellen bleiben erreichbar."
         },
         {
           "type": "List",

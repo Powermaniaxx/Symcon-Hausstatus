@@ -1,28 +1,42 @@
-# Sven Hausstatus 0.10
+# Sven Hausstatus 0.11
 
-IP-Symcon-Modul ab Version 9.0. Dieses Update erweitert die bestehende Fassung 0.9. Zentrale Instanz: **52627**. Kachelbereich: **55503**. Hausstatus-Link: **29867**.
+IP-Symcon-Modul ab Version 9.0. Dieses Update erweitert die bestehende Fassung 0.10. Zentrale Instanz: **52627**. Kachelbereich: **55503**. Hausstatus-Link: **29867**.
 
-## Neu in 0.10
+## Neu in 0.11
 
-- **Markise und Dachfenster:** Im vorhandenen gemeinsamen Startseitenblock stehen jetzt eigene Statuszeilen. Dachfenster verwendet **25259**, Markise/Rollo **35313**. Position und Automatik bleiben daneben verfügbar.
-- **Räume und Geräte:** Eigene HTML-Raumseiten mit den bisherigen Raumverknüpfungen, ergänzt um die bekannten Licht-, Heizungs-, Medien-, Wasserbett-, Küchen- und Terrassenquellen. PV erhält eine eigene Detailkachel.
-- **Bedienung:** Schalter, hinterlegte Auswahlwerte, Regler und RGB-Farbe verwenden die vorhandenen Variablenaktionen und Darstellungen. Andere Bedienoberflächen öffnen sich über „Bedienung öffnen“ direkt in Symcon.
-- **Umlaute:** Beschriftungen, Meldungen, Einrichtungsausgaben und diese Anleitung verwenden richtige Umlaute. Das neue Einrichtungsskript korrigiert auch bekannte alte Schreibweisen in den übernommenen Raum- und Meldernamen. Technische Eigenschaftsnamen, Objektkennungen und bestehende Dateinamen bleiben kompatibel.
+Die vorhandene Startseite behält ihre Reihenfolge. Anwesenheit/Alarm und Haustür sind kompakter. **Esstisch** steht innerhalb des vorhandenen Wohnzimmerlichtblocks; **Herz** bleibt eine eigene Lampe. PV zeigt auf der Startseite nur die aktuelle Leistung. Unter Wetter kommen der aktuelle Regenstatus und Regenphasen der letzten 24 Stunden hinzu.
 
-Die gemeinsame Startseite bleibt wie in 0.9 aufgebaut: Anwesenheit/Alarm zuerst, Haustür danach, auch mobil. Schloss und Türkontakt bleiben getrennte Zustände. Wohnzimmerlicht, Cinema 40, Gerätewarnungen, PV sowie Markise/Dachfenster folgen darunter. Bewegung, Temperaturen und Wetter bleiben eigene Detailbereiche. Die funktionierende Aktualisierung aus 0.9 bleibt erhalten.
+Raumseiten bündeln die Werte eines Geräts in einem gemeinsamen Block. Schalten, Helligkeit, Lautstärke und häufig benötigte Werte bleiben direkt sichtbar. Farbe, Übergang, zusätzliche Einstellungen und Verbrauchsdetails stehen unter **Details**. Auch dort bleiben die vorhandenen Aktionen bedienbar; aufgeklappte Details bleiben bei Hintergrundaktualisierungen geöffnet. Fehlende Quellen werden angezeigt und bei zugeklappten Details im Hinweiszähler berücksichtigt.
+
+Temperaturen erscheinen in zusammengehörigen Zeilen: **Sollwerte links einstellen, Istwerte rechts ablesen**, auch mobil. Sollwerte nutzen die vorhandenen Grenzen, Schritte und Einheiten. In der zentralen Temperaturkonfiguration lässt sich pro Raum eine Sollvariable auswählen. Ohne Auswahl werden passende Solltemperaturen der konfigurierten Raumgeräte oder desselben Thermostats verwendet. Fehlt eine passende Sollquelle, zeigt die Seite weiterhin den Istwert und „Keine Sollquelle“.
+
+Die Gestaltung orientiert sich an [Apples Empfehlungen zur Informationshierarchie und schrittweise sichtbaren Details](https://developer.apple.com/videos/play/wwdc2025/359/), [Home Assistants gruppierten Sections](https://www.home-assistant.io/dashboards/sections/) und [Googles Empfehlungen für ausreichend große Bedienflächen](https://developer.android.com/develop/ui/compose/accessibility/api-defaults). Die bestehende Symcon-Übersicht bleibt dafür die Grundlage.
 
 ## Bestehende Installation aktualisieren
 
-1. ZIP entpacken. Im [Repository Symcon-Hausstatus](https://github.com/Powermaniaxx/Symcon-Hausstatus) **library.json**, den vollständigen Ordner **HausstatusBedienung**, **README.md** und **docs** durch diese Fassung ersetzen und committen. Auch die neuen Dateien **RoomSupport.php** und **room_defaults.json** im Modulordner hochladen. Keine ZIP-Datei und keine zusätzliche Ordnerstufe hochladen. Im Hauptverzeichnis steht Version **0.10**, Build **10**.
-2. In Symcon **Module Control** das Repository aktualisieren. Danach Instanz **52627** öffnen und **Änderungen übernehmen**. Die Instanzkonfiguration schließen und erneut öffnen. Die Visualisierung neu laden, damit die neue HTML-Fassung geladen wird. Der Tooltip am Aktualisieren-Button zeigt **Hausstatus 0.10**.
-3. **docs/Raeume_und_Punkte_0_10_KOMPLETT.php** vollständig in ein **neues temporäres PHP-Skript** kopieren und einmal manuell ausführen. Dieses komplette Skript richtet die Raumseiten und PV-Details ein und ordnet die beiden Statusquellen zu.
-4. Visualisierung neu laden. Die Raumseiten stehen im neuen Bereich **„Räume und Geräte“**, PV in **„PV-Details“**. Quellen und Bedienoptionen bleiben zentral in **52627 → „11 · Räume und weitere Geräte“** einstellbar. Jede Rauminstanz verwendet 52627 als Konfigurationsquelle und ihren eigenen Raumfilter.
+1. In Symcon **Module Control** das Repository [Symcon-Hausstatus](https://github.com/Powermaniaxx/Symcon-Hausstatus) aktualisieren. Im Hauptverzeichnis muss **library.json** Version **0.11**, Build **11** anzeigen. Der vollständige Modulordner enthält auch **RoomSupport.php**, **ComfortSupport.php**, **RainSupport.php** und **room_defaults.json**.
+2. Instanz **52627** öffnen und **Änderungen übernehmen**. Die Instanzkonfiguration schließen und erneut öffnen. Die Visualisierung neu laden, damit die neue HTML-Fassung geladen wird. Der Tooltip am Aktualisieren-Button zeigt **Hausstatus 0.11**.
+3. Falls die Raumseiten und **PV-Details** aus 0.10 bereits eingerichtet sind, ist für die neue Darstellung kein Einrichtungsskript erforderlich. Esstisch und Regen verwenden die unten genannten Vorgaben automatisch. Die Sollquellen bei Bedarf unter **09 · Temperaturen** auswählen.
+4. Zum erstmaligen Einrichten, erneuten Einlesen vorhandener Raumverknüpfungen oder Umbenennen des eigenen Bereichs in **Raumsteuerung**: **docs/Wohnansicht_0_11_KOMPLETT.php** vollständig in ein **neues temporäres PHP-Skript** kopieren und einmal manuell ausführen. Danach die Visualisierung neu laden. Die alte Datei 49024 wird dafür nicht verwendet.
 
-Das Einrichtungsskript verwendet zuerst die vorhandenen Raumverknüpfungen unter **52891** und liest ergänzend die älteren Raumverknüpfungen unter **10577**, sofern diese Kategorien existieren. Zusätzliche dort vorhandene Räume und Geräte werden ebenfalls übernommen. Vorhandene konfigurierte Raumquellen behalten Vorrang; die bekannten Vorgaben ergänzen nur fehlende Ziele. Eine erneute Ausführung verwendet dieselben eigenen Kacheln und Links. Die Ausgabe nennt die gelesenen Kategorien und übernommenen Quellen. Fehlende bekannte Quellen werden als solche angezeigt.
+Das komplette Einrichtungsskript verwendet zuerst vorhandene Raumverknüpfungen unter **52891** und liest ergänzend **10577**, sofern vorhanden. Weitere dort enthaltene Räume und Geräte werden übernommen. Bereits konfigurierte Raumquellen behalten Vorrang; Vorgaben ergänzen nur fehlende Ziele. Eine erneute Ausführung verwendet dieselben eigenen Kacheln und Links. Die Ausgabe nennt die gelesenen Kategorien und übernommenen Quellen.
 
-Bestehende native Raum- und Gerätebereiche bleiben erhalten. Das Skript verändert die Gerätequellen nicht und sendet keine Gerätebefehle. **Skript 49024 und die alte Visualisierung unter 30848 werden nicht bearbeitet oder ausgeführt.** Auch das vorhandene Lichtskript wird beim Modulupdate nicht ersetzt.
+Bestehende native Raum- und Gerätebereiche bleiben erhalten. **49024 und die alte Visualisierung unter 30848 werden nicht bearbeitet oder ausgeführt.** Das vorhandene Lichtskript wird beim Modulupdate nicht ersetzt. Alte Einrichtungsskripte sind für die bisherigen Fassungen beigefügt; für dieses Update die vollständige Fassung **Wohnansicht_0_11_KOMPLETT.php** verwenden.
 
-Das erstmalige **Einrichten_Kachel_KOMPLETT.php** ist für diese bestehende Installation nicht erforderlich. **Hausstatus_Detailkacheln_0_8_KOMPLETT.php** nur vor der neuen Einrichtung verwenden, falls Bewegung/Temperaturen/Wetter noch fehlen. Nach der Einrichtung von 0.10 würde das alte Detailskript die separate PV-Kachel wieder pausieren; deshalb anschließend das neue 0.10-Skript verwenden.
+## Esstisch und Regen
+
+| Quelle | ID |
+| --- | ---: |
+| Esstisch · Hue-Gruppe | **54491** |
+| Esstisch · Status | **58764** |
+| Esstisch · Helligkeit | **57302** |
+| Herz · eigene Lampeninstanz | **56035** |
+| Regenstatus · RAINING | **54692** |
+| Bisherige Regenmenge | **54690** |
+
+Esstisch lässt sich unabhängig von der Wohnzimmergruppe ein-/ausschalten und dimmen. **DiningEnabled** schaltet die Bedienung frei; Quellen stehen unter **03 · Wohnzimmerlicht**. Die vorhandenen Hue-Aktionen werden verwendet. Esstisch setzt nicht den manuellen Zustand der Wohnzimmerautomatik. Die Einstellungen **DiningInstance**, **DiningState** und **DiningBrightness** bleiben getrennt von deren Quellen.
+
+**Raining** benötigt eine Boolean-Variable. **RainArchive** 0 verwendet bei genau einem Archive Control dieses Archiv; bei mehreren ein Archiv auswählen. **RainLogging** aktiviert die Aufzeichnung der gewählten Regenvariable. Startseite und Wetterdetail zeigen aktuellen Regenstatus, Zeitband und aufklappbare Regenzeiten der letzten **24 Stunden** in **Europe/Berlin**. Eine Phase vor dem Zeitfenster wird als solche gekennzeichnet; eine noch laufende Archivphase reicht bis zum Abfrageende. Wiederholte gleiche Meldungen erzeugen keine zusätzlichen Regenphasen. Fehlende Daten und ein erreichtes Abfragelimit werden angezeigt. Nicht aufgezeichnete Vergangenheit wird nicht nachträglich erzeugt. Nach erstmaliger Aktivierung steht deshalb noch kein vollständiger 24-Stunden-Verlauf zur Verfügung.
 
 ## Raumseiten und vorhandene Funktionen
 
@@ -78,7 +92,7 @@ CinemaVolume: **45376**, Master Volume, Float. CinemaSource: **16889**, Input So
 
 Bewegung verwendet die konfigurierte **MotionSensors**-Liste. Bekannte Quellen: Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Präsenz 37345, Terrasse 34118, Schlafzimmer Präsenz 22412 und Keller 16931. **MotionArchive** 0 wählt bei genau einem Archive Control automatisch dieses Archiv. **MotionLogging** aktiviert die Archivierung der gewählten Boolean-Variablen. Angezeigt werden Zustand, Bewegungsphasen und Zustandswechsel der letzten 24 Stunden in Europe/Berlin. Nicht aufgezeichnete Vergangenheit wird nicht nachträglich erzeugt. Ein erreichtes Abfragelimit wird angezeigt.
 
-Temperaturen verwenden weiterhin **Rooms**. Wetter zeigt Wetterzustand, Wind, Regen, Warnstufe sowie Sonnenaufgang und Sonnenuntergang. Diese drei Detailbereiche bleiben unabhängig von den neuen Raumgeräteansichten.
+Temperaturen verwenden weiterhin **Rooms**, ergänzt um das optionale Feld **Setpoint**. Die bisherigen **Name**- und **Variable**-Felder bleiben erhalten. Temperatursollwerte sind ausschließlich in der zugehörigen Raumseite und der Temperaturansicht bedienbar. Wetter zeigt Wetterzustand, Wind, Regenmenge, Warnstufe, Sonnenaufgang und Sonnenuntergang sowie den Regenverlauf. Bewegung bleibt ein eigener Detailbereich.
 
 **Aktualisieren** in jeder HTML-Kachel wartet auf die zugehörige Rückmeldung, auch bei unveränderten Werten. Nach Erfolg erscheint eine Uhrzeit. Fehler und eine fehlende Antwort nach acht Sekunden werden daneben angezeigt. Der Verlauf wird frisch aus dem Archiv gelesen. Der Button liest die aktuellen Symcon-Variablenwerte; Moduldateien werden über Module Control aktualisiert. Quellenmeldungen und der 30-Sekunden-Timer aktualisieren die Anzeige zusätzlich.
 
@@ -86,8 +100,10 @@ Temperaturen verwenden weiterhin **Rooms**. Wetter zeigt Wetterzustand, Wind, Re
 
 ## Prüfung
 
-Die JavaScript-Logik wurde mit einem simulierten DOM geprüft: Aktualisierung in allen zwölf Ansichten, passende Rückmeldungen, unveränderte und geänderte Werte, Fehler, Timeout, erneuter Versuch, Türabbruch und Reihenfolge der Übersicht. Hinzu kommen die neuen Raumsteuerungen mit unveränderten Boolean-, Auswahl-, Float- und RGB-Werten, native Bedienung sowie die unabhängigen Statuszeilen für Markise und Dachfenster. JSON, neue Quelldateien, UTF-8 und der Erhalt aller 43 bisherigen Konfigurationsfelder wurden geprüft.
+Die JavaScript-Logik wird mit einem simulierten DOM geprüft: Aktualisierung in allen zwölf Ansichten, passende Rückmeldungen, unveränderte und geänderte Werte, Fehler, Timeout, erneuter Versuch, Türabbruch und Reihenfolge der Übersicht. Dazu kommen typgerechte Raum- und Esstischbefehle, Prozentrohwerte, Lautstärke, Farbe, native Bedienung, Gerätebündelung, getrenntes Herz/Esstisch, geöffnete Details, Soll-/Ist-Zuordnung, fehlende Sollquellen und Regenphasen mit unbekannter Vorgeschichte, Zeitfenstergrenzen, gleichen Wiederholungen und fehlenden Archiven. Die PHP-Syntax wurde mit einem PHP-Parser geprüft. JSON, UTF-8, Quellenzuordnung, erforderliche Dateien und der Erhalt aller 46 bisherigen Konfigurationsfelder wurden ebenfalls geprüft.
 
-Eine PHP-/Symcon-Laufzeit, echte Browserdarstellung und die physischen Geräte sind hier nicht verfügbar. Die tatsächlich vorhandenen zusätzlichen Raumquellen werden erst beim manuellen Einrichtungslauf in Symcon eingelesen und in dessen Ausgabe aufgeführt.
+Eine Symcon-Laufzeit, echte Browserdarstellung und die physischen Geräte sind hier nicht verfügbar. Zusätzliche Raumquellen werden beim manuellen Einrichtungslauf in Symcon eingelesen. Die tatsächliche Darstellung auf dem Handy und Geräteaktionen sind dort zu prüfen.
 
 Offizielle Dokumentation: [HTML SDK](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/), [Variablendarstellung](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenverwaltung/ips-getvariablepresentation/), [Schieberegler](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/presentations/slider/), [Aufzählung](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/darstellungen/aufzaehlung/).
+
+Regenarchiv: [AC_GetLoggedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/) und [AC_SetLoggingStatus](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-setloggingstatus/).

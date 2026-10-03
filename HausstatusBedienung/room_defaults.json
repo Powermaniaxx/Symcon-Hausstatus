@@ -99,6 +99,13 @@
   },
   {
     "Room": "Wohnzimmer",
+    "Group": "Licht",
+    "Name": "Esstisch",
+    "Target": 54491,
+    "Operate": true
+  },
+  {
+    "Room": "Wohnzimmer",
     "Group": "Zusatzheizung",
     "Name": "Zusatzheizung",
     "Target": 18502,

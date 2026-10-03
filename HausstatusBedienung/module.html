@@ -30,6 +30,22 @@
 .outdoorToggle input{width:18px;height:18px;margin:0;accent-color:#3c78d2}.grid>#card-permission{grid-column:1/-1}
 @media(max-width:600px){.dashboard{gap:8px}.dashboard>.overview-status,.dashboard>.overview-door{grid-column:1/-1}.dashboard>.card,.overview-group{padding:10px}.overview-status .value{font-size:17px}.overview-group h2{font-size:13px;margin-bottom:10px}.dashboard .value{font-size:15px}.dashboard button{font-size:12px;padding:7px 8px}.dashboard .icon{font-size:20px}.dashboard select{font-size:12px;padding:7px}.overview-door .group-content{gap:10px}.overview-door #card-lock .value,.overview-door #card-contact .value{font-size:15px}.outdoorDevices{gap:12px}.outdoorDevice+.outdoorDevice{padding-left:12px}.doorHistory .row{font-size:11px}}
 @media(max-width:380px){.dashboard>#card-light,.dashboard>#card-cinema{grid-column:1/-1}.outdoorDevices{grid-template-columns:1fr}.outdoorDevice+.outdoorDevice{border-left:0;border-top:1px solid #8883;padding:12px 0 0}}
+.dashboard .overview-status,.dashboard .overview-door{padding:10px}
+.dashboard .overview-status h2,.dashboard .overview-door h2{margin-bottom:7px}
+.overview-status .icon,.overview-door #card-lock .icon,.overview-door #card-contact .icon{display:none}
+.overview-status .group-content{align-items:start;gap:12px;flex:0}.dashboard .overview-status .value{font-size:17px}
+.overview-door #card-permission{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 8px;padding-top:7px;border-top:1px solid #8883}
+.overview-door #card-permission .value{margin:0;text-align:right}.overview-door #card-permission .buttons{margin:0;min-width:0}
+.overview-door #card-permission>button{width:auto;margin:0!important}.overview-door #card-permission>.small{grid-column:1/-1}
+.overview-door .doorHistory{margin-top:7px}.overview-door button{min-height:44px}
+.diningLamp{margin-top:12px;padding-top:10px;border-top:1px solid #8883}.diningLamp h3{font-size:13px;margin:0}.diningLamp .row{align-items:center;border:0;padding:0}.diningLamp .row span{font-size:13px}.diningLamp button{min-height:44px}
+.roomSurface{font-size:14px}.roomGroupGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;align-items:start}.roomGroup h3{margin:10px 0 8px;font-size:14px}
+.roomDeviceGrid{display:grid;grid-template-columns:1fr;gap:8px}.roomDevice h4{margin:0 0 7px;font-size:14px;font-weight:600}.roomItem{padding:7px 0;border-top:1px solid #8882;min-width:0}.roomItem>.row{font-size:13px;line-height:1.4;align-items:center;border:0;padding:0}.roomItem .buttons{margin-top:6px}.roomItem .row span:last-child{font-weight:600;font-variant-numeric:tabular-nums}
+.roomSurface button,.roomSurface select{min-height:48px;font-size:13px}.roomSurface input[type=range]{height:38px;margin:5px 0 0}.roomSurface .buttons{gap:5px}.roomSurface input[type=color]{width:100%;height:48px;margin-top:6px}.roomSurface .roomNote{font-size:12px;line-height:1.45}
+.roomDetails summary,.rainDetail summary{cursor:pointer;min-height:44px;line-height:1.4;display:list-item;padding:12px 0;font-size:13px}.roomDetails summary:focus-visible,.rainDetail summary:focus-visible{outline:2px solid #3c78d2}.roomDetails{margin-top:2px}.roomDetails[open] summary{border-bottom:1px solid #8883}.roomItem[data-kind=bool]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.roomItem[data-kind=bool]>.buttons{margin:0}.roomItem[data-kind=bool] .row{display:block}.roomItem[data-kind=bool] .row span{display:block;text-align:left;max-width:none}.roomItem[data-kind=bool]>.roomNote{grid-column:1/-1}
+.climateBoard{margin:8px 0 12px;border:1px solid #8883;border-radius:10px;overflow:hidden}.climateHeader,.climatePair{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}.climateHeader{background:#8881;font-size:12px;font-weight:600}.climateHeader>div{padding:10px}.climateHeader>div+div,.climateActual{border-left:1px solid #8883}.climatePair{border-top:1px solid #8883}.climateName{grid-column:1/-1;background:#8881;font-size:13px;font-weight:600;padding:7px 10px}.climateSetpoints,.climateActual{padding:8px 10px;min-width:0}.climateSetpoints .roomItem{border:0;padding:3px 0}.climateActual{display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;overflow-wrap:anywhere}.climateEmpty{font-size:12px;opacity:.65;padding:8px 0}.climateSetpoints .roomNote{font-size:12px}
+.rainHistory{margin-top:12px;padding-top:10px;border-top:1px solid #8883}.rainHeadline{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px}.rainHeadline strong{font-size:14px}.rainHistory .motionBar{background:#428dc9}.rainDetail{margin-top:4px}.rainLog{max-height:190px;overflow:auto}.rainLog .row{font-size:12px;line-height:1.5;display:block}
+@media(max-width:600px){.roomGroupGrid{grid-template-columns:1fr;gap:6px}.roomDevice{padding:9px}.roomSurface button,.roomSurface select{font-size:13px;padding:8px}.roomItem>.row{font-size:13px}.climateHeader>div,.climateSetpoints,.climateActual{padding:8px}.climateActual{font-size:20px}.overview-status .label,.overview-door .label{font-size:11px}}
 </style></head><body><main>
 
 <div class="grid" id="cards"></div>
@@ -38,7 +54,7 @@
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
-<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.10">&#8635; Aktualisieren</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.11">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -46,6 +62,7 @@ let state=/*INITIAL_STATE*/null;
 let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
 let refreshRequest=null,refreshTimer=null;
+const openPanels=new Set();
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
 function showStatus(value,temporary=false){
@@ -132,13 +149,15 @@ function render(){
  range.addEventListener('change',()=>{editing=false;send('Brightness',Number(range.value));});
  range.addEventListener('blur',()=>{if(editing){editing=false;render();}});
  light.append(range,level);
+ renderDining(light,s.Dining);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',boolValue(s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);renderCinemaFields(cinema,s);
- const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);
+ const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');if(s.View!==0){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
  renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
- rows('rooms',s.Rooms.map(r=>[r.name,r.value]));
- rows('weather',[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regen',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
- renderRoomSections(s.RoomSections??[]);
+ if(s.View===9&&s.TemperatureRows?.length){el('rooms').replaceChildren(climateBoard(s.TemperatureRows));el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';}
+ rows('weather',s.View===0&&s.SeparateDetails===true?[['Wetter',s.Weather.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
+ renderRainHistory(el('weather'),s.RainHistory);
+ renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
  applyView(s.View??0);
 }
 function applyView(view){
@@ -147,6 +166,7 @@ function applyView(view){
  if(view===0)groupOverview();
  el('cards').hidden=[8,9,10,12].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v;
+ if(view===0&&state.RainHistory)el('weatherSection').hidden=false;
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
@@ -179,30 +199,99 @@ function renderCinemaFields(box,s){
  }
  box.append(fields);
 }
-function renderRoomSections(sections){
- const root=el('roomDeviceSections');root.replaceChildren();root.hidden=!sections.length;
- for(const room of sections){
-  const section=document.createElement('section');section.className='section';
-  if(sections.length>1){const title=document.createElement('h2');text(title,room.name);section.append(title);}
-  for(const group of room.groups){
-   const groupBox=document.createElement('div');groupBox.className='roomGroup';const title=document.createElement('h3');text(title,group.name);groupBox.append(title);
-   const grid=document.createElement('div');grid.className='roomDeviceGrid';
-   for(const item of group.items){
-    const box=document.createElement('div');box.className='roomDevice';box.setAttribute('data-variable',String(item.id));
-    const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);text(value,item.value.text);row.append(label,value);box.append(row);
-    renderRoomControl(box,item,value);
-    if(item.note){const note=document.createElement('div');note.className='roomNote';text(note,item.note);box.append(note);}grid.append(box);
-   }
-   groupBox.append(grid);section.append(groupBox);
-  }
-  root.append(section);
+function renderDining(box,d){
+ if(!d)return;
+ const lamp=document.createElement('div');lamp.className='diningLamp';lamp.id='diningLamp';
+ const row=document.createElement('div');row.className='row';const title=document.createElement('h3'),value=document.createElement('span');text(title,'Esstisch');text(value,boolValue(d.state));row.append(title,value);lamp.append(row);
+ buttons(lamp,'Dining',d.canSwitch);
+ if(d.control&&typeof d.brightness.raw==='number'){
+  const c=d.control,level=document.createElement('div');level.className='small';text(level,'Helligkeit '+d.brightness.text);
+  const range=document.createElement('input');range.type='range';range.min=String(c.min);range.max=String(c.max);range.step=String(c.step);range.value=String(d.brightness.raw);range.disabled=busy;range.setAttribute('aria-label','Helligkeit Esstisch');
+  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(level,'Helligkeit '+sliderText(range.value,c,d.brightness.text));});range.addEventListener('change',()=>{editing=false;send('DiningBrightness',Number(range.value));});range.addEventListener('blur',()=>{if(editing){editing=false;render();}});lamp.append(range,level);
  }
+ if(d.reason){const note=document.createElement('div');note.className='small';text(note,d.reason);lamp.append(note);}box.append(lamp);
+}
+function rememberPanel(panel,key){
+ panel.open=openPanels.has(key);panel.addEventListener('toggle',()=>{if(panel.open)openPanels.add(key);else openPanels.delete(key);});
+}
+function roomItemBox(item){
+ const box=document.createElement('div');box.className='roomItem';box.setAttribute('data-variable',String(item.id));box.setAttribute('data-kind',item.control?.kind??'read');
+ const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.label??item.name);text(value,item.value.text);row.append(label,value);box.append(row);
+ renderRoomControl(box,item,value);
+ if(item.note){const note=document.createElement('div');note.className='roomNote';text(note,item.note);box.append(note);}return box;
+}
+function climateBoard(climate){
+ const board=document.createElement('div');board.className='climateBoard roomSurface';
+ const header=document.createElement('div');header.className='climateHeader';for(const caption of ['Soll · einstellen','Ist · gemessen']){const cell=document.createElement('div');text(cell,caption);header.append(cell);}board.append(header);
+ for(const room of climate){
+  const pair=document.createElement('div');pair.className='climatePair';const name=document.createElement('div');name.className='climateName';text(name,room.name);pair.append(name);
+  const left=document.createElement('div');left.className='climateSetpoints';
+  for(const item of room.setpoints??[])left.append(roomItemBox(item));
+  if(!left.children.length){const empty=document.createElement('div');empty.className='climateEmpty';text(empty,'Keine Sollquelle');left.append(empty);}
+  const right=document.createElement('div');right.className='climateActual';text(right,room.actual.text);right.setAttribute('aria-label',room.name+' Isttemperatur '+room.actual.text);pair.append(left,right);board.append(pair);
+ }
+ return board;
+}
+function renderRoomSections(sections,climate=[]){
+ const root=el('roomDeviceSections');root.replaceChildren();root.className='roomSurface';
+ const names=[...new Set([...sections.map(r=>r.name),...climate.map(r=>r.name)])];root.hidden=!names.length;
+ const order=['Licht','Heizung','Medien','Wasserbett','Klima','Sensoren','Energie','Weitere Geräte'];
+ for(const name of names){
+  const room=sections.find(r=>r.name===name)??{name,groups:[]};const section=document.createElement('section');section.className='section';
+  if(names.length>1){const title=document.createElement('h2');text(title,name);section.append(title);}
+  const temperatures=climate.filter(r=>r.name===name);if(temperatures.length)section.append(climateBoard(temperatures));
+  const groups=document.createElement('div');groups.className='roomGroupGrid';
+  const rank=group=>{const i=order.indexOf(group.name);return i<0?order.length:i;};
+  for(const group of room.groups.slice().sort((a,b)=>rank(a)-rank(b))){
+   const groupBox=document.createElement('div');groupBox.className='roomGroup';const title=document.createElement('h3');text(title,group.name);groupBox.append(title);
+   const grid=document.createElement('div');grid.className='roomDeviceGrid';const devices=new Map();
+   for(const item of group.items){const key=item.deviceKey??('source:'+item.id);if(!devices.has(key))devices.set(key,[]);devices.get(key).push(item);}
+   for(const [key,items] of devices){
+    const box=document.createElement('div');box.className='roomDevice';const title=document.createElement('h4');text(title,items[0].deviceName??items[0].name);box.append(title);
+    const primary=items.filter(item=>item.primary!==false),secondary=items.filter(item=>item.primary===false);
+    for(const item of primary)box.append(roomItemBox(item));
+    if(secondary.length){
+     const detail=document.createElement('details');detail.className='roomDetails';rememberPanel(detail,name+':'+group.name+':'+key);
+     const summary=document.createElement('summary');const issues=secondary.filter(item=>item.note).length;text(summary,'Details ('+secondary.length+')'+(issues?' · '+issues+' Hinweis'+(issues===1?'':'e'):''));detail.append(summary);
+     for(const item of secondary)detail.append(roomItemBox(item));box.append(detail);
+    }
+    grid.append(box);
+   }
+   groupBox.append(grid);groups.append(groupBox);
+  }
+  section.append(groups);root.append(section);
+ }
+}
+function rainPeriods(data){
+ const h=data.history,all=h.entries.filter(e=>e.time<=data.end).slice().sort((a,b)=>a.time-b.time);
+ let previous=h.previous;for(const e of all){if(e.time<data.start)previous=e.active;}
+ const entries=all.filter(e=>e.time>=data.start),periods=[];let active=previous,begin=active===true?data.start:null,clipped=active===true;
+ for(const e of entries){
+  if(e.active===active)continue;
+  if(active===true&&begin!==null&&e.time>begin)periods.push({start:begin,end:e.time,clipped,ongoing:false});
+  active=e.active;begin=active===true?e.time:null;clipped=false;
+ }
+ if(active===true&&begin!==null&&data.end>begin)periods.push({start:begin,end:data.end,clipped,ongoing:true});
+ return periods;
+}
+function renderRainHistory(root,data){
+ if(!data)return;
+ const box=document.createElement('div');box.className='rainHistory';
+ const headline=document.createElement('div');headline.className='rainHeadline';const title=document.createElement('strong'),status=document.createElement('span');text(title,'Regen · letzte 24 Stunden');text(status,boolValue(data.current,'Es regnet','Kein Regen'));headline.append(title,status);box.append(headline);
+ const periods=rainPeriods(data),track=document.createElement('div');track.className='motionTrack';track.setAttribute('aria-label','Aufgezeichnete Regenzeiten der letzten 24 Stunden');
+ for(const p of periods){const bar=document.createElement('div');bar.className='motionBar';bar.style.left=((p.start-data.start)/(data.end-data.start)*100)+'%';bar.style.width=((p.end-p.start)/(data.end-data.start)*100)+'%';bar.title=motionTime(p.start)+' bis '+motionTime(p.end);track.append(bar);}box.append(track);
+ const scale=document.createElement('div');scale.className='motionScale';for(const t of [data.start,data.end]){const n=document.createElement('span');text(n,motionTime(t));scale.append(n);}box.append(scale);
+ if(data.history.note){const note=document.createElement('div');note.className='small';text(note,data.history.note);box.append(note);}
+ const detail=document.createElement('details');detail.className='rainDetail';rememberPanel(detail,'rain-history');const summary=document.createElement('summary');text(summary,'Regenzeiten anzeigen ('+periods.length+')');detail.append(summary);
+ const log=document.createElement('div');log.className='rainLog';
+ if(!periods.length){const empty=document.createElement('div');empty.className='small';text(empty,data.history.entries.length||data.history.previous!==null?'Keine Regenphase in den verfügbaren Archivdaten.':'Noch keine aufgezeichneten Regenzeiten.');log.append(empty);}
+ for(const p of periods.slice().reverse()){const row=document.createElement('div');row.className='row';text(row,(p.clipped?'Bereits vor ':'')+motionTime(p.start)+' bis '+(p.ongoing?'Abfrageende ('+motionTime(p.end)+')':motionTime(p.end)));log.append(row);}detail.append(log);box.append(detail);root.append(box);
 }
 function renderRoomControl(box,item,valueLabel){
  const c=item.control;if(!c)return;const sendValue=value=>send('RoomValue',{id:item.id,value});
  if(c.kind==='bool'){
   const row=document.createElement('div');row.className='buttons';
-  for(const option of c.options){const b=document.createElement('button');b.type='button';text(b,option.name);b.disabled=busy||item.value.raw===option.value;b.addEventListener('click',()=>sendValue(option.value));row.append(b);}box.append(row);
+  for(const option of c.options){const b=document.createElement('button');b.type='button';text(b,option.name);b.disabled=busy||item.value.raw===option.value;b.setAttribute('aria-pressed',String(item.value.raw===option.value));b.setAttribute('aria-label',item.name+': '+option.name);b.addEventListener('click',()=>sendValue(option.value));row.append(b);}box.append(row);
  }else if(c.kind==='enum'){
   const select=document.createElement('select');select.setAttribute('aria-label',item.name);select.disabled=busy;
   let chosen=-1;
