@@ -1,8 +1,8 @@
 <?php
-// Nach dem Modulupdate auf 0.8 in einem NEUEN temporaeren PHP-Skript ausfuehren.
-// Dies ist ein vollstaendiges Einrichtungsskript, kein Ersatz fuer Skript 49024.
-// Es sendet keine Schaltbefehle. Vorhandene Raeume und fremde Kacheln bleiben bestehen.
-if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte einmal manuell ausfuehren.'); }
+// Nach dem Modulupdate auf 0.8 in einem NEUEN temporären PHP-Skript ausführen.
+// Dies ist ein vollständiges Einrichtungsskript, kein Ersatz für Skript 49024.
+// Es sendet keine Schaltbefehle. Vorhandene Räume und fremde Kacheln bleiben bestehen.
+if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte einmal manuell ausführen.'); }
 $root = 55503; $master = 52627; $mainLink = 29867;
 $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
 $details = [8 => 'Bewegung', 9 => 'Temperaturen', 10 => 'Wetter'];
@@ -20,9 +20,9 @@ if (!IPS_LinkExists($mainLink) || IPS_GetParent($mainLink) !== $root || IPS_GetL
     throw new RuntimeException('Hausstatus-Link 29867 stimmt nicht. Nichts eingerichtet.');
 }
 if (!IPS_VariableExists(47467) || !in_array(IPS_GetVariable(47467)['VariableType'], [0, 1], true)) {
-    throw new RuntimeException('Tuerkontakt 47467 fehlt oder hat einen anderen Variablentyp. Nichts eingerichtet.');
+    throw new RuntimeException('Türkontakt 47467 fehlt oder hat einen anderen Variablentyp. Nichts eingerichtet.');
 }
-// Alle eigenen Identitaeten pruefen, bevor Objekte oder Einstellungen geaendert werden.
+// Alle eigenen Identitäten prüfen, bevor Objekte oder Einstellungen geändert werden.
 $owned = [];
 foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10, 11] as $view) {
     $instance = @IPS_GetObjectIDByIdent('SVHSTile_' . $view, $root);
@@ -45,7 +45,7 @@ foreach (IPS_GetChildrenIDs($root) as $id) {
         $kept[$id] = IPS_GetName($id);
     }
 }
-// Bekannte, zuvor leere Bewegungsquellen vervollstaendigen; eigene Auswahlen erhalten.
+// Bekannte, zuvor leere Bewegungsquellen vervollständigen; eigene Auswahlen erhalten.
 $sensors = json_decode($config['MotionSensors'], true);
 if (is_array($sensors)) {
     $known = ['Schlafzimmer Praesenz' => 22412, "Schlafzimmer Pr\u{e4}senz" => 22412, 'Keller' => 16931];
@@ -79,7 +79,7 @@ foreach ($details as $view => $name) {
 }
 IPS_SetProperty($master, 'DoorContact', 47467);
 IPS_SetProperty($master, 'View', 0); IPS_SetProperty($master, 'SeparateDetails', true); IPS_SetProperty($master, 'ActiveView', true);
-if (!IPS_ApplyChanges($master)) { throw new RuntimeException('Hausstatus-Konfiguration konnte nicht uebernommen werden.'); }
+if (!IPS_ApplyChanges($master)) { throw new RuntimeException('Hausstatus-Konfiguration konnte nicht übernommen werden.'); }
 IPS_SetName($mainLink, 'Hausstatus'); IPS_SetPosition($mainLink, 0); IPS_SetHidden($mainLink, false); IPS_SetHidden($master, true);
 foreach ($owned as $view => $item) {
     if (isset($details[$view])) { IPS_SetHidden($item['link'], false); continue; }
@@ -87,10 +87,10 @@ foreach ($owned as $view => $item) {
     if ($item['instance'] !== false) { IPS_SetProperty($item['instance'], 'ActiveView', false); IPS_ApplyChanges($item['instance']); }
 }
 echo 'Fertig: Hausstatus, Bewegung, Temperaturen und Wetter als vier Kacheln.' . PHP_EOL;
-echo 'Im Hausstatus: Anwesenheit/Alarm zuerst, Haustuer danach, Licht, Cinema, Geraete, PV sowie Markise und Dachfenster.' . PHP_EOL;
-echo 'Tuerkontakt 47467 getrennt vom Schlossstatus. Vorhandene Raum- und Geraetekacheln bleiben erhalten.' . PHP_EOL;
+echo 'Im Hausstatus: Anwesenheit/Alarm zuerst, Haustür danach, Licht, Cinema, Geräte, PV sowie Markise und Dachfenster.' . PHP_EOL;
+echo 'Türkontakt 47467 getrennt vom Schlossstatus. Vorhandene Raum- und Gerätekacheln bleiben erhalten.' . PHP_EOL;
 foreach ($kept as $id => $name) {
     if (IPS_GetObject($id)['ObjectIsHidden']) { throw new RuntimeException('Vorhandener Bereich wurde unerwartet ausgeblendet: ' . $id); }
     echo 'Weiter vorhanden: ' . $name . ' (' . $id . ')' . PHP_EOL;
 }
-echo 'Kachelvisualisierung jetzt neu laden. Keine Motor-, Licht-, AVR- oder Tuerbefehle wurden gesendet.' . PHP_EOL;
+echo 'Kachelvisualisierung jetzt neu laden. Keine Motor-, Licht-, AVR- oder Türbefehle wurden gesendet.' . PHP_EOL;

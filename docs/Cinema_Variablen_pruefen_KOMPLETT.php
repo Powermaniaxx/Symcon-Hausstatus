@@ -1,6 +1,6 @@
 <?php
-// Nur lesen: zeigt Variablen im Bereich des bisher ausgewaehlten Cinema-Status/Power.
-if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausfuehren.'); }
+// Nur lesen: zeigt Variablen im Bereich des bisher ausgewählten Cinema-Status/Power.
+if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausführen.'); }
 $master = 52627;
 if (!IPS_InstanceExists($master)) { throw new RuntimeException('Instanz 52627 fehlt.'); }
 $seeds = array_unique([45754, 10950, 45376, (int)IPS_GetProperty($master, 'CinemaState'), (int)IPS_GetProperty($master, 'CinemaControl')]);
@@ -29,4 +29,4 @@ foreach (array_keys($parents) as $parent) {
         }
     }
 }
-echo PHP_EOL . 'Keine Variablen oder Geraete geaendert.' . PHP_EOL;
+echo PHP_EOL . 'Keine Variablen oder Geräte geändert.' . PHP_EOL;

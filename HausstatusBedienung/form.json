@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.9 – Einstellungen"
+      "caption": "Hausstatus 0.10 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -63,9 +63,19 @@
             {
               "value": 10,
               "caption": "Detail: Wetter"
+            },
+            {
+              "caption": "Raum: Geräte und Bedienung",
+              "value": 12
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "RoomFilter",
+          "caption": "Raumname (leer = alle Räume)",
+          "visible": false
         },
         {
           "type": "Label",
@@ -458,6 +468,82 @@
           "type": "SelectVariable",
           "name": "Sunset",
           "caption": "Sonnenuntergang"
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "RoomDeviceSettings",
+      "caption": "11 · Räume und weitere Geräte",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "RoomControlsEnabled",
+          "caption": "Raumgeräte über ihre vorhandenen Aktionen bedienen"
+        },
+        {
+          "type": "Label",
+          "caption": "Das Einrichtungsskript übernimmt bestehende Raumverknüpfungen. Variablen werden direkt angezeigt; bei Geräteinstanzen werden ihre sichtbaren Variablen ergänzt."
+        },
+        {
+          "type": "List",
+          "name": "RoomEntries",
+          "caption": "Räume, Geräte und PV-Details",
+          "rowCount": 10,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "name": "Room",
+              "caption": "Raum / Bereich",
+              "width": "170px",
+              "add": "Raum",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Group",
+              "caption": "Gruppe",
+              "width": "160px",
+              "add": "Geräte",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Name",
+              "caption": "Beschriftung",
+              "width": "220px",
+              "add": "Gerät",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Target",
+              "caption": "Quelle",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectObject"
+              }
+            },
+            {
+              "name": "Operate",
+              "caption": "Bedienen",
+              "width": "100px",
+              "add": true,
+              "edit": {
+                "type": "CheckBox"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "Schalter, Auswahl, Regler und RGB-Farbe verwenden die vorhandene Variablendarstellung. Andere Darstellungen lassen sich über „Bedienung öffnen“ in Symcon bedienen. Türbefehle bleiben im Haustürbereich."
         }
       ]
     }

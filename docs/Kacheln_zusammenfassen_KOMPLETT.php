@@ -1,6 +1,6 @@
 <?php
-// Nach Modulupdate auf 0.8 einmal in einem NEUEN temporaeren Skript ausfuehren.
-if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausfuehren.'); }
+// Nach Modulupdate auf 0.8 einmal in einem NEUEN temporären Skript ausführen.
+if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausführen.'); }
 $root = 55503; $master = 52627; $link = 29867; $volume = 45376;
 $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
 if (!IPS_InstanceExists($master) || IPS_GetInstance($master)['ModuleInfo']['ModuleID'] !== $module) {
@@ -14,7 +14,7 @@ if (!IPS_LinkExists($link) || IPS_GetObject($link)['ParentID'] !== $root || IPS_
     throw new RuntimeException('Hausstatus-Link 29867 unter 55503 stimmt nicht. Nichts umgestellt.');
 }
 if (!IPS_VariableExists($volume) || !in_array(IPS_GetVariable($volume)['VariableType'], [1, 2], true)) {
-    throw new RuntimeException('Lautstaerkevariable 45376 fehlt oder ist keine Zahl. Nichts umgestellt.');
+    throw new RuntimeException('Lautstärkevariable 45376 fehlt oder ist keine Zahl. Nichts umgestellt.');
 }
 $generated = [];
 foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10, 11] as $view) {
@@ -33,7 +33,7 @@ IPS_SetProperty($master, 'View', 0);
 if (array_key_exists('SeparateDetails', $config)) { IPS_SetProperty($master, 'SeparateDetails', false); }
 IPS_SetProperty($master, 'ActiveView', true);
 IPS_SetProperty($master, 'CinemaVolume', $volume);
-if (!IPS_ApplyChanges($master)) { throw new RuntimeException('Zentrale Konfiguration konnte nicht uebernommen werden.'); }
+if (!IPS_ApplyChanges($master)) { throw new RuntimeException('Zentrale Konfiguration konnte nicht übernommen werden.'); }
 IPS_SetName($link, 'Hausstatus');
 IPS_SetHidden($link, false);
 IPS_SetHidden($master, true);
@@ -43,5 +43,5 @@ foreach ($generated as $part) {
     IPS_ApplyChanges($part['instance']);
 }
 echo 'Gemeinsame Hausstatus-Kachel wieder aktiv. Kachelansicht neu laden.' . PHP_EOL;
-echo 'Cinema-Lautstaerke 45376 zugeordnet. Quelle weiterhin in 52627 auswaehlen.' . PHP_EOL;
+echo 'Cinema-Lautstärke 45376 zugeordnet. Quelle weiterhin in 52627 auswählen.' . PHP_EOL;
 echo 'Aufgeteilte Kacheln ausgeblendet; vorhandene Einstellungen und Objekte bleiben erhalten.' . PHP_EOL;

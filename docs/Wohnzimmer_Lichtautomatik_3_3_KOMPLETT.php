@@ -1,23 +1,23 @@
 <?php
 /*
  * Wohnzimmer Lichtautomatik, Version 3.3
- * Vollstaendiger Ersatz im EXISTIERENDEN Skript 33054.
- * Alte Frueh-/Nachtlicht-Ablaufplaene inkl. Statusplan deaktivieren.
- * Speichern und einmal manuell ausfuehren: richtet Ereignisse und Timer ein,
+ * Vollständiger Ersatz im EXISTIERENDEN Skript 33054.
+ * Alte Früh-/Nachtlicht-Ablaufpläne inkl. Statusplan deaktivieren.
+ * Speichern und einmal manuell ausführen: richtet Ereignisse und Timer ein,
  * schaltet bei Einrichtung keine Lampen. Bestehende Sperre bleibt erhalten.
  *
- * Fruehlicht 05:30-08:00: Bewegung, Tag=false,
- * innen<=1, Terrasse<=4; weiss 100%. Ruhezeit 30 Minuten.
- * Nachtlicht ausserhalb 05:30-08:00: Bewegung, innen<=1, Terrasse<=4,
+ * Frühlicht 05:30-08:00: Bewegung, Tag=false,
+ * innen<=1, Terrasse<=4; weiß 100%. Ruhezeit 30 Minuten.
+ * Nachtlicht außerhalb 05:30-08:00: Bewegung, innen<=1, Terrasse<=4,
  * AVR 10950=false; rot 1%. Keine feste Abendzeit, Tag ist keine Sperre.
- * Nacht AUS: 3 Minuten alle Melder false, AVR an, Fruehzeit beginnt,
- * oder Terrasse>=6 fuer 5 Minuten. Bei AUS zuerst Weiss, dann AUS.
- * Um 05:30 bei aktiver Praesenz und gueltigen Fruehbedingungen direkt Weiss.
- * Manuell EIN geschuetzt; Manuell AUS sperrt beide bis 30 Minuten Ruhe.
+ * Nacht AUS: 3 Minuten alle Melder false, AVR an, Frühzeit beginnt,
+ * oder Terrasse>=6 für 5 Minuten. Bei AUS zuerst Weiß, dann AUS.
+ * Um 05:30 bei aktiver Präsenz und gültigen Frühbedingungen direkt Weiß.
+ * Manuell EIN geschützt; Manuell AUS sperrt beide bis 30 Minuten Ruhe.
  * Abwesenheit 12936=false seit 5 Minuten UND alle Melder false: AUS.
  * Farbbefehle und AUS werden nacheinander gesendet; Hue kann dabei kurz
- * Weiss zeigen. Das tatsaechliche Verhalten muss vor Ort geprueft werden.
- * Die alte Variable Nachtlicht (38164) wird nicht mehr benoetigt.
+ * Weiß zeigen. Das tatsächliche Verhalten muss vor Ort geprüft werden.
+ * Die alte Variable Nachtlicht (38164) wird nicht mehr benötigt.
  */
 
 $cfg = [
@@ -41,7 +41,7 @@ $cfg = [
     'hellDauer' => 300,         // 5 Minuten ausreichend hell
     'ruheDauer' => 1800,        // 30 Minuten bis automatisches AUS
     'sperrDauer' => 1800,       // 30 Minuten Ruhe nach manuellem AUS
-    'abwesenheitDauer' => 300,  // 5 Minuten; 12936 muss verlaesslich sein
+    'abwesenheitDauer' => 300,  // 5 Minuten; 12936 muss verlässlich sein
 ];
 
 $self = (int) $_IPS['SELF'];
@@ -56,7 +56,7 @@ if (!IPS_SemaphoreEnter($lock, 5000)) {
 }
 
 try {
-    // Zuerst IDs und Typen pruefen; bei Fehler keine Schaltbefehle.
+    // Zuerst IDs und Typen prüfen; bei Fehler keine Schaltbefehle.
     $bools = array_merge($cfg['melder'], [
         $cfg['anwesenheit'], $cfg['tag'], $cfg['licht'], $cfg['avr']
     ]);
@@ -113,7 +113,7 @@ try {
     // Commands from the HTML module use the same lock and state as the automation.
     if (isset($_IPS['COMMAND'])) {
         if (($_IPS['SOURCE'] ?? '') !== 'HausstatusBedienung') {
-            throw new Exception('Unbekannte Quelle fuer manuellen Lichtbefehl.');
+            throw new Exception('Unbekannte Quelle für manuellen Lichtbefehl.');
         }
         $command = $_IPS['COMMAND'];
         $value = $_IPS['VALUE'] ?? null;
@@ -132,8 +132,8 @@ try {
         $s['retryAt'] = $now + 15;
         if (!$switchOn) { $s['offAt'] = $now; }
         // Save before sending: the next timer or feedback must respect manual intent.
-        $save($switchOn ? 'Manuell EIN ueber Kachel: geschuetzt'
-            : 'Manuell AUS ueber Kachel: gesperrt bis 30 Minuten Ruhe');
+        $save($switchOn ? 'Manuell EIN über Kachel: geschützt'
+            : 'Manuell AUS über Kachel: gesperrt bis 30 Minuten Ruhe');
         if ($switchOn) {
             if ($wasNight || !GetValueBoolean($cfg['licht'])) {
                 foreach ($cfg['farben'] as $id) { RequestAction($id, 16777215); }
@@ -151,7 +151,7 @@ try {
     }
 
     if ($sender === 'Execute') {
-        // Interne Identifikatoren bleiben erhalten: vorhandene Zustaende weiterverwenden.
+        // Interne Identifikatoren bleiben erhalten: vorhandene Zustände weiterverwenden.
         IPS_SetName($self, 'Wohnzimmer Lichtautomatik');
         IPS_SetName($stateID, 'Lichtautomatik interner Zustand');
         IPS_SetName($statusID, 'Lichtautomatik Status');
@@ -183,7 +183,7 @@ try {
         IPS_SetScriptTimer($self, 5);
         $save('Eingerichtet; Modus: ' . $s['mode']);
         echo "Einrichtung abgeschlossen. Statusvariable: $statusID\n";
-        echo "Alte Frueh-/Nachtlicht-Ablaufplaene inkl. Statusplan deaktivieren.\n";
+        echo "Alte Früh-/Nachtlicht-Ablaufpläne inkl. Statusplan deaktivieren.\n";
         echo "Anwesenheit: 12936 (true=jemand da).\n";
         return;
     }
@@ -195,14 +195,14 @@ try {
     };
     $isOn = GetValueBoolean($cfg['licht']);
     $button = (string) ($_IPS['VALUE'] ?? '');
-    // Sowohl Hue-Rohwert als auch deutsche Darstellung unterstuetzen.
+    // Sowohl Hue-Rohwert als auch deutsche Darstellung unterstützen.
     $shortPress = in_array($button, ['short_release', 'Kurzer Tastendruck', 'Short release'], true);
     if ($source === $cfg['einTaste'] && $shortPress) {
         $wasNight = $s['mode'] === 'night';
         $s['mode'] = 'manual';
         $s['brightSince'] = 0;
-        $s['pendingUntil'] = $now + 15; // Hue-Rueckmeldung abwarten
-        $save('Manuell EIN: geschuetzt; AUS nur bei Abwesenheit oder Bedienung');
+        $s['pendingUntil'] = $now + 15; // Hue-Rückmeldung abwarten
+        $save('Manuell EIN: geschützt; AUS nur bei Abwesenheit oder Bedienung');
         if ($wasNight) {
             $setColor(16777215);
             RequestAction($cfg['helligkeit'], 100);
@@ -224,7 +224,7 @@ try {
     }
 
     // Ruhestand anhand letzter WERTÄNDERUNG, nicht letzter Aktualisierung.
-    // Wiederholte false-Meldungen verlaengern die Ruhezeit nicht.
+    // Wiederholte false-Meldungen verlängern die Ruhezeit nicht.
     $quietSince = (int) $s['initAt'];
     $allQuiet = true;
     $wasQuiet = true;
@@ -254,19 +254,19 @@ try {
         }
     }
 
-    // Ausfall-/Neustartluecken zaehlen nicht als bestaetigte Helligkeitsdauer.
+    // Ausfall-/Neustartlücken zählen nicht als bestätigte Helligkeitsdauer.
     if ($now - $s['lastRun'] > 30) {
         $s['brightSince'] = 0;
     }
 
-    // Rueckmeldung AUS beendet manuellen/automatischen Betrieb.
+    // Rückmeldung AUS beendet manuellen/automatischen Betrieb.
     if (!$isOn && $now >= $s['pendingUntil'] && in_array($s['mode'], ['manual', 'auto', 'night'], true)) {
         $wasNight = $s['mode'] === 'night';
         $s['mode'] = 'idle';
         $s['brightSince'] = 0;
         if ($wasNight && !($s['whiteRestored'] ?? false)) {
             $s['retryAt'] = $now + 15;
-            $save('Nachtlicht aus: Weiss wiederherstellen');
+            $save('Nachtlicht aus: Weiß wiederherstellen');
             try { $setColor(16777215); }
             finally { RequestAction($cfg['licht'], false); }
             return;
@@ -288,8 +288,8 @@ try {
     $morningWindow = $timeOfDay >= $cfg['beginn'] && $timeOfDay < $cfg['ende'];
     $dark = $inside <= $cfg['innenEinMax'] && $outside <= $cfg['aussenEinMax'];
     $avrOn = GetValueBoolean($cfg['avr']);
-    // Beim Wechsel von Rot zu Weiss kann das eigene Licht den Innenwert erhoehen.
-    // Der Aussenwert bleibt daher fuer die laufende Nachtlicht-Uebergabe massgeblich.
+    // Beim Wechsel von Rot zu Weiß kann das eigene Licht den Innenwert erhöhen.
+    // Der Außenwert bleibt daher für die laufende Nachtlicht-Übergabe maßgeblich.
     $morningEligible = !GetValueBoolean($cfg['tag'])
         && $outside <= $cfg['aussenEinMax'];
     if ($isOn && $s['mode'] === 'night' && $morningWindow && !$allQuiet
@@ -297,7 +297,7 @@ try {
         $s['mode'] = 'auto';
         $s['brightSince'] = 0;
         $s['pendingUntil'] = $now + 15;
-        $save('Fruehlicht: Nachtlicht auf Weiss umgestellt');
+        $save('Frühlicht: Nachtlicht auf Weiß umgestellt');
         $setColor(16777215);
         RequestAction($cfg['helligkeit'], 100);
         return;
@@ -311,9 +311,9 @@ try {
             if ($avrOn) {
                 $offReason = 'AVR eingeschaltet';
             } elseif ($morningWindow) {
-                $offReason = 'Fruehlicht-Zeitfenster beginnt';
+                $offReason = 'Frühlicht-Zeitfenster beginnt';
             } elseif ($allQuiet && $now - $quietSince >= $cfg['nachtRuhe']) {
-                $offReason = '3 Minuten ohne Bewegung/Praesenz';
+                $offReason = '3 Minuten ohne Bewegung/Präsenz';
             }
         } elseif (!$morningWindow) {
             $offReason = 'Morgen-Zeitfenster beendet';
@@ -361,7 +361,7 @@ try {
         $s['whiteRestored'] = false;
         $s['pendingUntil'] = $now + 15;
         $s['retryAt'] = $now + 15;
-        $save($startMorning ? 'Fruehlicht automatisch: Weiss 100 %' : 'Nachtlicht automatisch: Rot 1 %');
+        $save($startMorning ? 'Frühlicht automatisch: Weiß 100 %' : 'Nachtlicht automatisch: Rot 1 %');
         // Zuerst die geringe Helligkeit setzen, damit Rot nicht mit 100 % startet.
         RequestAction($cfg['helligkeit'], $startMorning ? 100 : 1);
         $setColor($startMorning ? 16777215 : 16711680);
@@ -371,8 +371,8 @@ try {
 
     $labels = [
         'night' => 'Nachtlicht Rot 1 %: AUS nach 3 Minuten Ruhe, bei AVR oder Tageslicht',
-        'manual' => 'Manuell EIN: geschuetzt; AUS nur bei Abwesenheit oder Bedienung',
-        'auto' => 'Automatisch EIN: Zeit, Ruhezeit und Tageslicht werden geprueft',
+        'manual' => 'Manuell EIN: geschützt; AUS nur bei Abwesenheit oder Bedienung',
+        'auto' => 'Automatisch EIN: Zeit, Ruhezeit und Tageslicht werden geprüft',
         'blocked' => 'Manuell AUS: gesperrt bis 30 Minuten ohne Bewegung/Präsenz',
         'idle' => 'Bereit: wartet auf Bewegung und Einschaltbedingungen'
     ];

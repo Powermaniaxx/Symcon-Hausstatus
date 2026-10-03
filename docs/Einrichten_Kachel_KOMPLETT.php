@@ -1,8 +1,8 @@
 <?php
-// Erst nach Installation des Moduls einmal manuell ausfuehren.
+// Erst nach Installation des Moduls einmal manuell ausführen.
 // Erstellt die Instanz unter 55503 und stellt Hausstatus-Link 29867 um.
 // Stoppt den alten Kachel-HTML-Timer 49024 nach erfolgreicher Einrichtung.
-if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausfuehren.'); }
+if (($_IPS['SENDER'] ?? '') !== 'Execute') { throw new RuntimeException('Bitte manuell ausführen.'); }
 $root = 55503;
 $moduleID = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
 if (!IPS_ModuleExists($moduleID)) { throw new RuntimeException('Das Modul Sven Hausstatus ist noch nicht installiert.'); }
@@ -26,7 +26,7 @@ if ($instance === false) {
     IPS_SetPosition($instance, 5);
 }
 IPS_ApplyChanges($instance);
-// Die Instanz selbst dient als Kachel; Link-Identitaet und Platz bleiben erhalten.
+// Die Instanz selbst dient als Kachel; Link-Identität und Platz bleiben erhalten.
 IPS_SetHidden($instance, true);
 IPS_SetLinkTargetID($link, $instance);
 IPS_SetName($link, 'Hausstatus');
@@ -39,5 +39,5 @@ if (IPS_ScriptExists($oldScript)) {
     if ($ancestor === $root) { IPS_SetScriptTimer($oldScript, 0); }
 }
 echo "Hausstatus-Modul eingerichtet. Instanz-ID: $instance\n";
-echo "Instanz oeffnen, Variablen pruefen und gewuenschte Bedienung aktivieren.\n";
+echo "Instanz öffnen, Variablen prüfen und gewünschte Bedienung aktivieren.\n";
 echo "Kachelansicht neu laden.\n";

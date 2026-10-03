@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/RoomSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
+    use HausstatusRoomSupport;
     private const SOURCES = [
         'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
         'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
@@ -26,9 +28,12 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('SeparateDetails', false);
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
         $this->RegisterPropertyInteger('ConfigSource', 0);
+        $this->RegisterPropertyString('RoomFilter', '');
+        $this->RegisterPropertyString('RoomEntries', $this->GetRoomDefaults());
+        $this->RegisterPropertyBoolean('RoomControlsEnabled', true);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
-        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Praesenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Praesenz","Variable":22412},{"Name":"Keller","Variable":16931}]');
+        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Präsenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Präsenz","Variable":22412},{"Name":"Keller","Variable":16931}]');
         $this->RegisterPropertyBoolean('DoorEnabled', false);
         $this->RegisterPropertyBoolean('LightEnabled', false);
         $this->RegisterPropertyBoolean('CinemaEnabled', false);
@@ -70,6 +75,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         $ids = [];
+        foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
@@ -124,12 +130,18 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $form = json_decode((string)file_get_contents(__DIR__ . '/form.json'), true, 512, JSON_THROW_ON_ERROR);
         $fields = $this->SettingsFormFields($this->ReadPropertyInteger('ConfigSource'), $this->ReadPropertyInteger('View'));
-        foreach ($form['elements'] as &$element) {
+        $this->ApplyFormFields($form['elements'], $fields);
+        return json_encode($form, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    private function ApplyFormFields(array &$elements, array $fields): void
+    {
+        foreach ($elements as &$element) {
             $name = $element['name'] ?? '';
             if (isset($fields[$name])) { $element = array_replace($element, $fields[$name]); }
+            if (isset($element['items'])) { $this->ApplyFormFields($element['items'], $fields); }
         }
         unset($element);
-        return json_encode($form, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 
     public function UpdateSettingsForm(int $Source, int $View): void
@@ -140,16 +152,22 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+    public function GetRoomDefaults(): string
+    {
+        return $this->DefaultRoomJSON();
+    }
+
     private function SettingsFormFields(int $source, int $view): array
     {
         $own = $source === 0;
         $fields = [];
         foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
-            'TemperatureSettings' => 9, 'WeatherSettings' => 10] as $name => $sectionView) {
+            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
+        $fields['RoomFilter'] = ['visible' => $view === 12];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
             if ($source === $this->InstanceID || !IPS_InstanceExists($source)
@@ -215,7 +233,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -224,7 +242,9 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
-            if (in_array($Ident, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
+            if ($Ident === 'RoomValue') {
+                $this->SetRoomValue($Value);
+            } elseif (in_array($Ident, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
                 $this->SetOutdoor($Ident, $Value);
             } elseif ($Ident === 'DoorPermission') {
                 $this->SetDoorPermission($Value);
@@ -250,7 +270,7 @@ class HausstatusBedienung extends IPSModuleStrict
                     throw new InvalidArgumentException('Helligkeit muss zwischen 1 und 100 liegen.');
                 }
                 $script = $this->ConfigInteger('LightCommandScript');
-                if ($script <= 0) { throw new RuntimeException('Zuerst Lichtautomatik 3.3 als Licht-Bedienskript auswaehlen.'); }
+                if ($script <= 0) { throw new RuntimeException('Zuerst Lichtautomatik 3.3 als Licht-Bedienskript auswählen.'); }
                 if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
                 // The selected script performs the command AND informs the light automation.
                 if (!IPS_RunScriptEx($script, ['COMMAND' => $Ident, 'VALUE' => $Value, 'SOURCE' => 'HausstatusBedienung'])) {
@@ -274,7 +294,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($source === $this->InstanceID || !IPS_InstanceExists($source)
             || IPS_GetInstance($source)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
             || IPS_GetProperty($source, 'ConfigSource') !== 0) {
-            throw new RuntimeException('Zentrale Hausstatus-Konfiguration fehlt oder ist ungueltig.');
+            throw new RuntimeException('Zentrale Hausstatus-Konfiguration fehlt oder ist ungültig.');
         }
         return IPS_GetProperty($source, $name);
     }
@@ -299,7 +319,7 @@ class HausstatusBedienung extends IPSModuleStrict
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => [],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
-            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus']];
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => []];
         $view = $this->ReadPropertyInteger('View');
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
             return array_values(array_diff(array_keys(self::SOURCES), $views[10]));
@@ -388,7 +408,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (!is_numeric($min) || !is_numeric($max) || !is_numeric($step)
             || !is_finite((float)$min) || !is_finite((float)$max) || !is_finite((float)$step)
             || (float)$max <= (float)$min || (float)$step < 0) {
-            throw new RuntimeException('Die Darstellung hat ungueltige Reglergrenzen.');
+            throw new RuntimeException('Die Darstellung hat ungültige Reglergrenzen.');
         }
         $min = (float)$min; $max = (float)$max; $step = (float)$step;
         if ($type === 1 && (floor($min) !== $min || floor($max) !== $max || floor($step) !== $step)) {
@@ -411,7 +431,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ((!is_int($Value) && !is_float($Value)) || !is_finite((float)$Value)
             || $Value < $control['min'] || $Value > $control['max']
             || ($control['type'] === 1 && floor($Value) !== (float)$Value)) {
-            throw new RuntimeException('Wert liegt ausserhalb der konfigurierten Reglergrenzen.');
+            throw new RuntimeException('Wert liegt außerhalb der konfigurierten Reglergrenzen.');
         }
         if (is_numeric($control['step'])) {
             $steps = ((float)$Value - $control['min']) / $control['step'];
@@ -468,7 +488,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function SetDoorPermission(mixed $Value): void
     {
         if (!is_bool($Value) || !$this->CanSetDoorPermission()) {
-            throw new RuntimeException('Tuerfreigabe ist deaktiviert oder keine Boolean-Variable.');
+            throw new RuntimeException('Türfreigabe ist deaktiviert oder keine Boolean-Variable.');
         }
         $id = $this->ConfigInteger('DoorPermission');
         if ($this->HasAction($id, 0)) {
@@ -484,17 +504,17 @@ class HausstatusBedienung extends IPSModuleStrict
     private function DoorPlan(): array
     {
         if (!$this->ConfigBoolean('DoorEnabled')) {
-            throw new RuntimeException('Tueroeffnung ist im Modul deaktiviert.');
+            throw new RuntimeException('Türöffnung ist im Modul deaktiviert.');
         }
         $permissionID = $this->ConfigInteger('DoorPermission');
         if (!IPS_VariableExists($permissionID)
             || IPS_GetVariable($permissionID)['VariableType'] !== 0
             || GetValueBoolean($permissionID) !== true) {
-            throw new RuntimeException('Tuer oeffnen ist gesperrt. Zuerst die vorhandene Tuerfreigabe aktivieren.');
+            throw new RuntimeException('Tür öffnen ist gesperrt. Zuerst die vorhandene Türfreigabe aktivieren.');
         }
         $contact = $this->Read($this->ConfigInteger('DoorContact'))['raw'];
         if ($contact === true || $contact === 1) {
-            throw new RuntimeException('Die Tuer ist bereits offen.');
+            throw new RuntimeException('Die Tür ist bereits offen.');
         }
         $id = $this->ConfigInteger('DoorControl');
         $this->ValidateAction($id, 1);
@@ -502,11 +522,11 @@ class HausstatusBedienung extends IPSModuleStrict
         // Use the existing custom door script, never write directly to the lock.
         $script = (int)$v['VariableCustomAction'];
         if ($script <= 0 || !IPS_ScriptExists($script)) {
-            throw new RuntimeException('Die Tuer-Bedienvariable muss ein vorhandenes Aktionsskript besitzen.');
+            throw new RuntimeException('Die Tür-Bedienvariable muss ein vorhandenes Aktionsskript besitzen.');
         }
         $profileName = $v['VariableCustomProfile'] !== '' ? $v['VariableCustomProfile'] : $v['VariableProfile'];
         if ($profileName === '' || !IPS_VariableProfileExists($profileName)) {
-            throw new RuntimeException('Das Variablenprofil fuer die Tuerbedienung fehlt.');
+            throw new RuntimeException('Das Variablenprofil für die Türbedienung fehlt.');
         }
         $values = [];
         foreach (IPS_GetVariableProfile($profileName)['Associations'] as $association) {
@@ -518,7 +538,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         if (count($values) !== 1) {
-            throw new RuntimeException('Die Aktion Oeffnen ist im Tuerprofil nicht eindeutig. Kein Befehl gesendet.');
+            throw new RuntimeException('Die Aktion Öffnen ist im Türprofil nicht eindeutig. Kein Befehl gesendet.');
         }
         return ['id' => $id, 'value' => $values[0], 'script' => $script, 'permission' => $permissionID];
     }
@@ -537,7 +557,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         if (!is_array($Value) || !isset($Value['request']) || !is_string($Value['request'])
             || !preg_match('/^[a-zA-Z0-9-]{16,64}$/D', $Value['request'])) {
-            throw new InvalidArgumentException('Ungueltige Bestaetigungsanfrage.');
+            throw new InvalidArgumentException('Ungültige Bestätigungsanfrage.');
         }
         $plan = $this->DoorPlan();
         $pending = json_decode($this->GetBuffer('DoorChallenges'), true) ?: [];
@@ -557,26 +577,26 @@ class HausstatusBedienung extends IPSModuleStrict
         if (!is_array($Value) || !isset($Value['request'], $Value['token'])
             || !is_string($Value['request']) || !is_string($Value['token'])
             || strlen($Value['request']) > 64 || strlen($Value['token']) !== 48) {
-            throw new InvalidArgumentException('Bestaetigung fehlt.');
+            throw new InvalidArgumentException('Bestätigung fehlt.');
         }
         $pending = json_decode($this->GetBuffer('DoorChallenges'), true) ?: [];
         $entry = $pending[$Value['request']] ?? null;
         if (!$entry || $entry['expires'] <= time() || !hash_equals($entry['token'], $Value['token'])) {
-            throw new RuntimeException('Bestaetigung fehlt oder ist abgelaufen. Bitte erneut Tuer oeffnen waehlen.');
+            throw new RuntimeException('Bestätigung fehlt oder ist abgelaufen. Bitte erneut Tür öffnen wählen.');
         }
         // Consume first; even a failing action must not be replayed.
         unset($pending[$Value['request']]);
         $this->SetBuffer('DoorChallenges', json_encode($pending, JSON_THROW_ON_ERROR));
         $plan = $this->DoorPlan();
-        if ($plan !== $entry['plan']) { throw new RuntimeException('Tuerkonfiguration wurde geaendert. Bitte erneut bestaetigen.'); }
+        if ($plan !== $entry['plan']) { throw new RuntimeException('Türkonfiguration wurde geändert. Bitte erneut bestätigen.'); }
         if (!RequestAction($plan['id'], $plan['value'])) {
-            throw new RuntimeException('Das Tuer-Aktionsskript konnte nicht ausgefuehrt werden.');
+            throw new RuntimeException('Das Tür-Aktionsskript konnte nicht ausgeführt werden.');
         }
     }
 
     private function ValidateAction(int $id, int $type): void
     {
-        if (!$this->HasAction($id, $type)) { throw new RuntimeException('Die gewaehlte Variable fehlt, hat den falschen Typ oder keine Bedienaktion.'); }
+        if (!$this->HasAction($id, $type)) { throw new RuntimeException('Die gewählte Variable fehlt, hat den falschen Typ oder keine Bedienaktion.'); }
     }
 
     private function HasAction(int $id, int $type): bool
@@ -638,15 +658,15 @@ class HausstatusBedienung extends IPSModuleStrict
                 $history = ['entries' => [], 'previous' => null, 'note' => ''];
                 try {
                     if ($id <= 0 || !IPS_VariableExists($id) || IPS_GetVariable($id)['VariableType'] !== 0) {
-                        throw new RuntimeException('Boolean-Bewegungsvariable auswaehlen.');
+                        throw new RuntimeException('Boolean-Bewegungsvariable auswählen.');
                     }
-                    if ($archive <= 0) { throw new RuntimeException('Archiv auswaehlen: kein eindeutiges Archiv gefunden.'); }
+                    if ($archive <= 0) { throw new RuntimeException('Archiv auswählen: kein eindeutiges Archiv gefunden.'); }
                     if (!AC_GetLoggingStatus($archive, $id)) { throw new RuntimeException('Archivierung ist nicht aktiviert.'); }
                     $values = AC_GetLoggedValues($archive, $id, $start, $now, 10000);
                     foreach ($values as $v) { $history['entries'][] = ['time' => (int)$v['TimeStamp'], 'active' => (bool)$v['Value']]; }
                     $previous = AC_GetLoggedValues($archive, $id, 0, $start - 1, 1);
                     if ($previous) { $history['previous'] = (bool)$previous[0]['Value']; }
-                    if (count($values) >= 10000) { $history['note'] = 'Abfragelimit erreicht: Verlauf moeglicherweise unvollstaendig.'; }
+                    if (count($values) >= 10000) { $history['note'] = 'Abfragelimit erreicht: Verlauf möglicherweise unvollständig.'; }
                     elseif (!$values && !$previous) { $history['note'] = 'Noch keine Archivdaten. Aufzeichnung beginnt mit Aktivierung.'; }
                 } catch (Throwable $e) { $history['note'] = $e->getMessage(); }
                 $cache['history'][(string)$id] = $history;
@@ -675,6 +695,7 @@ class HausstatusBedienung extends IPSModuleStrict
         try { $state['VolumeControl'] = $this->CinemaVolumePlan(); }
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
+        $state['RoomSections'] = $this->RoomSections();
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {
                 $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];

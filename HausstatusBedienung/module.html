@@ -8,6 +8,8 @@
 
 [hidden]{display:none!important}
 .head{gap:8px;flex-wrap:wrap}.refreshStatus{font-size:11px;line-height:1.4;opacity:.75;text-align:right}
+.roomDeviceGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.roomDevice{padding:10px;border:1px solid #8883;border-radius:10px;min-width:0}.roomDevice .row{border:0;padding:0;align-items:flex-start}.roomDevice .row span:last-child{font-weight:600}.roomGroup h3{font-size:13px;margin:12px 0 8px}.roomDevice input[type=color]{width:100%;height:38px;border:1px solid #8885;background:none;border-radius:8px;margin-top:8px}.roomNote{font-size:11px;line-height:1.4;opacity:.7;margin-top:6px}.outdoorStatus span:last-child{font-weight:600}.outdoorStatus{margin:6px 0 10px}
+@media(max-width:600px){.roomDeviceGrid{grid-template-columns:1fr;gap:8px}.roomDevice{padding:9px}}
 .dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
 .dashboard>.card,.overview-group{min-width:0;padding:12px;border:1px solid #8883;border-radius:12px}
 .dashboard>.card{display:flex;flex-direction:column}.overview-group{display:flex;flex-direction:column;background:#8881}
@@ -35,7 +37,8 @@
 <section class="section" id="motionSection"><h2>Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section" id="roomsSection"><h2>R&auml;ume</h2><div id="rooms"></div></section>
 <section class="section" id="weatherSection"><h2>Wetter</h2><div id="weather"></div></section>
-<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.9">&#8635; Aktualisieren</button></div>
+<div id="roomDeviceSections"></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.10">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -93,7 +96,7 @@ function renderOutdoor(data){
    range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(value,sliderText(range.value,d.control,d.position.text));});
    range.addEventListener('change',()=>{editing=false;send(name+'Position',Number(range.value));});range.addEventListener('blur',()=>{if(editing){editing=false;render();}});box.append(range);
   }else if(d.reason){const n=document.createElement('div');n.className='small';text(n,d.reason);box.append(n);}
-  const status=document.createElement('div');status.className='small';text(status,'Status: '+d.status.text);box.append(status);
+  const status=document.createElement('div');status.className='row outdoorStatus';const statusLabel=document.createElement('span'),statusValue=document.createElement('span');text(statusLabel,'Status');text(statusValue,d.status.text);status.append(statusLabel,statusValue);box.append(status);
   outdoorToggle(box,'Automatik',d.auto,name+'Auto',d.canAuto);
   if(name==='Roof')outdoorToggle(box,'\u00dcber Nacht',d.night,'RoofNight',d.canNight);
   inside.append(box);
@@ -135,13 +138,14 @@ function render(){
  renderMotion(s.Motion);
  rows('rooms',s.Rooms.map(r=>[r.name,r.value]));
  rows('weather',[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regen',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
+ renderRoomSections(s.RoomSections??[]);
  applyView(s.View??0);
 }
 function applyView(view){
  const keys={1:['presence','alarm'],2:['lock','contact','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[],11:['outdoor']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
  if(view===0)groupOverview();
- el('cards').hidden=[8,9,10].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
+ el('cards').hidden=[8,9,10,12].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v;
 }
 function groupOverview(){
@@ -166,7 +170,7 @@ function renderCinemaFields(box,s){
  const volume=s.CinemaVolume??{raw:null,text:'Nicht eingerichtet'},control=s.VolumeControl;
  const volumeLabel=document.createElement('label');text(volumeLabel,'Lautst\u00e4rke: '+(volume.raw===null?'Nicht eingerichtet':volume.text));fields.append(volumeLabel);
  if(control&&typeof volume.raw==='number'){
-  const range=document.createElement('input');range.type='range';range.min=String(control.min);range.max=String(control.max);range.step=String(control.step);range.value=String(volume.raw);range.disabled=busy;range.setAttribute('aria-label','Cinema 40 Lautstaerke');
+  const range=document.createElement('input');range.type='range';range.min=String(control.min);range.max=String(control.max);range.step=String(control.step);range.value=String(volume.raw);range.disabled=busy;range.setAttribute('aria-label','Cinema 40 Lautstärke');
   range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(volumeLabel,'Lautst\u00e4rke: '+sliderText(range.value,control,volume.text));});
   range.addEventListener('change',()=>{editing=false;send('CinemaVolume',Number(range.value));});
   range.addEventListener('blur',()=>{if(editing){editing=false;render();}});fields.append(range);
@@ -174,6 +178,47 @@ function renderCinemaFields(box,s){
   const reason=document.createElement('div');reason.className='small';text(reason,'Regler nicht verf\u00fcgbar: '+s.VolumeReason);fields.append(reason);
  }
  box.append(fields);
+}
+function renderRoomSections(sections){
+ const root=el('roomDeviceSections');root.replaceChildren();root.hidden=!sections.length;
+ for(const room of sections){
+  const section=document.createElement('section');section.className='section';
+  if(sections.length>1){const title=document.createElement('h2');text(title,room.name);section.append(title);}
+  for(const group of room.groups){
+   const groupBox=document.createElement('div');groupBox.className='roomGroup';const title=document.createElement('h3');text(title,group.name);groupBox.append(title);
+   const grid=document.createElement('div');grid.className='roomDeviceGrid';
+   for(const item of group.items){
+    const box=document.createElement('div');box.className='roomDevice';box.setAttribute('data-variable',String(item.id));
+    const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);text(value,item.value.text);row.append(label,value);box.append(row);
+    renderRoomControl(box,item,value);
+    if(item.note){const note=document.createElement('div');note.className='roomNote';text(note,item.note);box.append(note);}grid.append(box);
+   }
+   groupBox.append(grid);section.append(groupBox);
+  }
+  root.append(section);
+ }
+}
+function renderRoomControl(box,item,valueLabel){
+ const c=item.control;if(!c)return;const sendValue=value=>send('RoomValue',{id:item.id,value});
+ if(c.kind==='bool'){
+  const row=document.createElement('div');row.className='buttons';
+  for(const option of c.options){const b=document.createElement('button');b.type='button';text(b,option.name);b.disabled=busy||item.value.raw===option.value;b.addEventListener('click',()=>sendValue(option.value));row.append(b);}box.append(row);
+ }else if(c.kind==='enum'){
+  const select=document.createElement('select');select.setAttribute('aria-label',item.name);select.disabled=busy;
+  let chosen=-1;
+  c.options.forEach((option,index)=>{if(option.value===item.value.raw)chosen=index;});
+  if(chosen<0){const n=document.createElement('option');n.value='';text(n,'Aktuell: '+item.value.text);select.append(n);}
+  c.options.forEach((option,index)=>{const n=document.createElement('option');n.value=String(index);text(n,option.name);select.append(n);});select.value=chosen<0?'':String(chosen);
+  select.addEventListener('change',()=>{if(select.value!==''){const index=Number(select.value);if(Number.isInteger(index)&&c.options[index])sendValue(c.options[index].value);}});box.append(select);
+ }else if(c.kind==='slider'&&typeof item.value.raw==='number'){
+  const range=document.createElement('input');range.type='range';range.min=String(c.min);range.max=String(c.max);range.step=String(c.step);range.value=String(item.value.raw);range.disabled=busy;range.setAttribute('aria-label',item.name);
+  range.addEventListener('pointerdown',()=>{editing=true;});range.addEventListener('input',()=>{editing=true;text(valueLabel,sliderText(range.value,c,item.value.text));});range.addEventListener('change',()=>{editing=false;sendValue(Number(range.value));});range.addEventListener('blur',()=>{if(editing){editing=false;render();}});box.append(range);
+ }else if(c.kind==='color'&&Number.isInteger(item.value.raw)&&item.value.raw>=0&&item.value.raw<=16777215){
+  const input=document.createElement('input');input.type='color';input.value='#'+item.value.raw.toString(16).padStart(6,'0');input.disabled=busy;input.setAttribute('aria-label',item.name);
+  input.addEventListener('input',()=>{editing=true;});input.addEventListener('change',()=>{editing=false;sendValue(parseInt(input.value.slice(1),16));});input.addEventListener('blur',()=>{if(editing){editing=false;render();}});box.append(input);
+ }else if(c.kind==='native'){
+  const b=document.createElement('button');b.type='button';text(b,'Bedienung öffnen');b.disabled=busy||typeof openObject!=='function';b.style.marginTop='8px';b.addEventListener('click',()=>{try{openObject(c.id);}catch(e){showStatus('Native Bedienung konnte nicht geöffnet werden.');}});box.append(b);
+ }
 }
 function motionTime(t){return new Date(t*1000).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function renderMotion(m){
@@ -251,7 +296,7 @@ handleMessage=function(data){
  if(message?.doorConfirmation){
   const c=message.doorConfirmation;if(c.request!==doorRequest)return;
   finish();doorToken=c.token;const remaining=(c.ttl??20)*1000;
-  if(remaining<=0){closeDoorDialog();showStatus('Bestaetigung abgelaufen.');render();return;}
+  if(remaining<=0){closeDoorDialog();showStatus('Bestätigung abgelaufen.');render();return;}
   showStatus('');el('doorDialog').showModal();el('doorCancel').focus();
   clearTimeout(doorExpiryTimer);doorExpiryTimer=setTimeout(()=>{closeDoorDialog();showStatus('Best\u00e4tigung abgelaufen. Bitte erneut beginnen.');render();},Math.min(remaining,20000));return;
  }
