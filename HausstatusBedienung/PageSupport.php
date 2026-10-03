@@ -52,14 +52,21 @@ trait HausstatusPageSupport
 
     private function HandlePageRequest(string $action, mixed $payload): void
     {
-        $request = is_array($payload) && is_string($payload['request'] ?? null) ? $payload['request'] : '';
-        if (preg_match('/^page-[a-z0-9-]{1,100}$/D', $request) !== 1) {
-            throw new InvalidArgumentException('Ungültige Seitenanfrage.');
-        }
-        $reply = ['pageReply' => $request];
+        $request = '';
+        $reply = [];
         $locked = false;
         $key = 'SVHSCommand' . $this->InstanceID;
+        $this->SetBuffer('LastPageRequest', $action . ' | Empfangener Wert: ' . get_debug_type($payload));
         try {
+            // Send a scalar JSON string through the visualization bridge; retain array compatibility.
+            if (is_string($payload)) {
+                if (strlen($payload) > 32768) { throw new InvalidArgumentException('Die Seitenanfrage ist zu groß.'); }
+                $payload = json_decode($payload, true, 32, JSON_THROW_ON_ERROR);
+            }
+            $request = is_array($payload) && is_string($payload['request'] ?? null) ? $payload['request'] : '';
+            if (preg_match('/^page-[a-z0-9-]{1,100}$/D', $request) !== 1) {
+                throw new InvalidArgumentException('Ungültige Seitenanfrage.');
+            }
             if (!$this->UsesInlinePages()) { throw new RuntimeException('Diese Instanz verwendet keine eingebetteten Unterseiten.'); }
             $view = $payload['view'] ?? null;
             $room = $payload['room'] ?? '';
@@ -78,13 +85,51 @@ trait HausstatusPageSupport
             $this->SetBuffer('MotionCache', '');
             $this->SetBuffer('RainCache', '');
             $reply['state'] = $this->State();
+            $this->SetBuffer('LastPageError', '');
         } catch (Throwable $e) {
             $reply['error'] = $e->getMessage();
+            $this->SetBuffer('LastPageError', get_class($e) . ': ' . $e->getMessage());
             $this->SendDebug('Unterseite', $e->getMessage(), 0);
         } finally {
             $this->pageContext = null;
             if ($locked) { IPS_SemaphoreLeave($key); }
         }
-        $this->UpdateVisualizationValue(json_encode($reply, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+        $reply['pageReply'] = $request;
+        try {
+            $encoded = json_encode($reply, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Throwable $e) {
+            $this->SetBuffer('LastPageError', get_class($e) . ': ' . $e->getMessage());
+            $encoded = json_encode(['pageReply' => $request, 'error' => 'Seitendaten konnten nicht übertragen werden: ' . $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE);
+        }
+        try { $this->UpdateVisualizationValue($encoded); }
+        catch (Throwable $e) {
+            $this->SetBuffer('LastPageError', get_class($e) . ': ' . $e->getMessage());
+            $this->SendDebug('Seitenübertragung', $e->getMessage(), 0);
+        }
+    }
+
+    public function CheckPages(): string
+    {
+        $info = json_decode($this->GetVisualizationDiagnostics(), true, 512, JSON_THROW_ON_ERROR);
+        $lines = ['Hausstatus ' . $info['moduleVersion'] . ' | Symcon ' . $info['kernel'],
+            'Letzte Seitenanfrage: ' . ($this->GetBuffer('LastPageRequest') ?: 'Noch keine Anfrage am Modul angekommen.'),
+            'Letzter Seitenfehler: ' . ($this->GetBuffer('LastPageError') ?: 'Kein Fehler gespeichert.')];
+        if (!$this->UsesInlinePages()) {
+            $lines[] = 'Eingebettete Unterseiten werden in dieser Instanz nicht verwendet. Die zentrale Übersicht prüfen.';
+            return implode(PHP_EOL, $lines);
+        }
+        $pages = [['view' => 7, 'room' => '', 'name' => 'PV-Details']];
+        foreach (array_slice($this->NavigationRooms(), 0, 50) as $room) { $pages[] = ['view' => 12, 'room' => $room, 'name' => $room]; }
+        $savedContext = $this->pageContext;
+        foreach ($pages as $page) {
+            try {
+                $this->pageContext = ['view' => $page['view'], 'room' => $page['room']];
+                $encoded = json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                $lines[] = $page['name'] . ': OK, ' . strlen($encoded) . ' Bytes Zustandsdaten.';
+            } catch (Throwable $e) { $lines[] = $page['name'] . ': ' . get_class($e) . ': ' . $e->getMessage(); }
+            finally { $this->pageContext = $savedContext; }
+        }
+        $lines[] = 'Serverprüfung ohne Gerätebefehle. Die Browserübertragung wird damit nicht bestätigt.';
+        return implode(PHP_EOL, $lines);
     }
 }

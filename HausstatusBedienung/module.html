@@ -47,7 +47,7 @@
 .rainHistory{margin-top:12px;padding-top:10px;border-top:1px solid #8883}.rainHeadline{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px}.rainHeadline strong{font-size:14px}.rainHistory .motionBar{background:#428dc9}.rainDetail{margin-top:4px}.rainLog{max-height:190px;overflow:auto}.rainLog .row{font-size:12px;line-height:1.5;display:block}
 @media(max-width:600px){.roomGroupGrid{grid-template-columns:1fr;gap:6px}.roomDevice{padding:9px}.roomSurface button,.roomSurface select{font-size:13px;padding:8px}.roomItem>.row{font-size:13px}.climateHeader>div,.climateSetpoints,.climateActual{padding:8px}.climateActual{font-size:20px}.overview-status .label,.overview-door .label{font-size:11px}}
 
-.detailLink{margin-top:12px;min-height:44px;font-size:13px}.head #roomNavigation{margin-right:auto;min-height:44px}
+.detailLink{margin-top:12px;min-height:44px;font-size:13px}
 .roomPage{max-width:1120px;margin:0 auto;padding:2px 0 8px}.roomPage>h2{font-size:20px;margin:12px 0}.roomOverview{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.roomMetric{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:#8881;font-size:12px}.roomMetric>span{opacity:.65}.roomMetric>strong{font-weight:600}
 .roomPage .roomGroupGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.roomPage .roomGroup{border:1px solid #8883;border-radius:15px;padding:13px;background:#8881;min-width:0}.roomPage .roomGroup>h3{margin:0 0 12px;font-size:15px;font-weight:650}
 .roomPage .roomDeviceGrid{gap:0}.roomPage .roomDevice{background:transparent;border:0;border-radius:0;padding:12px 0;border-top:1px solid #8883}.roomPage .roomDevice:first-child{border-top:0;padding-top:0}.roomPage .roomGroup-light .roomDeviceGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.roomPage .roomGroup-light .roomDevice{padding:10px;border:1px solid #8883;border-radius:12px;background:#8881}.roomPage .roomGroup-light .roomDevice.isOn{background:#e8bb3e20;border-color:#c7a84065}
@@ -67,7 +67,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><button id="roomNavigation" type="button" hidden>Räume öffnen</button><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.15">&#8635; Aktualisieren</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.16">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -181,7 +181,6 @@ function render(){
  rows('weather',s.View===0&&s.SeparateDetails===true?[['Wetter',s.Weather.text],['Wind',s.Wind.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
- const roomNav=el('roomNavigation');roomNav.hidden=s.View!==0||(s.InlinePages===true?!s.NavigationRooms?.length:!Number.isInteger(s.RoomNavigationTarget)||s.RoomNavigationTarget<=0);roomNav.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');
  applyView(s.View??0);
  renderPageNavigation();
 }
@@ -306,10 +305,6 @@ function renderTechnicalSections(sections,climate=[]){
   section.append(groups);root.append(section);
  }
 }
-el('roomNavigation').addEventListener('click',()=>{
- if(state?.InlinePages===true){if(busy)return;showingRooms=true;showStatus('');render();}
- else openDetail(state?.RoomNavigationTarget,'Räume');
-});
 el('pageBack').addEventListener('click',()=>{
  if(busy)return;
  const rooms=inlinePage?.view===12;clearTimeout(pagePollTimer);pagePollTimer=null;cancelPageRequest();inlinePage=null;showingRooms=rooms;
@@ -322,7 +317,7 @@ function renderPageNavigation(){
  el('pageBack').disabled=busy;text(el('pageBack'),inlinePage?.view===12?'← Räume':'← Startseite');
  text(el('pageTitle'),showingRooms?'Räume':inlinePage?.view===7?'PV-Details':inlinePage?.room??'');
  if(showingRooms){
-  for(const id of ['cards','motionSection','roomsSection','weatherSection','roomDeviceSections','networkSection','roomNavigation'])el(id).hidden=true;
+  for(const id of ['cards','motionSection','roomsSection','weatherSection','roomDeviceSections','networkSection'])el(id).hidden=true;
   const chooser=el('roomChooser');chooser.replaceChildren();
   for(const name of homeState?.NavigationRooms??[]){const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy;b.addEventListener('click',()=>readInlinePage({view:12,room:name},'navigate'));chooser.append(b);}
   if(!chooser.children.length)text(chooser,'Keine Räume eingerichtet.');
@@ -358,7 +353,7 @@ function readInlinePage(page,reason,value){
   else if(pending.reason!=='background')showStatus(command?'Keine Bestätigung empfangen. Status prüfen.':'Seite konnte nicht geladen werden. Bitte erneut öffnen.');
   render();
  },8000);
- try{requestAction(command?'PageValue':'PageRead',{request,view:page.view,room:page.room,...(command?{value}:{})});}
+ try{requestAction(command?'PageValue':'PageRead',JSON.stringify({request,view:page.view,room:page.room,...(command?{value}:{})}));}
  catch(e){cancelPageRequest();if(reason==='navigate'||command)busy=false;if(reason==='refresh')text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');else if(reason!=='background')showStatus('Seitenanfrage konnte nicht gesendet werden.');render();}
 }
 function receivePageReply(message){

@@ -1,4 +1,4 @@
-# Hausstatus 0.15 für IP-Symcon
+# Hausstatus 0.16 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -11,7 +11,7 @@ Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit
 5. Unter **Texte und Beschreibungen** Bezeichnungen und optionale Hinweise anpassen. Die anfänglichen Namen sind Beispiele und lassen sich ändern, etwa „Wohnzimmerlicht“, „Esstisch“ oder „Cinema 40“. Bei Boolean-Anzeigen können zusätzlich eigene Texte für An und Aus hinterlegt werden. Leere Zustandstexte behalten die bisherige Darstellung.
 6. **Änderungen übernehmen** und die Kategorie in der Kachelvisualisierung öffnen. Im Darstellungseditor **Instanzspezifische Darstellung** wählen, falls dort eine Liste ausgewählt ist.
 
-Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, wenn Symcon mindestens **9.1** und die passende SDK-Konstante bereitstellt. Sonst bleibt der normale HTML-Kacheltyp aktiv. Unter Symcon 9.0 öffnen **Details öffnen** bei PV und **Räume öffnen** in der Hausstatus-Kachel die Inhalte direkt innerhalb dieser Kachel. Dadurch benötigen sie keine native Vollbildansicht. Die Startseite verwendet weiterhin den normalen Kacheltyp.
+Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, wenn Symcon mindestens **9.1** und die passende SDK-Konstante bereitstellt. Sonst bleibt der normale HTML-Kacheltyp aktiv. Unter Symcon 9.0 öffnet **Details öffnen** bei PV die Inhalte direkt innerhalb dieser Kachel. Dadurch benötigt die PV-Seite keine native Vollbildansicht. Räume werden über den vorhandenen Menüpunkt **Räume** geöffnet; die Startseite enthält keinen zusätzlichen Raumzugang. Die Startseite verwendet weiterhin den normalen Kacheltyp.
 
 ## Einstellungen und geeignete Quellen
 
@@ -40,7 +40,7 @@ Raumseiten zeigen zuerst Licht und Raumklima, anschließend Medien und Sensoren.
 
 Unterseiten lassen sich als weitere Instanzen desselben Moduls anlegen. In **Inhalt dieser Kachel** den Bereich auswählen und als **Gemeinsame Einstellungen** die eigene zentrale Instanz wählen. Für eine einzelne Raumseite den Inhalt **Räume und weitere Geräte** und den passenden **Raumname** einstellen. Die Namen müssen mit den Raumlisten übereinstimmen.
 
-Unter Symcon 9.0 benötigt die eingebettete PV-Detailansicht keine zusätzliche Instanz. Die Raumauswahl entsteht aus den konfigurierten Raumgeräten und Temperaturen sowie bereits vorhandenen aktiven Raumseiten mit dieser zentralen Konfigurationsquelle. Dazu **Räume öffnen** innerhalb der Hausstatus-Kachel verwenden.
+Unter Symcon 9.0 benötigt die eingebettete PV-Detailansicht keine zusätzliche Instanz. Raumseiten liegen im Menü. Die bestehende Kategorie und ihre Raumlinks werden durch das Entfernen des Raumzugangs aus der Startseite nicht verändert.
 
 Die Netzwerkseite ist ein eigener Inhalt. Sie ergänzt die Startseite nicht um weitere Karten. Die PV-Startkarte bleibt auf aktuelle Leistung und Detailzugang beschränkt. Der kompakte Wetterblock enthält Wetter und Wind sowie den Regenverlauf. Anwesenheit/Alarm und Haustür bleiben an erster und zweiter Stelle.
 
@@ -74,16 +74,18 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.15**, Build **15**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.16**, Build **16**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
-**0.15 ergänzt die Navigation für Symcon 9.0.** PV-Details und Räume werden über die Buttons der zentralen Übersicht in der bestehenden HTML-Kachel angezeigt. **← Startseite** führt von PV zurück; aus einem Raum führt **← Räume** zuerst zur Raumauswahl und von dort **← Startseite** zur Übersicht. Die Auswahl gehört nur zur jeweiligen geöffneten Darstellung: Sie ändert keine Instanzeinstellungen und wechselt keine andere App- oder Browseransicht. Raumregler verwenden weiterhin die vorhandenen, geprüften Variablenaktionen und Bedienskripte. Die sichtbare Unterseite wird spätestens alle 30 Sekunden erneut gelesen; **Aktualisieren** fragt sie sofort ab.
+**0.16 entfernt den Raumzugang aus der Startseite.** Der vorhandene Menüpunkt **Räume** und seine Links bleiben erhalten. PV-Details öffnen unter Symcon 9.0 weiterhin innerhalb der Hausstatus-Kachel; **← Startseite** führt zurück. Die sichtbare Unterseite wird regelmäßig neu gelesen; **Aktualisieren** fragt sie sofort ab. Raumregler behalten ihre vorhandenen Variablenaktionen und Bedienskripte.
 
-Bei Symcon 9.0 diese Buttons innerhalb der Hausstatus-Kachel verwenden. Das native Maximieren einer Instanz oder eines Instanzlinks kann weiterhin die normale Symcon-Liste anzeigen; eine eigene HTML-Vollbildansicht steht dort nicht zur Verfügung. Unterseiten mit einer unterstützten Vollbild-SDK-Version verwenden weiterhin die native Navigation.
+Seitenanfragen werden als JSON-Text über die Visualisierungsverbindung übertragen und im Modul geprüft. Fehler beim Lesen, Prüfen oder Codieren der Seitendaten werden als Fehlermeldung zurückgegeben und in der Instanz gespeichert. Falls **Mehr** im nativen Fehlerbalken nicht geöffnet werden kann, gibt es in der Modulinstanz die Aktion **Unterseiten prüfen / Fehlerdetails**. Sie zeigt die letzte am Modul angekommene Seitenanfrage, gespeicherte Fehler und das Ergebnis einer Serverprüfung für PV und die konfigurierten Räume. Die Prüfung sendet keine Gerätebefehle und verändert keine Quellen oder Instanzeinstellungen. Eine erfolgreiche Serverprüfung bestätigt die Browserübertragung nicht.
+
+Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.0 die normale Symcon-Liste anzeigen; eine eigene HTML-Vollbildansicht steht dort nicht zur Verfügung. Unterseiten mit einer unterstützten Vollbild-SDK-Version verwenden weiterhin die native Navigation.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** und **Räume öffnen** innerhalb der Hausstatus-Kachel verwenden. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.15** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.16** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).

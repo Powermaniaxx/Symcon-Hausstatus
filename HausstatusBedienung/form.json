@@ -911,6 +911,16 @@
     {
       "type": "Label",
       "caption": "Liest die aktuellen Symcon-Werte und den gespeicherten Bewegungsverlauf neu. Neue Moduldateien werden über Module Control geladen."
+    },
+    {
+      "type": "Button",
+      "caption": "Unterseiten prüfen / Fehlerdetails",
+      "onClick": "echo SVHS_CheckPages($id);",
+      "link": false
+    },
+    {
+      "type": "Label",
+      "caption": "Prüft PV- und Raumdaten auf dem Server und zeigt die letzte Seitenanfrage sowie Fehlerdetails. Sendet keine Gerätebefehle."
     }
   ]
 }
