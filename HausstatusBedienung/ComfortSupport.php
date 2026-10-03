@@ -96,9 +96,9 @@ trait HausstatusComfortSupport
 
     private function TemperatureSources(): array
     {
-        $view = $this->ReadPropertyInteger('View');
+        $view = $this->CurrentView();
         if (!in_array($view, [9, 12], true)) { return []; }
-        $filter = $view === 12 ? $this->ReadPropertyString('RoomFilter') : '';
+        $filter = $view === 12 ? $this->CurrentRoom() : '';
         $expanded = $this->ExpandedRoomEntries($filter);
         $rows = [];
         foreach ($this->Rooms() as $room) {

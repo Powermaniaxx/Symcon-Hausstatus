@@ -55,7 +55,10 @@
 .roomPage .roomGroup-light .deviceHeader{gap:5px;flex-wrap:wrap}.roomPage .roomGroup-light .deviceIcon{display:none}.roomPage .roomGroup-light .deviceHeader>h4{flex:1 1 85px}.roomPage .roomItem{padding:8px 0}.roomPage .roomItem:first-of-type{border-top:0}.roomPage .roomDetails>summary{min-height:44px;padding:11px 0;font-size:12px;opacity:.8}.roomPage .roomDetails[open]{margin-top:5px}.roomPage .roomDetails[open]>summary{margin-bottom:7px}.roomPage .roomDetails[open] .roomItem{border-top:1px solid #8883}.roomPage .climateBoard{margin:0 0 8px;background:transparent;border-radius:12px}.roomPage .climateName{display:none}.roomPage .climateHeader>div{font-size:12px}.roomPage .climateSetpoints .row span:last-child{font-size:20px}.roomPage .climateActual{font-size:25px}.temperatureSteps{display:flex;gap:8px;margin:6px 0 0}.temperatureSteps button{flex:1;min-height:48px;font-size:23px}.roomPage .roomGroup-climate .climateSetpoints input[type=range]{margin-top:7px}
 @media(max-width:720px){.roomPage .roomGroupGrid{grid-template-columns:1fr;gap:10px}.roomPage .roomGroup{padding:11px}.roomOverview{gap:6px}.roomMetric{font-size:12px;padding:6px 8px}.roomPage .roomGroup>h3{margin-bottom:9px}.roomPage .roomGroup-light .roomDeviceGrid{gap:7px}.roomPage .roomGroup-light .roomDevice{padding:8px}.deviceHeader>h4{font-size:13px}.roomPage .climateActual{font-size:23px}}
 .wifiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}.wifiCard{padding:12px;border:1px solid #8883;border-radius:12px;min-width:0}.wifiCard h3{margin:0 0 8px;font-size:14px}.wifiQR summary{cursor:pointer;padding:12px 0;min-height:44px}.wifiQR img{display:block;width:100%;max-width:260px;height:auto;aspect-ratio:auto;background:white;padding:12px;margin:4px auto 0}.networkMetrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 18px}
+.pageHeader{display:flex;gap:12px;align-items:center;margin:0 0 12px}.pageHeader h2{margin:0;font-size:19px;overflow-wrap:anywhere}.pageHeader button{min-height:44px}.roomChooser{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.roomChooser button{text-align:left;min-height:52px;padding:12px;font-weight:600}
 </style></head><body><main>
+<div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
+<section id="inlineRooms" hidden><div class="roomChooser" id="roomChooser"></div></section>
 
 <div class="grid" id="cards"></div>
 <div id="message" role="status" aria-live="polite"></div>
@@ -64,7 +67,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><button id="roomNavigation" type="button" hidden>Räume öffnen</button><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.14">&#8635; Aktualisieren</button></div>
+<div class="head"><button id="roomNavigation" type="button" hidden>Räume öffnen</button><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.15">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -72,6 +75,7 @@ let state=/*INITIAL_STATE*/null;
 let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
 let refreshRequest=null,refreshTimer=null;
+let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
 const openPanels=new Set();
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
@@ -168,7 +172,7 @@ function render(){
  renderDining(light,s.Dining);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);renderCinemaFields(cinema,s);
  const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');if(s.View!==0){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
- if(s.View===0&&Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0){const b=document.createElement('button');b.type='button';b.className='detailLink';text(b,'Details öffnen');b.disabled=busy||typeof openObject!=='function';b.addEventListener('click',()=>openDetail(s.PVDetailsTarget,'PV-Details'));pv.append(b);}
+ if(s.View===0&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('button');b.type='button';b.className='detailLink';text(b,'Details öffnen');b.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.addEventListener('click',()=>s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details'));pv.append(b);}
  renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
  renderNetwork(s.Network);
@@ -177,8 +181,9 @@ function render(){
  rows('weather',s.View===0&&s.SeparateDetails===true?[['Wetter',s.Weather.text],['Wind',s.Wind.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
- const roomNav=el('roomNavigation');roomNav.hidden=s.View!==0||!Number.isInteger(s.RoomNavigationTarget)||s.RoomNavigationTarget<=0;roomNav.disabled=busy||typeof openObject!=='function';
+ const roomNav=el('roomNavigation');roomNav.hidden=s.View!==0||(s.InlinePages===true?!s.NavigationRooms?.length:!Number.isInteger(s.RoomNavigationTarget)||s.RoomNavigationTarget<=0);roomNav.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');
  applyView(s.View??0);
+ renderPageNavigation();
 }
 function renderNetwork(data){
  const root=el('networkMetrics'),wireless=el('wirelessNetworks');root.replaceChildren();wireless.replaceChildren();
@@ -301,7 +306,74 @@ function renderTechnicalSections(sections,climate=[]){
   section.append(groups);root.append(section);
  }
 }
-el('roomNavigation').addEventListener('click',()=>openDetail(state?.RoomNavigationTarget,'Räume'));
+el('roomNavigation').addEventListener('click',()=>{
+ if(state?.InlinePages===true){if(busy)return;showingRooms=true;showStatus('');render();}
+ else openDetail(state?.RoomNavigationTarget,'Räume');
+});
+el('pageBack').addEventListener('click',()=>{
+ if(busy)return;
+ const rooms=inlinePage?.view===12;clearTimeout(pagePollTimer);pagePollTimer=null;cancelPageRequest();inlinePage=null;showingRooms=rooms;
+ state=homeState;showStatus('');text(el('refreshStatus'),'');render();
+});
+function renderPageNavigation(){
+ if(state?.View===0)homeState=state;
+ const active=inlinePage!==null||showingRooms;
+ el('pageHeader').hidden=!active;el('inlineRooms').hidden=!showingRooms;
+ el('pageBack').disabled=busy;text(el('pageBack'),inlinePage?.view===12?'← Räume':'← Startseite');
+ text(el('pageTitle'),showingRooms?'Räume':inlinePage?.view===7?'PV-Details':inlinePage?.room??'');
+ if(showingRooms){
+  for(const id of ['cards','motionSection','roomsSection','weatherSection','roomDeviceSections','networkSection','roomNavigation'])el(id).hidden=true;
+  const chooser=el('roomChooser');chooser.replaceChildren();
+  for(const name of homeState?.NavigationRooms??[]){const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy;b.addEventListener('click',()=>readInlinePage({view:12,room:name},'navigate'));chooser.append(b);}
+  if(!chooser.children.length)text(chooser,'Keine Räume eingerichtet.');
+ }else if(inlinePage?.view===12&&!state.RoomSections?.length&&!state.TemperatureRows?.length){
+  const root=el('roomDeviceSections');root.hidden=false;text(root,'Für diesen Raum sind noch keine Geräte eingerichtet.');
+ }
+}
+function cancelPageRequest(){
+ clearTimeout(pageTimer);pageTimer=null;pageRequest=null;updateRefreshButton();
+}
+function schedulePagePoll(){
+ clearTimeout(pagePollTimer);pagePollTimer=null;if(inlinePage===null)return;
+ pagePollTimer=setTimeout(()=>{
+  pagePollTimer=null;
+  if(inlinePage!==null&&!busy&&!editing&&pageRequest===null)readInlinePage(inlinePage,'background');
+  schedulePagePoll();
+ },30000);
+}
+function readInlinePage(page,reason,value){
+ if(!homeState?.InlinePages||typeof requestAction!=='function')return;
+ if(pageRequest!==null)return;
+ if(busy)return;
+ const request='page-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,14);
+ pageRequest={request,page,reason};
+ const command=reason==='value';
+ if(reason==='navigate'||command){busy=true;editing=false;showStatus(command?'Befehl wird gesendet ...':'Seite wird geladen ...');render();}
+ if(reason==='refresh')text(el('refreshStatus'),'Werte werden geladen ...');
+ updateRefreshButton();
+ pageTimer=setTimeout(()=>{
+  const pending=pageRequest;if(pending?.request!==request)return;
+  cancelPageRequest();if(reason==='navigate'||command)busy=false;
+  if(pending.reason==='refresh')text(el('refreshStatus'),'Keine Antwort. Bitte die Verbindung prüfen.');
+  else if(pending.reason!=='background')showStatus(command?'Keine Bestätigung empfangen. Status prüfen.':'Seite konnte nicht geladen werden. Bitte erneut öffnen.');
+  render();
+ },8000);
+ try{requestAction(command?'PageValue':'PageRead',{request,view:page.view,room:page.room,...(command?{value}:{})});}
+ catch(e){cancelPageRequest();if(reason==='navigate'||command)busy=false;if(reason==='refresh')text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');else if(reason!=='background')showStatus('Seitenanfrage konnte nicht gesendet werden.');render();}
+}
+function receivePageReply(message){
+ const pending=pageRequest;if(!pending||message.pageReply!==pending.request)return;
+ cancelPageRequest();if(pending.reason==='navigate'||pending.reason==='value')busy=false;
+ const valid=message.state?.Controls&&message.state.View===pending.page.view&&message.state.PageRoom===pending.page.room;
+ if(valid){inlinePage=pending.page;showingRooms=false;state=message.state;}
+ const error=message.error||(!valid?'Die Unterseite hat keine gültigen Werte geliefert.':'');
+ if(pending.reason==='refresh')text(el('refreshStatus'),error?'Aktualisierung fehlgeschlagen: '+error:'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+ else if(error)showStatus(error);
+ else if(pending.reason==='value')showStatus('Befehl übergeben.',true);
+ else if(pending.reason==='navigate')showStatus('');
+ schedulePagePoll();
+ if(!editing)render();
+}
 function openDetail(target,name){
  if(busy||!Number.isInteger(target)||target<=0||typeof openObject!=='function')return;
  try{openObject(target);}catch(e){showStatus(name+' konnte nicht geöffnet werden.');}
@@ -472,6 +544,11 @@ function renderMotion(m){
 }
 function send(command,value){
  if(busy)return;
+ if(inlinePage!==null){
+  if(command!=='RoomValue'){showStatus('Diese Aktion gehört nicht zur Raumansicht.');return;}
+  if(pageRequest?.reason==='refresh')text(el('refreshStatus'),'');
+  cancelPageRequest();readInlinePage(inlinePage,'value',value);return;
+ }
  if(typeof requestAction!=='function'){showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
  busy=true;editing=false;showStatus('Befehl wird gesendet ...');render();
  timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
@@ -479,12 +556,16 @@ function send(command,value){
 }
 function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
 function updateRefreshButton(){
- const waiting=refreshRequest!==null;el('refresh').disabled=busy||waiting;
+ const waiting=refreshRequest!==null||pageRequest?.reason==='refresh';el('refresh').disabled=busy||waiting;
  el('refresh').setAttribute('aria-busy',String(waiting));text(el('refresh'),waiting?'Aktualisiere ...':'\u21bb Aktualisieren');
 }
 function finishRefresh(){clearTimeout(refreshTimer);refreshTimer=null;refreshRequest=null;updateRefreshButton();}
 function requestRefresh(){
  if(busy||refreshRequest!==null)return;
+ if(inlinePage!==null){
+  if(pageRequest?.reason==='background'){pageRequest.reason='refresh';text(el('refreshStatus'),'Werte werden geladen ...');updateRefreshButton();}
+  else readInlinePage(inlinePage,'refresh');return;
+ }
  if(typeof requestAction!=='function'){text(el('refreshStatus'),'Aktualisieren ist nur in Symcon verf\u00fcgbar.');return;}
  refreshRequest='refresh-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
  text(el('refreshStatus'),'Werte werden geladen ...');updateRefreshButton();
@@ -514,13 +595,27 @@ el('refresh').addEventListener('click',requestRefresh);
 const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
+ if(message&&Object.prototype.hasOwnProperty.call(message,'pageReply')){receivePageReply(message);return;}
  if(message&&Object.prototype.hasOwnProperty.call(message,'refreshDone')){
-  if(message.state?.Controls){state=message.state;if(!busy&&!editing)render();}
+  if(message.state?.Controls){
+   if(inlinePage!==null||showingRooms){if(message.state.View===0){homeState=message.state;if(showingRooms)state=homeState;}}
+   else state=message.state;
+   if(!busy&&!editing)render();
+  }
   if(refreshRequest!==null&&message.refreshDone===refreshRequest){
    finishRefresh();
    if(message.refreshError)text(el('refreshStatus'),'Aktualisierung fehlgeschlagen: '+message.refreshError);
    else if(message.state?.Controls)text(el('refreshStatus'),'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
    else text(el('refreshStatus'),'Aktualisierung hat keine g\u00fcltigen Werte geliefert.');
+  }
+  return;
+ }
+ if(inlinePage!==null||showingRooms||pageRequest!==null){
+  const base=message?.Controls?message:message?.state;
+  if(base?.Controls&&base.View===0){
+   homeState=base;
+   if(showingRooms){state=base;if(!busy&&!editing)render();}
+   else if(inlinePage!==null&&!busy&&!editing&&pageRequest===null)readInlinePage(inlinePage,'background');
   }
   return;
  }

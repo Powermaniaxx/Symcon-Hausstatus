@@ -23,7 +23,7 @@ trait HausstatusRoomSupport
 
     private function SelectedRoomEntries(): array
     {
-        $view = $this->ReadPropertyInteger('View');
+        $view = $this->CurrentView();
         if ($this->HasTemperatureView()) {
             $profile = $this->HeatingProfileEntry();
             $entries = $view === 9 ? $this->TemperatureEntries() : [];
@@ -31,7 +31,7 @@ trait HausstatusRoomSupport
             return $entries;
         }
         if (!in_array($view, [7, 12], true)) { return []; }
-        $filter = $view === 7 ? $this->ConfigString('PVRoom') : $this->ReadPropertyString('RoomFilter');
+        $filter = $view === 7 ? $this->ConfigString('PVRoom') : $this->CurrentRoom();
         $result = $this->ExpandedRoomEntries($filter);
         if ($view === 12) {
             $extra = $this->TemperatureEntries();
@@ -244,7 +244,7 @@ trait HausstatusRoomSupport
 
     private function RoomSections(): array
     {
-        if (!in_array($this->ReadPropertyInteger('View'), [7, 12], true)) { return []; }
+        if (!in_array($this->CurrentView(), [7, 12], true)) { return []; }
         $sections = [];
         $climateIDs = [];
         foreach ($this->TemperatureSources() as $row) {
@@ -276,7 +276,7 @@ trait HausstatusRoomSupport
         if (($control['kind'] ?? '') === 'enum' && $id === $this->ConfigInteger('CinemaSource')) { $primary = true; }
         if ($entry['type'] !== 2) { $primary = false; }
         $role = $this->RoomItemRole($entry, $control);
-        if (in_array($this->ReadPropertyInteger('View'), [9, 12], true)) {
+        if (in_array($this->CurrentView(), [9, 12], true)) {
             $primary = in_array($role, ['switch', 'brightness', 'setpoint', 'source', 'volume', 'temperature',
                 'humidity', 'motion', 'presence', 'illuminance', 'position', 'power', 'control'], true);
         }

@@ -18,9 +18,11 @@ trait HausstatusNavigationSupport
     public function GetVisualizationDiagnostics(): string
     {
         $html = $this->GetVisualizationTile();
-        $data = ['instance' => $this->InstanceID, 'kernel' => IPS_GetKernelVersion(),
+        $library = json_decode((string)@file_get_contents(__DIR__ . '/../library.json'), true);
+        $data = ['moduleVersion' => $library['version'] ?? 'unbekannt', 'instance' => $this->InstanceID, 'kernel' => IPS_GetKernelVersion(),
             'view' => $this->ReadPropertyInteger('View'), 'room' => $this->ReadPropertyString('RoomFilter'),
             'source' => $this->ReadPropertyInteger('ConfigSource'), 'active' => $this->ReadPropertyBoolean('ActiveView'),
+            'inlinePages' => $this->UsesInlinePages(),
             'fullscreenSupported' => $this->SupportsHtmlFullscreen(), 'expectedType' => $this->HtmlVisualizationType(),
             'actualType' => IPS_GetInstance($this->InstanceID)['InstanceVisualizationType'],
             'htmlBytes' => strlen($html), 'initialStateInserted' => str_contains($html, 'let state=') && !str_contains($html, '/*INITIAL_STATE*/null'),

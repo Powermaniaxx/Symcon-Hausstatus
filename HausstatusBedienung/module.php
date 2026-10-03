@@ -6,6 +6,7 @@ require_once __DIR__ . '/RainSupport.php';
 require_once __DIR__ . '/NavigationSupport.php';
 require_once __DIR__ . '/DisplaySupport.php';
 require_once __DIR__ . '/NetworkSupport.php';
+require_once __DIR__ . '/PageSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -15,6 +16,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusNavigationSupport;
     use HausstatusDisplaySupport;
     use HausstatusNetworkSupport;
+    use HausstatusPageSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -172,7 +174,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function Refresh(): void
     {
-        $state = $this->State();
+        $state = $this->BaseState();
         $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
         if ($this->GetBuffer('LastState') !== $encoded) {
             $this->SetBuffer('LastState', $encoded);
@@ -246,7 +248,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $this->SetBuffer('MotionCache', '');
         $this->SetBuffer('RainCache', '');
-        $state = $this->State();
+        $state = $this->BaseState();
         $this->SetBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         return $state;
     }
@@ -269,7 +271,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $html = file_get_contents(__DIR__ . '/module.html');
             if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
             if (!str_contains($html, '/*INITIAL_STATE*/null')) { throw new RuntimeException('Die HTML-Vorlage enthält keinen Platzhalter für Zustandsdaten.'); }
-            $initial = json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
+            $initial = json_encode($this->BaseState(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
                 | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
             return str_replace('/*INITIAL_STATE*/null', $initial, $html);
         } catch (Throwable $e) {
@@ -285,6 +287,9 @@ class HausstatusBedienung extends IPSModuleStrict
     public function RequestAction(string $Ident, mixed $Value): void
     {
         if (!$this->ReadPropertyBoolean('ActiveView')) { throw new RuntimeException('Diese Ansicht ist pausiert. Bitte die gemeinsame Hausstatus-Kachel verwenden.'); }
+        if (in_array($Ident, ['PageRead', 'PageValue'], true)) {
+            $this->HandlePageRequest($Ident, $Value); return;
+        }
         if ($Ident === 'Refresh') {
             // Reply to the requesting tile even when no values have changed.
             // A manual refresh must also bypass the cached archive history.
@@ -338,7 +343,7 @@ class HausstatusBedienung extends IPSModuleStrict
             } else {
                 $this->SetLight($Ident, $Value);
             }
-            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->State()], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->BaseState()], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         } catch (Throwable $e) {
             $this->SendDebug('Bedienfehler', $e->getMessage(), 0);
             $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'error' => $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE));
@@ -365,12 +370,12 @@ class HausstatusBedienung extends IPSModuleStrict
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
     private function HasMotionView(): bool
     {
-        $view = $this->ReadPropertyInteger('View');
+        $view = $this->CurrentView();
         return $view === 8 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
     }
     private function HasTemperatureView(): bool
     {
-        $view = $this->ReadPropertyInteger('View');
+        $view = $this->CurrentView();
         return $view === 9 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
     }
 
@@ -381,7 +386,7 @@ class HausstatusBedienung extends IPSModuleStrict
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => [], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
-        $view = $this->ReadPropertyInteger('View');
+        $view = $this->CurrentView();
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
             return array_keys(self::SOURCES);
         }
@@ -745,15 +750,18 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function State(): array
     {
-        $state = ['View' => $this->ReadPropertyInteger('View'), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
+        $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
+        $state['InlinePages'] = $this->UsesInlinePages();
+        $state['NavigationRooms'] = $state['InlinePages'] ? $this->NavigationRooms() : [];
+        $state['PageRoom'] = $this->CurrentRoom();
         $state['DisplaySettings'] = $this->DisplaySettings();
         $state['Network'] = $this->NetworkState();
         $state['HeatingProfileItem'] = $this->HeatingProfileItem();
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
-        $state['Outdoor'] = in_array($this->ReadPropertyInteger('View'), [0, 11], true) ? $this->OutdoorState() : null;
+        $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['CinemaOptions'] = $this->CinemaSourceOptions();
         $state['VolumeControl'] = null;
         $state['VolumeReason'] = '';
@@ -762,10 +770,10 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Rooms'] = [];
         $state['RoomSections'] = $this->RoomSections();
         $state['TemperatureRows'] = $this->TemperatureRows();
-        $state['Dining'] = in_array($this->ReadPropertyInteger('View'), [0, 5], true)
+        $state['Dining'] = in_array($this->CurrentView(), [0, 5], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
-        $state['PVDetailsTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->PVDetailsTarget() : 0;
-        $state['RoomNavigationTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->RoomNavigationTarget() : 0;
+        $state['PVDetailsTarget'] = $this->CurrentView() === 0 ? $this->PVDetailsTarget() : 0;
+        $state['RoomNavigationTarget'] = $this->CurrentView() === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {
                 $state['Rooms'][] = ['name' => $room['Name'], 'value' => $this->Read($room['Variable'])['text']];

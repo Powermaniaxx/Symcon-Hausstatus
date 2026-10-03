@@ -38,7 +38,7 @@ trait HausstatusNetworkSupport
 
     private function NetworkState(): ?array
     {
-        if ($this->ReadPropertyInteger('View') !== 13) { return null; }
+        if ($this->CurrentView() !== 13) { return null; }
         $metrics = [];
         foreach (['NetworkConnection' => 'Verbindung', 'NetworkDownload' => 'Download', 'NetworkUpload' => 'Upload',
             'NetworkDownloadUsage' => 'Download-Auslastung', 'NetworkUploadUsage' => 'Upload-Auslastung',
