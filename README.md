@@ -1,4 +1,4 @@
-# Hausstatus 0.17 für IP-Symcon
+# Hausstatus 0.18 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,7 +74,7 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.17**, Build **17**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.18**, Build **18**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
@@ -86,10 +86,12 @@ Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.17** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.18** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).
 
-## Änderungen in 0.17
+## Änderungen in 0.18
 
-Raumseiten zeigen Geräte in klaren Zeilen mit Namen und Schalter nebeneinander. Pro Gerät bleiben höchstens zwei häufig verwendete Werte sichtbar; alle weiteren Werte und Bedienmöglichkeiten stehen unter **Weitere Einstellungen** beziehungsweise **Weitere Werte**. Breite Raumansichten verwenden zwei Bereichsspalten, schmale Ansichten eine. Die Temperaturen und Sollregler sind in Raumseiten und der separaten Temperaturkachel kompakter. Die Startseite und ihre Bedienung bleiben unverändert; Räume bleiben über das Menü erreichbar. Bestehende Quellen, Geräte und Bedienskripte bleiben erhalten.
+Raumseiten zeigen oben die wichtigsten Raumwerte und darunter jeweils einen auswählbaren Bereich, beispielsweise **Licht**, **Klima** oder **Medien**. Jedes Gerät steht in einer eigenen kompakten Zeile. Schalter bleiben direkt erreichbar; weitere Werte und Einstellungen lassen sich pro Gerät aufklappen. Temperaturtasten sind nochmals kleiner und benötigen weniger Platz.
+
+Die PV-Kachel der Startseite zeigt zusätzlich die AC-Leistung und den Produktionsstatus jedes bereits eingerichteten Wechselrichters. Dafür werden aus dem konfigurierten PV-Raum die zusammengehörigen Werte **Leistung AC** und **Wechselrichter produziert** übernommen. **Produziert: Ja** erscheint grün, **Produziert: Nein** rot; ein fehlender oder ungültiger Status bleibt grau und heißt **Unbekannt**. Der Status wird aus der Produktionsvariable gelesen, nicht aus der Leistung abgeleitet. Bestehende Quellen, Geräte und Bedienskripte bleiben erhalten. Räume bleiben über das Menü erreichbar.

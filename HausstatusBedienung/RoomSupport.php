@@ -3,6 +3,36 @@ declare(strict_types=1);
 
 trait HausstatusRoomSupport
 {
+    private function PVInverterSources(): array
+    {
+        // Reuse the user's configured PV devices; never ship installation-specific IDs.
+        $devices = [];
+        foreach ($this->ExpandedRoomEntries($this->ConfigString('PVRoom')) as $entry) {
+            if ($entry['type'] !== 2) { continue; }
+            $label = trim($this->RoomVariableName($entry['id']));
+            $key = $entry['deviceKey'];
+            if (preg_match('/^(?:Leistung[ _-]*AC|AC[ _-]*Leistung|AC[ _-]*Power)$/iu', $label)) {
+                $devices[$key]['power'] = $entry['id'];
+                $devices[$key]['name'] = $entry['deviceName'];
+            } elseif (preg_match('/^(?:Wechselrichter produziert|Produziert|Producing)$/iu', $label)) {
+                $devices[$key]['producing'] = $entry['id'];
+            }
+        }
+        return array_values(array_filter($devices, static fn(array $device): bool => isset($device['power'], $device['producing'])));
+    }
+
+    private function PVInverters(): array
+    {
+        if (!in_array($this->CurrentView(), [0, 7], true)) { return []; }
+        $result = [];
+        foreach ($this->PVInverterSources() as $device) {
+            $production = $this->Read($device['producing']);
+            $result[] = ['name' => $device['name'], 'power' => $this->Read($device['power']),
+                'producing' => is_bool($production['raw']) ? $production['raw'] : null];
+        }
+        return $result;
+    }
+
     private function DefaultRoomJSON(): string
     {
         $json = file_get_contents(__DIR__ . '/room_defaults.json');

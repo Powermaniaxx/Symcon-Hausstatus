@@ -81,6 +81,32 @@
 .compactTemperatures .temperatureSteps{gap:5px;margin-top:3px}
 .compactTemperatures .temperatureSteps button{min-height:38px;font-size:18px}
 @media(min-width:800px){.roomPage .roomGroupGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.roomCategoryTabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 9px}
+.roomCategoryTabs button{min-height:32px;padding:5px 8px;font-size:12px;background:transparent}
+.roomCategoryTabs button[aria-pressed=true]{background:#218a8020;border-color:#218a80;font-weight:600}
+.roomPage .roomGroupGrid{display:block}
+.roomPage .roomGroup{border:0;padding:0}
+.roomPage .roomGroup>h3{font-size:13px;margin:2px 0 7px}
+.roomPage .roomDevice,.roomPage .roomGroup-light .roomDevice{border:1px solid #8883;border-radius:8px;padding:5px 8px;margin-bottom:6px;background:#8881}
+.roomPage .roomDeviceGrid{display:block}
+.roomPage .deviceHeader{min-height:38px;gap:6px}
+.roomPage .deviceHeader>h4{font-size:12px;line-height:1.3}
+.roomPage .deviceIcon{display:none}
+.roomPage .deviceState{font-size:11px}
+.roomPage .deviceToggle{height:36px;width:40px;min-width:40px;min-height:36px}
+.roomDeviceValue{font-size:12px;font-weight:600;white-space:nowrap}
+.roomPage .roomDetails>summary{min-height:28px;padding:4px 0;font-size:11px}
+.roomPage .roomDetails[open]{margin-top:2px}
+.roomPage .roomDetails[open]>summary{margin-bottom:3px}
+.roomPage .temperatureSteps,.compactTemperatures .temperatureSteps{justify-content:flex-end;gap:4px}
+.roomPage .temperatureSteps button,.compactTemperatures .temperatureSteps button{flex:0 0 30px;width:30px;min-height:26px;height:26px;padding:1px;font-size:15px;border-radius:5px}
+.pvInverters{margin-top:8px;display:grid;gap:7px}
+.pvInverter{border-top:1px solid #8883;padding-top:7px;min-width:0}
+.pvInverter .row{border:0;padding:0;font-size:12px}
+.pvProduction{display:flex;align-items:center;gap:5px;font-size:11px;margin-top:4px}
+.pvProduction::before{content:'';width:8px;height:8px;border-radius:50%;background:#888;flex:0 0 auto}
+.pvProduction[data-producing=true]::before{background:#258145}
+.pvProduction[data-producing=false]::before{background:#c73a32}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <section id="inlineRooms" hidden><div class="roomChooser" id="roomChooser"></div></section>
@@ -92,7 +118,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.17">&#8635; Aktualisieren</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.18">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -102,6 +128,7 @@ let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTime
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
 const openPanels=new Set();
+const activeRoomCategories=new Map();
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
 function showStatus(value,temporary=false){
@@ -198,6 +225,7 @@ function render(){
  renderDining(light,s.Dining);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema);renderCinemaFields(cinema,s);
  const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');if(s.View!==0){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
+ if(s.View===0)renderPVInverters(pv,s.PVInverters??[]);
  if(s.View===0&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('button');b.type='button';b.className='detailLink';text(b,'Details öffnen');b.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.addEventListener('click',()=>s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details'));pv.append(b);}
  renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
@@ -403,7 +431,7 @@ function groupKind(name){
  const value=String(name).toLocaleLowerCase('de-DE');
  if(/licht|lampe|hue/.test(value))return 'light';
  if(/heizung|klima|temperatur|heizkörper/.test(value))return 'climate';
- if(/medien|cinema|audio|heos/.test(value))return 'media';
+ if(/medien|media|cinema|marantz|audio|heos/.test(value))return 'media';
  if(/wasserbett/.test(value))return 'bed';
  if(/sensor|bewegung|präsenz/.test(value))return 'sensor';
  if(/energie|strom|pv/.test(value))return 'energy';
@@ -441,9 +469,24 @@ function roomDevicePanel(items,key,kind){
  const title=document.createElement('h4');text(title,items[0].deviceName??items[0].name);header.append(title);box.append(header);
  const toggle=selected.primary.find(item=>item.role==='switch');
  if(toggle){if(toggle.value.raw===true)box.className+=' isOn';renderDeviceSwitch(header,toggle,items[0].deviceName??items[0].name);}
- for(const item of selected.primary){if(item!==toggle)box.append(roomItemBox(item));}
- if(selected.secondary.length)box.append(roomDetails(selected.secondary,key,selected.secondary.some(item=>item.control)?'Weitere Einstellungen':'Weitere Werte'));
+ const remaining=items.filter(item=>item!==toggle);
+ if(remaining.length){
+  const preview=selected.primary.find(item=>item!==toggle)??remaining.find(item=>['brightness','volume','temperature','position','power'].includes(item.role));
+  const caption=preview?(preview.label??preview.name)+' · '+preview.value.text:'Weitere Werte';
+  if(!toggle&&preview){const value=document.createElement('span');value.className='roomDeviceValue';text(value,preview.value.text);header.append(value);}
+  box.append(roomDetails(remaining,key,caption+(remaining.some(item=>item.control)?' · einstellen':' · Details')));
+ }
  return box;
+}
+function renderPVInverters(card,inverters){
+ if(!inverters.length)return;
+ const list=document.createElement('div');list.className='pvInverters';
+ for(const inverter of inverters){
+  const box=document.createElement('div');box.className='pvInverter';
+  const row=document.createElement('div');row.className='row';const name=document.createElement('span'),power=document.createElement('strong');text(name,inverter.name+' · AC');text(power,inverter.power?.text);row.append(name,power);box.append(row);
+  const status=document.createElement('div');status.className='pvProduction';status.dataset.producing=String(inverter.producing);text(status,inverter.producing===true?'Produziert: Ja':inverter.producing===false?'Produziert: Nein':'Produziert: Unbekannt');box.append(status);list.append(box);
+ }
+ card.append(list);
 }
 function roomOverview(section,room,climate){
  const overview=document.createElement('div');overview.className='roomOverview';
@@ -479,12 +522,19 @@ function renderRoomSections(sections,climate=[]){
   const section=document.createElement('section');section.className='roomPage';
   if(names.length>1){const title=document.createElement('h2');text(title,name);section.append(title);}roomOverview(section,room,temperatures);
   const groups=document.createElement('div');groups.className='roomGroupGrid';
-  const list=room.groups.slice();let climateGroup=list.find(group=>groupKind(group.name)==='climate');
-  if(temperatures.length&&!climateGroup){climateGroup={name:'Raumklima',items:[]};list.push(climateGroup);}
-  list.sort((a,b)=>order.indexOf(groupKind(a.name))-order.indexOf(groupKind(b.name)));
-  for(const group of list){
-   const kind=groupKind(group.name),groupBox=document.createElement('div');groupBox.className='roomGroup roomGroup-'+kind;const title=document.createElement('h3');text(title,group.name);groupBox.append(title);
-   if(group===climateGroup&&temperatures.length){const board=climateBoard(temperatures);addClimateSteps(board,temperatures);groupBox.append(board);}
+  const categories=new Map(),labels={light:'Licht',climate:'Klima',media:'Medien',bed:'Wasserbett',sensor:'Sensoren',energy:'Energie',other:'Weitere Geräte'};
+  for(const group of room.groups){const kind=groupKind(group.name);if(!categories.has(kind))categories.set(kind,{name:labels[kind],items:[]});categories.get(kind).items.push(...group.items);}
+  if(temperatures.length&&!categories.has('climate'))categories.set('climate',{name:labels.climate,items:[]});
+  const kinds=order.filter(kind=>categories.has(kind));
+  let active=activeRoomCategories.get(name);if(!categories.has(active))active=kinds[0];
+  if(kinds.length>1){
+   const tabs=document.createElement('div');tabs.className='roomCategoryTabs';tabs.setAttribute('aria-label','Bereiche in '+name);
+   for(const kind of kinds){const button=document.createElement('button');button.type='button';text(button,labels[kind]);button.setAttribute('aria-pressed',String(kind===active));button.addEventListener('click',()=>{activeRoomCategories.set(name,kind);render();});tabs.append(button);}section.append(tabs);
+  }
+  for(const kind of kinds){
+   if(kind!==active)continue;
+   const group=categories.get(kind),groupBox=document.createElement('div');groupBox.className='roomGroup roomGroup-'+kind;const title=document.createElement('h3');text(title,group.name);groupBox.append(title);
+   if(kind==='climate'&&temperatures.length){const board=climateBoard(temperatures);addClimateSteps(board,temperatures);groupBox.append(board);}
    const grid=document.createElement('div');grid.className='roomDeviceGrid';const devices=new Map();
    for(const item of group.items){const key=item.deviceKey??('source:'+item.id);if(!devices.has(key))devices.set(key,[]);devices.get(key).push(item);}
    const extra=[];

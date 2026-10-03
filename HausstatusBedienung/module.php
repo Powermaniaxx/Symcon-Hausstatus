@@ -122,6 +122,9 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
         }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
+        if (in_array($this->ReadPropertyInteger('View'), [0, 7], true)) {
+            foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
+        }
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) { $ids[] = $room['Variable']; }
         }
@@ -772,6 +775,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['TemperatureRows'] = $this->TemperatureRows();
         $state['Dining'] = in_array($this->CurrentView(), [0, 5], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
+        $state['PVInverters'] = $this->PVInverters();
         $state['PVDetailsTarget'] = $this->CurrentView() === 0 ? $this->PVDetailsTarget() : 0;
         $state['RoomNavigationTarget'] = $this->CurrentView() === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
