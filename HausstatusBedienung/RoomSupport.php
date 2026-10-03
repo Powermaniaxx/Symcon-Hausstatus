@@ -24,13 +24,18 @@ trait HausstatusRoomSupport
     private function SelectedRoomEntries(): array
     {
         $view = $this->ReadPropertyInteger('View');
-        if ($view === 9) { return $this->TemperatureEntries(); }
+        if ($this->HasTemperatureView()) {
+            $profile = $this->HeatingProfileEntry();
+            $entries = $view === 9 ? $this->TemperatureEntries() : [];
+            if ($profile !== null) { $entries[] = $profile; }
+            return $entries;
+        }
         if (!in_array($view, [7, 12], true)) { return []; }
-        $filter = $view === 7 ? 'PV-Anlage' : $this->ReadPropertyString('RoomFilter');
+        $filter = $view === 7 ? $this->ConfigString('PVRoom') : $this->ReadPropertyString('RoomFilter');
         $result = $this->ExpandedRoomEntries($filter);
         if ($view === 12) {
             $extra = $this->TemperatureEntries();
-            if ($filter === '' || $filter === 'Wohnzimmer') { $extra = array_merge($extra, $this->DiningEntries()); }
+            if ($filter === '' || $filter === $this->ConfigString('DiningRoom')) { $extra = array_merge($extra, $this->DiningEntries()); }
             foreach ($extra as $entry) {
                 if (!array_filter($result, static fn(array $row): bool => $row['room'] === $entry['room'] && $row['id'] === $entry['id'])) { $result[] = $entry; }
             }
@@ -76,7 +81,7 @@ trait HausstatusRoomSupport
         $device = $type === 1 ? $target : (IPS_InstanceExists($parent) ? $parent : $target);
         $parts = explode(' · ', $prefix);
         $deviceName = $prefix !== '' ? $this->RoomLabel((string)end($parts)) : ($device !== $target ? $this->RoomLabel(IPS_GetName($device)) : $entry['Name']);
-        if (in_array($target, [10950, 45754, 45376, 16889, 38002], true)) { $deviceName = 'Cinema 40'; }
+        if ($this->IsCinemaVariable($target)) { $deviceName = $this->DisplayText('CinemaState'); }
         $result[] = ['room' => $entry['Room'], 'group' => $entry['Group'], 'name' => $name,
             'id' => $target, 'type' => $type, 'operate' => ($entry['Operate'] ?? false) === true,
             'deviceKey' => 'device:' . $device, 'deviceName' => $deviceName];
@@ -116,7 +121,7 @@ trait HausstatusRoomSupport
     private function ProtectedDoorTarget(int $id): bool
     {
         $protected = [$this->ConfigInteger('DoorControl'), $this->ConfigInteger('DoorPermission'),
-            $this->ConfigInteger('Lock'), 30053, 33983, 31820];
+            $this->ConfigInteger('Lock')];
         $control = $this->ConfigInteger('DoorControl');
         if (IPS_VariableExists($control)) {
             $v = IPS_GetVariable($control);
@@ -147,8 +152,10 @@ trait HausstatusRoomSupport
         foreach ($routes as $source => $command) {
             if ($id > 0 && $this->ConfigInteger($source) === $id) { return $command; }
         }
-        // The other known AVR power variable must respect the Cinema enable flag too.
-        return [10950 => 'Cinema', 45754 => 'Cinema', 45376 => 'CinemaVolume', 16889 => 'CinemaSource'][$id] ?? '';
+        // Power aliases of the configured receiver keep the same enable flag and action route.
+        if ($this->IsCinemaVariable($id) && IPS_GetVariable($id)['VariableType'] === 0
+            && in_array(strtolower(IPS_GetName($id)), ['power', 'mainzone power'], true)) { return 'Cinema'; }
+        return '';
     }
 
     private function RoomOptions(int $id, int $type): array
@@ -194,11 +201,12 @@ trait HausstatusRoomSupport
         $v = IPS_GetVariable($id); $type = (int)$v['VariableType'];
         if (($entry['temperature'] ?? false) && !in_array($type, [1, 2], true)) { throw new RuntimeException('Solltemperatur benötigt eine Integer- oder Float-Variable.'); }
         if (in_array($route, ['Dining', 'DiningBrightness'], true) && !$this->ConfigBoolean('DiningEnabled')) {
-            throw new RuntimeException('Esstisch-Bedienung ist deaktiviert.');
+            throw new RuntimeException('Bedienung der zusätzlichen Lampe ist deaktiviert.');
         }
         if (in_array($route, ['Light', 'Brightness'], true)) {
             $script = $this->ConfigInteger('LightCommandScript');
-            if (!$this->ConfigBoolean('LightEnabled') || !IPS_ScriptExists($script)) { throw new RuntimeException('Lichtbedienung und Bedienskript in 52627 einstellen.'); }
+            if (!$this->ConfigBoolean('LightEnabled') || ($script > 0 && !IPS_ScriptExists($script))) { throw new RuntimeException('Lichtbedienung und gegebenenfalls Bedienskript in der zentralen Konfiguration einstellen.'); }
+            if ($script === 0) { $this->ValidateAction($id, $type); }
             if (($route === 'Light' && $type !== 0) || ($route === 'Brightness' && $type !== 1)) {
                 throw new RuntimeException('Die Lichtquelle hat nicht den passenden Variablentyp.');
             }
@@ -265,7 +273,7 @@ trait HausstatusRoomSupport
         $label = explode(' · ', $entry['name']); $label = end($label);
         $primary = $control === null || in_array($control['kind'], ['bool', 'slider'], true);
         if (preg_match('/(?:übergang|farbtemperatur|^farbe$|batter|voltage|_status|detection_active|channel volume|minimum|maximum|kosten|energie|verbrauch|^min\b|^max\b)/iu', $label) === 1) { $primary = false; }
-        if (($control['kind'] ?? '') === 'enum' && in_array($id, [16889], true)) { $primary = true; }
+        if (($control['kind'] ?? '') === 'enum' && $id === $this->ConfigInteger('CinemaSource')) { $primary = true; }
         if ($entry['type'] !== 2) { $primary = false; }
         $role = $this->RoomItemRole($entry, $control);
         if (in_array($this->ReadPropertyInteger('View'), [9, 12], true)) {
@@ -286,7 +294,7 @@ trait HausstatusRoomSupport
         $roles = ['Light' => 'switch', 'Dining' => 'switch', 'Cinema' => 'switch', 'Brightness' => 'brightness',
             'DiningBrightness' => 'brightness', 'CinemaVolume' => 'volume', 'CinemaSource' => 'source'];
         if (isset($roles[$route])) { return $roles[$route]; }
-        if (in_array($id, [10950, 45754], true)) { return 'switch'; }
+        if (in_array($id, [$this->ConfigInteger('CinemaState'), $this->ConfigInteger('CinemaControl')], true)) { return 'switch'; }
         if (($entry['temperature'] ?? false) || $this->IsRoomSetpoint($entry)) { return 'setpoint'; }
         if (preg_match('/(?:_status|detection_active|current_illumination|übergang|transition|farbtemperatur|colou?r.?temperature|channel volume|batter|voltage|minimum|maximum|\bmin\b|\bmax\b|kosten|energie|verbrauch)/iu', $text)) { return 'other'; }
         if (preg_match('/(?:presence_detection_state|präsenz|praesenz)/iu', $text)) { return 'presence'; }
@@ -331,10 +339,7 @@ trait HausstatusRoomSupport
         $route = $control['route'] ?? '';
         if ($route === 'Dining') { $this->SetDining($route, $value); return; }
         if (in_array($route, ['Light', 'Brightness'], true)) {
-            if (!IPS_RunScriptEx($this->ConfigInteger('LightCommandScript'), ['COMMAND' => $route, 'VALUE' => $value, 'SOURCE' => 'HausstatusBedienung'])) {
-                throw new RuntimeException('Licht-Bedienskript konnte nicht gestartet werden.');
-            }
-            return;
+            $this->SetLight($route, $value); return;
         }
         if ($route === 'Cinema') {
             $id = $this->ConfigInteger('CinemaControl'); $this->ValidateAction($id, 0);

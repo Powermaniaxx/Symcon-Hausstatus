@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.13 – Einstellungen"
+      "caption": "Hausstatus 0.14 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -67,6 +67,10 @@
             {
               "caption": "Raum: Geräte und Bedienung",
               "value": 12
+            },
+            {
+              "caption": "Detail: Netzwerk / FritzBox",
+              "value": 13
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -92,7 +96,7 @@
         },
         {
           "type": "Label",
-          "caption": "Leer lassen für eigene Einstellungen. Bei den gemeinsamen Detailkacheln ist hier 52627 ausgewählt."
+          "caption": "Für die Übersicht leer lassen. In Unterseiten die eigene zentrale Hausstatus-Instanz auswählen."
         }
       ]
     },
@@ -100,6 +104,158 @@
       "type": "Label",
       "caption": "Die Quellen und Bedienoptionen werden in dieser Instanz eingestellt.",
       "name": "SettingsOrigin"
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "DisplaySettings",
+      "caption": "Texte und Beschreibungen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Bezeichnungen und Hinweise frei anpassen. Texte für An/Aus werden bei Boolean-Statusanzeigen verwendet. Leer lassen, um die bisherigen Zustandstexte zu behalten. Die Zeilen gehören zu den jeweiligen Quellen in den Einstellungen."
+        },
+        {
+          "type": "List",
+          "name": "DisplayTexts",
+          "caption": "Kacheltexte",
+          "rowCount": 8,
+          "add": false,
+          "delete": false,
+          "columns": [
+            {
+              "name": "Key",
+              "caption": "Bereich / Quelle",
+              "width": "0px",
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Überschrift Anwesenheit / Alarm",
+                    "value": "StatusTitle"
+                  },
+                  {
+                    "caption": "Überschrift Haustür",
+                    "value": "DoorTitle"
+                  },
+                  {
+                    "caption": "Anwesenheit",
+                    "value": "Presence"
+                  },
+                  {
+                    "caption": "Türschloss",
+                    "value": "Lock"
+                  },
+                  {
+                    "caption": "Türkontakt",
+                    "value": "DoorContact"
+                  },
+                  {
+                    "caption": "Türfreigabe",
+                    "value": "DoorPermission"
+                  },
+                  {
+                    "caption": "Alarm",
+                    "value": "Alarm"
+                  },
+                  {
+                    "caption": "Gerätewarnungen",
+                    "value": "BatteryWarnings"
+                  },
+                  {
+                    "caption": "Hauptlicht",
+                    "value": "LightState"
+                  },
+                  {
+                    "caption": "Zusätzliche Lampe",
+                    "value": "Dining"
+                  },
+                  {
+                    "caption": "Mediengerät",
+                    "value": "CinemaState"
+                  },
+                  {
+                    "caption": "PV-Anlage",
+                    "value": "PVPower"
+                  },
+                  {
+                    "caption": "Überschrift Außenbereich",
+                    "value": "OutdoorTitle"
+                  },
+                  {
+                    "caption": "Markise / Beschattung",
+                    "value": "Awning"
+                  },
+                  {
+                    "caption": "Dachfenster",
+                    "value": "Roof"
+                  },
+                  {
+                    "caption": "Bewegungsverlauf",
+                    "value": "MotionTitle"
+                  },
+                  {
+                    "caption": "Temperaturen",
+                    "value": "TemperatureTitle"
+                  },
+                  {
+                    "caption": "Heizungsprofil",
+                    "value": "HeatingProfile"
+                  },
+                  {
+                    "caption": "Wetter",
+                    "value": "WeatherTitle"
+                  },
+                  {
+                    "caption": "Netzwerk / Router",
+                    "value": "NetworkTitle"
+                  }
+                ]
+              },
+              "visible": false,
+              "save": true
+            },
+            {
+              "name": "Section",
+              "caption": "Bereich",
+              "width": "210px",
+              "save": false
+            },
+            {
+              "name": "Text",
+              "caption": "Bezeichnung",
+              "width": "200px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Description",
+              "caption": "Beschreibung (optional)",
+              "width": "auto",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "OnText",
+              "caption": "Text bei An",
+              "width": "140px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "OffText",
+              "caption": "Text bei Aus",
+              "width": "140px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "type": "ExpansionPanel",
@@ -114,7 +270,7 @@
         },
         {
           "type": "Label",
-          "caption": "Diese Bereiche erscheinen in ihren eigenen Detailkacheln. Zum erstmaligen Anlegen das vollständige Einrichtungsskript Hausstatus_Detailkacheln_0_8_KOMPLETT.php verwenden."
+          "caption": "Unterseiten als weitere Hausstatus-Instanzen anlegen: Inhalt wählen und die zentrale Instanz als gemeinsame Konfiguration auswählen."
         }
       ]
     },
@@ -186,7 +342,7 @@
     {
       "type": "ExpansionPanel",
       "name": "LightSettings",
-      "caption": "03 · Wohnzimmerlicht",
+      "caption": "03 · Licht und zusätzliche Lampe",
       "expanded": false,
       "items": [
         {
@@ -211,42 +367,47 @@
         },
         {
           "type": "Label",
-          "caption": "Für die vorhandene Automatik Skript 33054 mit der Fassung 3.3 verwenden. Ein/Aus und Helligkeit werden an dieses Skript übergeben."
+          "caption": "Optionales Bedienskript: erhält COMMAND (Light oder Brightness), VALUE und SOURCE. Ohne Skript werden die vorhandenen Variablenaktionen verwendet. Bei einer bestehenden Lichtautomatik das dafür eingerichtete Bedienskript beibehalten."
         },
         {
           "type": "Label",
-          "caption": "Esstisch · eigene Lichtgruppe unter Wohnzimmer"
+          "caption": "Zusätzliche Lampe / Lichtgruppe"
         },
         {
           "type": "SelectInstance",
           "name": "DiningInstance",
-          "caption": "Esstisch – Hue-Gruppe (54491)"
+          "caption": "Zusätzliche Lichtinstanz (optional)"
         },
         {
           "type": "SelectVariable",
           "name": "DiningState",
-          "caption": "Esstisch – Status (58764)"
+          "caption": "Zusätzliche Lampe – Boolean-Status"
         },
         {
           "type": "SelectVariable",
           "name": "DiningBrightness",
-          "caption": "Esstisch – Helligkeit (57302)"
+          "caption": "Zusätzliche Lampe – Helligkeit"
         },
         {
           "type": "CheckBox",
           "name": "DiningEnabled",
-          "caption": "Esstisch bedienen"
+          "caption": "Zusätzliche Lampe bedienen"
         },
         {
           "type": "Label",
-          "caption": "Herz bleibt eine eigene Lampe. Esstisch verwendet die native Hue-Aktion und ist unabhängig von der Wohnzimmerautomatik."
+          "caption": "Die zusätzliche Lampe verwendet ihre eigene Symcon-Aktion. Andere Lampen können unter Räume und weitere Geräte ergänzt werden."
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "DiningRoom",
+          "caption": "Raumname für die zusätzliche Lampe"
         }
       ]
     },
     {
       "type": "ExpansionPanel",
       "name": "CinemaSettings",
-      "caption": "04 · Cinema 40",
+      "caption": "04 · Mediengerät",
       "expanded": false,
       "items": [
         {
@@ -257,17 +418,17 @@
         {
           "type": "SelectVariable",
           "name": "CinemaSource",
-          "caption": "Quelle – Variable (16889)"
+          "caption": "Quelle – schaltbare Auswahlvariable"
         },
         {
           "type": "SelectVariable",
           "name": "CinemaVolume",
-          "caption": "Lautstärke – Variable (45376)"
+          "caption": "Lautstärke – numerische Variable"
         },
         {
           "type": "CheckBox",
           "name": "CinemaEnabled",
-          "caption": "Cinema-40-Bedienung aktivieren"
+          "caption": "Mediengerät bedienen"
         },
         {
           "type": "SelectVariable",
@@ -312,6 +473,11 @@
           "type": "SelectVariable",
           "name": "PVEnergy",
           "caption": "Energie heute"
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "PVRoom",
+          "caption": "Bereichsname für PV-Detailgeräte (muss zu Räume und weitere Geräte passen)"
         }
       ]
     },
@@ -432,6 +598,11 @@
       "expanded": false,
       "items": [
         {
+          "type": "SelectVariable",
+          "name": "HeatingProfile",
+          "caption": "Heizungsprofil – vorhandene Auswahl- oder Statusvariable (optional)"
+        },
+        {
           "type": "List",
           "name": "Rooms",
           "caption": "Räume und Temperaturvariablen",
@@ -513,7 +684,7 @@
         {
           "type": "SelectVariable",
           "name": "Raining",
-          "caption": "Regenstatus – RAINING (54692, Boolean)"
+          "caption": "Regenstatus – Boolean-Variable"
         },
         {
           "type": "SelectInstance",
@@ -605,6 +776,127 @@
         {
           "type": "Label",
           "caption": "Schalter, Auswahl, Regler und RGB-Farbe verwenden die vorhandene Variablendarstellung. Andere Darstellungen lassen sich über „Bedienung öffnen“ in Symcon bedienen. Türbefehle bleiben im Haustürbereich."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "NetworkSettings",
+      "caption": "12 · Netzwerk / FritzBox",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Vorhandene Variablen der FritzBox-Module auswählen. Einheiten und Texte stammen aus den Symcon-Variablendarstellungen. Die Netzwerk-Unterseite zeigt keine internen Portfreigaben oder Gerätelisten."
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkConnection",
+          "caption": "Verbindungsstatus"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDownload",
+          "caption": "Aktuelle Downloadrate"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkUpload",
+          "caption": "Aktuelle Uploadrate"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDownloadUsage",
+          "caption": "Download-Auslastung"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkUploadUsage",
+          "caption": "Upload-Auslastung"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkActiveDevices",
+          "caption": "Aktive Netzwerkgeräte"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDevices",
+          "caption": "Netzwerkgeräte insgesamt"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkUptime",
+          "caption": "Laufzeit"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkModel",
+          "caption": "Routermodell"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkFirmware",
+          "caption": "Software-Version"
+        },
+        {
+          "type": "List",
+          "name": "WirelessNetworks",
+          "caption": "WLAN und vorhandene QR-Code-Bilder",
+          "rowCount": 3,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "name": "Name",
+              "caption": "Bezeichnung",
+              "width": "180px",
+              "add": "WLAN",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "State",
+              "caption": "WLAN-Status",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            },
+            {
+              "name": "SSID",
+              "caption": "SSID",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            },
+            {
+              "name": "Devices",
+              "caption": "Aktive WLAN-Geräte",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            },
+            {
+              "name": "QRCode",
+              "caption": "QR-Code-Bild",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectMedia"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "QR-Codes werden aus vorhandenen PNG- oder JPEG-Medienobjekten gelesen und erst beim Aufklappen angezeigt. Keine Übertragung an einen QR-Code-Dienst. Nur Personen mit Zugriff auf diese Visualisierung können die Codes sehen."
         }
       ]
     }

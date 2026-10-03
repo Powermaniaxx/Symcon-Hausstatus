@@ -1,123 +1,85 @@
-# Sven Hausstatus 0.13
+# Hausstatus 0.14 für IP-Symcon
 
-IP-Symcon-Modul ab Version 9.0. Dieses Update korrigiert die Unterseiten der Fassung 0.12. Zentrale Instanz: **52627**. Kachelbereich: **55503**. Hausstatus-Link: **29867**.
+Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
-## 0.13: HTML auch auf geöffneten Unterseiten
+## Installation
 
-In 0.12 war bei allen Instanzen nur **SetVisualizationType(1)** gesetzt. Die HTML-Raumdarstellung war vorhanden, aber die Unterseiten hatten noch keine HTML-Vollbildunterstützung. Ab 0.13 verwenden alle Unterseiten **Typ 2**, den Symcon seit 9.0 für HTML in der Kachel und im Vollbild anbietet. **Die Startseite View 0 bleibt bei Typ 1. Ihr Aufbau, die Kacheln und die Bedienung bleiben gleich. Im kompakten Wetterblock kommt auf Wunsch nur eine Windzeile hinzu.** Sie liest weiterhin die konfigurierte Quelle **Wind**, standardmäßig **29921**, und zeigt deren formatierten Wert. Regenverlauf und Wetterdetail bleiben erhalten.
+1. Dieses Repository über **Module Control** in Symcon hinzufügen: `https://github.com/Powermaniaxx/Symcon-Hausstatus`.
+2. Eine eigene Kategorie für das Dashboard und darin eine Instanz **Hausstatus mit Bedienung** anlegen.
+3. In **Kachel und Konfiguration** als Inhalt **Übersicht** wählen. **Gemeinsame Einstellungen** leer lassen: Diese Instanz verwaltet die Quellen für das Dashboard.
+4. Die benötigten Variablen in den einzelnen Einstellungsbereichen auswählen. Neue Instanzen haben keine vorausgewählten Geräte- oder Variablen-IDs. Bewegung, Temperaturen, WLAN und Raumgeräte beginnen mit leeren Listen.
+5. Unter **Texte und Beschreibungen** Bezeichnungen und optionale Hinweise anpassen. Die anfänglichen Namen sind Beispiele und lassen sich ändern, etwa „Wohnzimmerlicht“, „Esstisch“ oder „Cinema 40“. Bei Boolean-Anzeigen können zusätzlich eigene Texte für An und Aus hinterlegt werden. Leere Zustandstexte behalten die bisherige Darstellung.
+6. **Änderungen übernehmen** und die Kategorie in der Kachelvisualisierung öffnen. Im Darstellungseditor **Instanzspezifische Darstellung** wählen, falls dort eine Liste ausgewählt ist.
 
-**Aktualisieren:** Modul in Module Control laden und bei **52627 Änderungen übernehmen**. Die zentrale Instanz übernimmt dabei auch die vorhandenen zugeordneten HTML-Unterseiten. Danach die Visualisierung neu laden.
+Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, wenn Symcon mindestens **9.1** und die passende SDK-Konstante bereitstellt. Sonst bleibt der normale HTML-Kacheltyp aktiv. Auf solchen Installationen führt der PV-Detailbutton zu einer Kategorie mit der normalen Detailkachel. Die Startseite verwendet weiterhin den normalen Kacheltyp.
 
-**Wenn weiterhin eine Liste erscheint:** Im Darstellungseditor der betroffenen Kachel **Instanzspezifische Darstellung** auswählen und die Auswahl speichern. Eine vorhandene Auswahl **Liste** wird durch das Modulupdate nicht im Browser überschrieben. Die neu gestalteten Raumseiten sind über **Räume öffnen** in der Startseite erreichbar. Die bisherigen nativen Raumseiten verwenden ihre eigene Darstellung; das HTML-Modul verändert deren Layout nicht.
+## Einstellungen und geeignete Quellen
 
-Falls unklar bleibt, welche Rauminstanzen vorhanden sind, **docs/Raumseiten_pruefen_0_13_KOMPLETT.php** vollständig in ein **neues temporäres Skript** kopieren und einmal manuell ausführen. Es zeigt für jede eigene Rauminstanz ID, View, Raumfilter, Konfigurationsquelle, HTML-Vollbildtyp und Verknüpfungen. Die Prüfung verändert keine Objekte und sendet keine Gerätebefehle. Sie kann die gespeicherte Darstellungswahl der Visualisierung nicht auslesen. Das vorhandene vollständige **Wohnansicht_0_12_KOMPLETT.php** bleibt für fehlende eigene Raumseiten verwendbar; es ist für ein reines 0.13-Update nicht erforderlich.
+| Bereich | Quellen und Bedienung |
+| --- | --- |
+| Anwesenheit und Alarm | Boolean-Statusvariablen. Eigene An-/Aus-Texte sind möglich. |
+| Haustür | Schlossstatus, eigener Türkontakt, letzte Öffnung und Schließung, Boolean-Freigabe und vorhandene Öffnen-Aktion. |
+| Hauptlicht | Boolean-Status und Integer-Helligkeit von 1 bis 100. Bedienung über vorhandene Variablenaktionen oder ein optionales Bedienskript. |
+| Zusätzliche Lampe | Eigene Status- und Helligkeitsvariable; optional eine Lichtinstanz zur Ermittlung ihrer Untervariablen. Raumname und Bezeichnung frei wählen. |
+| Medien | Status, Power-Aktion, Quellenwahl und Lautstärke. Optionen, Einheit, Grenzen und Schritte kommen von den tatsächlichen Variablendarstellungen. |
+| Gerätewarnungen | Integer-Variable mit der Anzahl der Warnungen. Eine Zählvariable wählen, kein PHP-Skript. |
+| PV | Aktuelle Leistung auf der Startseite; Tagesenergie und zusätzliche Geräte auf der Detailseite. Der PV-Bereichsname muss mit den Einträgen in der Raumgeräteliste übereinstimmen. |
+| Markise und Dachfenster | Position, eigener Zustand und Automatik; für Dachfenster optional Nachtbetrieb. Regler übernehmen die vorhandenen Grenzen und Schritte. |
+| Bewegung | Liste aus eigener Bezeichnung und Boolean-Bewegungsvariable; optional Archive Control für den Verlauf. |
+| Temperaturen | Liste aus Raumname, Isttemperatur und optionaler Sollvariable. Zusätzlich eine frei wählbare Heizungsprofilvariable. |
+| Wetter | Zustand, Wind, Regenmenge, Warnstufe, Sonnenzeiten und Boolean-Regenstatus. |
+| Netzwerk / FritzBox | Verbindung, aktuelle Datenraten und Auslastung, Geräteanzahl, Laufzeit, Modell und Software-Version; zusätzliche WLAN-Liste. |
 
-Offizielle Grundlage: [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [IPS_GetInstance](https://www.symcon.de/en/service/documentation/command-reference/management-instances/ips-getinstance/) und [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/).
+**Texte und Beschreibungen** legt die angezeigten Namen fest; die Variablen werden im jeweils zugehörigen Bereich ausgewählt. Die Texte ändern keine Gerätewerte. Eigene Beschreibungen erscheinen unmittelbar in der zugehörigen Kachel. Raum- und Gerätenamen werden direkt in den Listen gepflegt. Umlaute werden als UTF-8 gespeichert.
 
-## Neu in 0.12
+## Räume und Unterseiten
 
-Die Startseite zeigt die PV-Anlage als kleine Kachel mit der **aktuellen Leistung** und **Details öffnen**. Die große zusätzliche PV-Detailkachel wird beim Übernehmen der zentralen Einstellungen ausgeblendet. Der Button öffnet dieselbe weiterhin aktive Detailansicht mit Erträgen, Wechselrichtern, OpenDTU, Messwerten und Bedienung. Alle bisherigen Quellen bleiben erhalten. **In 0.12 blieb der Wetterblock einschließlich Regenverlauf unverändert. 0.13 ergänzt die Windzeile auf der Startseite.**
+Unter **Räume und weitere Geräte** pro Eintrag den **Raum / Bereich**, die **Gruppe**, eine **Beschriftung** und eine **Quelle** auswählen. Die Quelle kann eine Variable oder Geräteinstanz sein. Bei Geräteinstanzen liest das Modul die sichtbaren Untervariablen ein. **Bedienen** bestimmt, ob vorhandene Aktionen verfügbar sind. Gruppennamen wie **Licht**, **Heizung**, **Medien** und **Sensoren** ordnen den Inhalt für die tägliche Bedienung.
 
-Raumseiten sind für die tägliche Bedienung gegliedert: **Licht und Raumklima zuerst**, anschließend Medien und weitere Geräte. Eine kurze Statuszeile zeigt verfügbare Temperatur, Bewegung und Luftfeuchte. Lampen erscheinen als kompakte Karten mit eindeutigen Namen, Schalter und Dimmer. Aktive Lampen werden zusätzlich durch Zustand und Farbe gekennzeichnet. Pro Gerät bleiben höchstens vier häufige Werte oder Bedienelemente sichtbar; technische Zusatzwerte stehen unter **Weitere Werte** beziehungsweise **Weitere Einstellungen**. Geräte ohne Alltagsfunktionen werden in einem gemeinsamen aufklappbaren Bereich zusammengefasst.
+Raumseiten zeigen zuerst Licht und Raumklima, anschließend Medien und Sensoren. Häufig verwendete Schalter und Regler bleiben sichtbar; technische Zusatzwerte stehen in aufklappbaren Details. Soll- und Isttemperatur stehen nebeneinander, auch mobil. Ohne Sollquelle bleibt der Istwert sichtbar. Türbefehle bleiben dem Haustürbereich mit Freigabe und Sicherheitsfrage vorbehalten.
 
-**Heizung:** Sollwerte und Isttemperatur gehören in einen gemeinsamen Block. Die linke Spalte enthält die vorhandenen Sollregler mit Minus/Plus, rechts steht der gemessene Wert. Grenzen und Schrittweite kommen vom echten Thermostat. Mobil bleiben Soll und Ist nebeneinander; die Funktionsbereiche folgen untereinander. Ohne Sollquelle bleibt die Isttemperatur sichtbar.
+Unterseiten lassen sich als weitere Instanzen desselben Moduls anlegen. In **Inhalt dieser Kachel** den Bereich auswählen und als **Gemeinsame Einstellungen** die eigene zentrale Instanz wählen. Für eine einzelne Raumseite den Inhalt **Räume und weitere Geräte** und den passenden **Raumname** einstellen. Die Namen müssen mit den Raumlisten übereinstimmen.
 
-**Medien:** Ein/Aus, Quelle und Lautstärke stehen gemeinsam beim Gerät. Sensoren bleiben von der Bedienung getrennt; interne Statuscodes und weitere Helligkeits-/Batteriewerte sind in den Details erreichbar. Aufgeklappte Details bleiben bei Hintergrundaktualisierungen geöffnet. Fehlende Quellen werden als Hinweise angezeigt. Esstisch und Herz bleiben getrennte Lampen.
+Alternativ legt [Seiten_anlegen_ALLGEMEIN.php](docs/Seiten_anlegen_ALLGEMEIN.php) die Detail- und Raumseiten aus der eigenen Konfiguration an. Vollständig in ein neues temporäres Skript kopieren, oben bei `$master` die **eigene zentrale Modulinstanz** eintragen und einmal manuell ausführen. Das Skript übernimmt keine fremden Gerätequellen und sendet keine Gerätebefehle. Vorhandene eigene Seiten werden wiederverwendet; bei anders belegten Objektkennungen bricht es vor Änderungen ab. Die zentrale Instanz muss direkt unter der eigenen Dashboard-Kategorie liegen.
 
-Die Anordnung setzt [Home Assistants Empfehlung für zusammengehörige Bereiche auf einem regelmäßigen Raster](https://www.home-assistant.io/dashboards/sections/) und [Apples Empfehlung für wesentliche Inhalte zuerst und zusätzliche Optionen bei Bedarf](https://developer.apple.com/videos/play/wwdc2025/359/) um. Bedienflächen erhalten ausreichend Platz entsprechend [Googles Empfehlungen für Touch-Bedienung](https://developer.android.com/develop/ui/compose/accessibility/api-defaults). Quellen und Variablenaktionen werden dafür weiterverwendet.
+Die Netzwerkseite ist ein eigener Inhalt. Sie ergänzt die Startseite nicht um weitere Karten. Die PV-Startkarte bleibt auf aktuelle Leistung und Detailzugang beschränkt. Der kompakte Wetterblock enthält Wetter und Wind sowie den Regenverlauf. Anwesenheit/Alarm und Haustür bleiben an erster und zweiter Stelle.
+
+## Heizungsprofil
+
+Unter **Temperaturen** die vorhandene **Heizungsprofilvariable** auswählen. Die Temperaturansicht zeigt den aktuellen Wert. Eine vorhandene Auswahlaktion wird mit ihren tatsächlichen Optionen bedienbar; ohne Aktion bleibt die Anzeige lesbar. Andere Darstellungen sind über die native Symcon-Bedienung erreichbar. Die Variable wird nicht angelegt und nicht durch eine Modulvariable ersetzt.
+
+Solltemperaturen werden pro Raum zugeordnet. Ohne explizite Sollquelle sucht das Modul passende Solltemperaturen aus den gewählten Raumgeräten oder demselben Thermostat. Bedienelemente verwenden dessen Grenzen und Schrittweite.
+
+## FritzBox und WLAN-QR-Codes
+
+Die FritzBox-Anbindung selbst erfolgt über die bereits vorhandenen Symcon-FritzBox-Module. Hausstatus liest deren Variablen und verbindet sich nicht separat mit dem Router.
+
+Unter **Netzwerk / FritzBox** die gewünschten Quellen auswählen. **Download / Upload** verwenden die aktuellen Raten; die maximale Anschlussrate ist eine andere Quelle. Einheiten stammen aus der gewählten Variable. In **WLAN und vorhandene QR-Code-Bilder** pro Netz Bezeichnung, Status, SSID, aktive Geräte und ein vorhandenes **Bild-Medienobjekt** auswählen. Die Bezeichnungen können beispielsweise „WLAN 2,4 GHz“, „WLAN 5 GHz“ oder „Gastnetz“ sein.
+
+Die Detailseite zeigt die wichtigsten Netzwerkinformationen und kompakte WLAN-Karten. **WLAN-QR-Code anzeigen** klappt das vorhandene PNG- oder JPEG-Bild auf. Es wird aus Symcon gelesen und innerhalb der Detailseite eingebettet; es gibt keinen externen QR-Code-Dienst. Wer Zugriff auf diese Seite hat, kann den WLAN-Code sehen. Passwörter werden nicht als separate Konfigurationsfelder benötigt. Ein fehlendes oder ungeeignetes Bild wird als Hinweis angezeigt.
+
+## Lichtautomatik und Haustür
+
+Für das Hauptlicht kann ein vorhandenes Bedienskript ausgewählt werden. Es erhält über `IPS_RunScriptEx` die Parameter `COMMAND` (`Light` oder `Brightness`), `VALUE` (Boolean beziehungsweise Integer-Prozentwert) und `SOURCE`. Ist ein Skript ausgewählt, wird ausschließlich dieses verwendet. So bleibt der manuelle Schutz einer vorhandenen Lichtautomatik erhalten. Ohne Skript verwendet das Modul die eigenen Variablenaktionen; Status ist Boolean, Helligkeit Integer von 1 bis 100. Andere Lampen und native Dimmerformate können in den Raumgeräten ergänzt werden.
+
+Die Türöffnung benötigt eine ausdrücklich gewählte Boolean-Freigabe und eine Integer-Bedienvariable mit **vorhandenem benutzerdefiniertem Aktionsskript**. Im Variablenprofil muss genau eine Aktion **Öffnen**, **Tür öffnen** oder **Open** vorhanden sein. Die Sicherheitsfrage muss bestätigt werden; die Bestätigung ist kurzzeitig gültig und nur einmal nutzbar. Freigeben öffnet die Tür noch nicht. Das Modul schreibt nicht direkt in den Schlossaktor.
+
+Der derzeitige Schlossstatus erwartet `1 = verriegelt`, `2 = aufgeschlossen`; der Türkontakt erwartet `true` oder `1 = offen` und `false` oder `0 = geschlossen`. Andere Gerätewerte müssen über passende bestehende Statusvariablen bereitgestellt werden. Bedienfreigaben werden separat aktiviert.
+
+## Verläufe und Aktualisieren
+
+Bewegungs- und Regenverläufe zeigen archivierte Zustandswechsel der letzten **24 Stunden** in **Europe/Berlin**. Bei genau einem Archive Control kann die Archivauswahl leer bleiben; bei mehreren ein Archiv auswählen. Die Archivierungsoption aktiviert die Aufzeichnung der gewählten Boolean-Variablen. Noch nicht aufgezeichnete Vergangenheit wird nicht nachträglich erzeugt.
+
+Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den regelmäßigen Modulabruf. **Aktualisieren** fragt Werte und Verläufe erneut ab und bestätigt auch unveränderte Werte. Ein Modulupdate wird dagegen in **Module Control** geladen. Die Texte „Befehl übergeben“ und erfolgreiche Aktionsmeldungen verschwinden nach kurzer Zeit.
 
 ## Bestehende Installation aktualisieren
 
-1. In Symcon **Module Control** das Repository [Symcon-Hausstatus](https://github.com/Powermaniaxx/Symcon-Hausstatus) aktualisieren. **library.json** zeigt Version **0.13**, Build **13**. Der vollständige Modulordner enthält auch **NavigationSupport.php**.
-2. Instanz **52627** öffnen und **Änderungen übernehmen**. Das blendet ausschließlich die korrekt zugeordnete eigene PV-Detailverknüpfung **SVHSTileLink_7** auf der Startseite aus. Die Instanz **SVHSTile_7** bleibt aktiv und ist über **Details öffnen** erreichbar. Ein anders belegter Link wird nicht verändert.
-3. Konfiguration schließen und die Visualisierung neu laden. Der Tooltip am Aktualisieren-Button zeigt **Hausstatus 0.13**. Bereits vorhandene eigene Raumseiten bekommen die neue Darstellung automatisch. Der eigene Bereich heißt jetzt **Räume**, sofern er bisher einen der ursprünglichen Namen „Raumsteuerung“ oder „Räume und Geräte“ trug. **Räume öffnen** führt direkt zu diesen HTML-Raumseiten.
-4. Fehlen die eigenen Raumseiten oder die PV-Detailinstanz, **docs/Wohnansicht_0_12_KOMPLETT.php** vollständig in ein **neues temporäres PHP-Skript** kopieren und einmal manuell ausführen. Anschließend die zentrale Instanz übernehmen und die Visualisierung neu laden. Das vollständige Skript erhält bestehende Quellen, liest weitere Raumverknüpfungen ein und verwendet dieselben eigenen Kacheln und Links erneut.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.14**, Build **14**.
 
-Die bestehenden nativen Raumseiten aus „Räume und Punkte“ bleiben erhalten; die neu gestalteten HTML-Seiten stehen im eigenen Bereich **Räume**. Quellen und Bedienfreigaben werden zentral in **52627** eingestellt. Bei fehlenden Thermostatsollwerten unter **09 · Temperaturen** pro Raum die vorhandene Sollvariable auswählen.
+Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
-Das Einrichtungsskript liest Raumverknüpfungen unter **52891** und ergänzend **10577**, sofern vorhanden. Bereits konfigurierte Quellen behalten Vorrang; bekannte Vorgaben ergänzen nur fehlende Ziele. Die Ausgabe nennt die gelesenen Kategorien und übernommenen Quellen. **49024, die alte Visualisierung unter 30848, Gerätequellen und das vorhandene Lichtskript werden nicht bearbeitet oder ausgeführt.** Die alten Einrichtungsskripte sind für frühere Fassungen beigefügt; für dieses Update **Wohnansicht_0_12_KOMPLETT.php** verwenden. Das alte 0.11-Skript würde die große PV-Detailverknüpfung erneut auf der Startseite einblenden.
+**0.14 korrigiert die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-## Esstisch und Regen
+Bei weiterhin leeren Ansichten [Ansichten_pruefen_0_14_KOMPLETT.php](docs/Ansichten_pruefen_0_14_KOMPLETT.php) in ein neues temporäres Skript kopieren und manuell ausführen. Die Diagnose liest alle Modulinstanzen ohne persönliche Vorgaben und ohne Gerätebefehle. Sie gibt keine vollständigen HTML-Inhalte oder WLAN-Codes aus. Die älteren Einrichtungsskripte im Ordner `docs` sind historische, installationsbezogene Fassungen; für neue Installationen die allgemeine Anleitung und das allgemeine Seitenskript verwenden.
 
-| Quelle | ID |
-| --- | ---: |
-| Esstisch · Hue-Gruppe | **54491** |
-| Esstisch · Status | **58764** |
-| Esstisch · Helligkeit | **57302** |
-| Herz · eigene Lampeninstanz | **56035** |
-| Regenstatus · RAINING | **54692** |
-| Bisherige Regenmenge | **54690** |
-
-Esstisch lässt sich unabhängig von der Wohnzimmergruppe ein-/ausschalten und dimmen. **DiningEnabled** schaltet die Bedienung frei; Quellen stehen unter **03 · Wohnzimmerlicht**. Die vorhandenen Hue-Aktionen werden verwendet. Esstisch setzt nicht den manuellen Zustand der Wohnzimmerautomatik. Die Einstellungen **DiningInstance**, **DiningState** und **DiningBrightness** bleiben getrennt von deren Quellen.
-
-**Raining** benötigt eine Boolean-Variable. **RainArchive** 0 verwendet bei genau einem Archive Control dieses Archiv; bei mehreren ein Archiv auswählen. **RainLogging** aktiviert die Aufzeichnung der gewählten Regenvariable. Startseite und Wetterdetail zeigen aktuellen Regenstatus, Zeitband und aufklappbare Regenzeiten der letzten **24 Stunden** in **Europe/Berlin**. Eine Phase vor dem Zeitfenster wird als solche gekennzeichnet; eine noch laufende Archivphase reicht bis zum Abfrageende. Wiederholte gleiche Meldungen erzeugen keine zusätzlichen Regenphasen. Fehlende Daten und ein erreichtes Abfragelimit werden angezeigt. Nicht aufgezeichnete Vergangenheit wird nicht nachträglich erzeugt. Nach erstmaliger Aktivierung steht deshalb noch kein vollständiger 24-Stunden-Verlauf zur Verfügung.
-
-## Raumseiten und vorhandene Funktionen
-
-Die sichtbaren Raumverknüpfungen ergänzen die folgenden bekannten Vorgaben aus der bisherigen Visualisierung:
-
-| Bereich | Ergänzte Inhalte |
-| --- | --- |
-| Wohnzimmer | Hue-Gruppe und Einzellampen, Zusatzheizung mit Automatik und Temperaturgrenzen, Bewegung/Präsenz, Cinema 40 mit Quelle und Lautstärke, Surround-Modus und HEOS |
-| Schlafzimmer | Licht, Präsenz, Wasserbett mit Heiztemperaturen, Leistung, Energie und Kosten für verschiedene Zeiträume |
-| Flur | Temperatur, Bewegung und Helligkeit |
-| Ankleidezimmer, Bad, Büro, Büro Keller, Sportraum, Keller | Bekannte Temperaturen sowie weitere vorhandene Raumverknüpfungen; Keller zusätzlich Bewegung |
-| Küche | Boiler und weitere vorhandene Raumverknüpfungen |
-| Terrasse | Bewegung, Dauerlicht und Steckdosenbetrieb |
-| PV-Details | Leistung und Tagesenergie aus der bestehenden PV-Kachel, AC- und Panelleistung, Gesamtenergie, Wechselrichtertemperaturen sowie HM-800, HM-1500 und OpenDTU |
-
-**RoomEntries** ist die gemeinsame Liste mit Raum, Gruppe, Beschriftung, Quelle und Bedienfreigabe. Eine Quelle kann eine Variable, Geräteinstanz, ein Skript oder Medium sein. Bei Geräteinstanzen werden sichtbare und aktive Variablen ergänzt; eigene HTML-Boxen werden nicht als Quelltext eingeblendet. Sind keine passenden Variablen vorhanden, bleibt die native Geräteansicht erreichbar. Nicht benötigte Zeilen können aus dieser Liste entfernt werden. **RoomControlsEnabled** sperrt oder aktiviert die Raumgerätebedienung insgesamt. Die Auswahl „Bedienen“ steuert jede einzelne Quelle.
-
-Direkte HTML-Bedienung setzt eine vorhandene aktive Variablenaktion voraus. Schalter übergeben Boolean, Auswahlfelder ausschließlich die hinterlegten Werte mit ihrem ursprünglichen Typ. Regler übernehmen Grenzen, Schrittweite und Einheit aus der Variablendarstellung oder dem Legacy-Profil. Prozentwerte werden nur für die Anzeige umgerechnet; an die Aktion geht der unveränderte Rohwert. RGB verwendet Integer von 0 bis 16777215. Andere Farbcodierungen und spezielle Darstellungen werden in ihrer nativen Symcon-Oberfläche geöffnet.
-
-Die Wohnzimmergruppe und ihre Helligkeit verwenden weiterhin das gewählte Licht-Bedienskript. Einzellampen und weitere Geräte nutzen ihre eigenen vorhandenen Aktionen; sie setzen nicht zusätzlich den manuellen Zustand der Wohnzimmerautomatik. Für deren manuellen Schutz die Gruppenbedienung verwenden. Die Cinema- und Markisen-/Dachfensterfreigaben gelten auch für die entsprechenden Raumvariablen. Türbefehle und die Türfreigabe werden in generischen Raumseiten gesperrt und bleiben im vorgesehenen Haustürbereich mit Sicherheitsfrage.
-
-## Markise, Dachfenster und Haustür
-
-| Quelle | ID |
-| --- | ---: |
-| Schlossstatus | 14438 |
-| Türkontakt | 47467 |
-| Türfreigabe | 33983 |
-| Tür-Bedienvariable | 30053 |
-| Letzte Öffnung | 19534 |
-| Letzte Schließung | 55355 |
-| Markise Position | 20434 |
-| Markise Automatik | 44425 |
-| Markise/Rollo Status | **35313** |
-| Dachfenster Position | 37131 |
-| Dachfenster Automatik | 30082 |
-| Dachfenster über Nacht | 44013 |
-| Dachfenster Status | **25259** |
-
-Die Statuszeilen zeigen jeweils den formatierten Wert der angegebenen Variable und werden unabhängig von Position und Automatik gelesen. **OutdoorEnabled** aktiviert die Bedienung. Positionsregler benötigen Integer-/Float-Variablen mit Aktion und gültiger Reglerdarstellung; Automatikschalter benötigen Boolean mit Aktion. Bestehende Motorsteuerungen und Automatikskripte werden weiterverwendet.
-
-**DoorEnabled** aktiviert Türfreigabe und Öffnen. Freigeben allein öffnet nicht. Die vorhandene Integer-Bedienvariable 30053 benötigt ihr benutzerdefiniertes Aktionsskript und im Legacy-Profil eine eindeutige Öffnen-Assoziation. Der Öffnen-Wert wird aus diesem Profil gelesen. Ein offener Türkontakt sperrt das Öffnen. „Tür öffnen“ zeigt eine Sicherheitsfrage; Abbrechen sendet keinen Befehl. Die Bestätigung gilt einmalig für die anfragende Anzeige und 20 Sekunden. Freigabe und Öffnungsplan werden vor der Ausführung erneut geprüft. Andere vorhandene native Türbedienelemente werden durch diese Frage nicht verändert.
-
-## Cinema, Licht und Gerätewarnungen
-
-CinemaVolume: **45376**, Master Volume, Float. CinemaSource: **16889**, Input Source, Integer. CinemaState: **45754**. CinemaControl ist die gewählte vorhandene Boolean-Power-Variable; **CinemaEnabled** aktiviert die Bedienung. In bestehenden Instanzen bleiben die gewählten IDs erhalten. Die Lautstärke verwendet die nativen Reglergrenzen und Schritte. Ein Befehl wird erst beim Loslassen gesendet. Die Quellenwahl zeigt die hinterlegten Optionen.
-
-**LightEnabled** aktiviert Wohnzimmerlicht und Helligkeit. Das vorhandene Skript **33054** in Fassung 3.3 wird als **LightCommandScript** gewählt. Die beigefügte **Wohnzimmer_Lichtautomatik_3_3_KOMPLETT.php** ist ein vollständiger Ersatz, falls diese Fassung noch fehlt; vorhandene spätere Anpassungen zuvor abgleichen. Ein setzt den manuellen Modus und Weiß, Aus setzt die 30-Minuten-Sperre. In 0.10 wurden nur Kommentare und sichtbare Meldungen dieser Skriptdatei auf Umlaute umgestellt; die Automatiklogik wurde nicht geändert.
-
-**BatteryWarnings** muss die Integer-Zählvariable „Anzahl Gerätewarnungen“ aus dem Batteriewächter sein, nicht das Skript. Ohne Quelle erscheint „Nicht eingerichtet“. Die PV-Übersicht verwendet weiterhin 55194 und 50290.
-
-## Bewegung, Temperaturen, Wetter und Aktualisieren
-
-Bewegung verwendet die konfigurierte **MotionSensors**-Liste. Bekannte Quellen: Flur 26325, Wohnzimmer Bewegung 58943, Wohnzimmer Präsenz 37345, Terrasse 34118, Schlafzimmer Präsenz 22412 und Keller 16931. **MotionArchive** 0 wählt bei genau einem Archive Control automatisch dieses Archiv. **MotionLogging** aktiviert die Archivierung der gewählten Boolean-Variablen. Angezeigt werden Zustand, Bewegungsphasen und Zustandswechsel der letzten 24 Stunden in Europe/Berlin. Nicht aufgezeichnete Vergangenheit wird nicht nachträglich erzeugt. Ein erreichtes Abfragelimit wird angezeigt.
-
-Temperaturen verwenden weiterhin **Rooms**, ergänzt um das optionale Feld **Setpoint**. Die bisherigen **Name**- und **Variable**-Felder bleiben erhalten. Temperatursollwerte sind ausschließlich in der zugehörigen Raumseite und der Temperaturansicht bedienbar. Wetter zeigt Wetterzustand, Wind, Regenmenge, Warnstufe, Sonnenaufgang und Sonnenuntergang sowie den Regenverlauf. Bewegung bleibt ein eigener Detailbereich.
-
-**Aktualisieren** in jeder HTML-Kachel wartet auf die zugehörige Rückmeldung, auch bei unveränderten Werten. Nach Erfolg erscheint eine Uhrzeit. Fehler und eine fehlende Antwort nach acht Sekunden werden daneben angezeigt. Der Verlauf wird frisch aus dem Archiv gelesen. Der Button liest die aktuellen Symcon-Variablenwerte; Moduldateien werden über Module Control aktualisiert. Quellenmeldungen und der 30-Sekunden-Timer aktualisieren die Anzeige zusätzlich.
-
-„Befehl übergeben“ verschwindet nach drei Sekunden. Die Meldung bestätigt die Übergabe an die vorhandene Aktion. Fehler bleiben sichtbar. Für lokale Ansicht und Aktivierung gelten weiterhin **View**, **ConfigSource** und **ActiveView**. Die neue Raumansicht hat **View 12**; **RoomFilter** bestimmt nur lokal den Raum. Alte Ansichtsnummern und gespeicherte Eigenschaftsnamen bleiben erhalten.
-
-## Prüfung
-
-Die JavaScript-Logik wird mit einem simulierten DOM geprüft: Aktualisierung in allen zwölf Ansichten, passende Rückmeldungen, unveränderte und geänderte Werte, Fehler, Timeout, erneuter Versuch, Türabbruch und Reihenfolge der Übersicht. Dazu kommen die neue direkte Navigation zu Räumen und PV-Details, einzelne Lampenschalter, gruppierte Zusatzwerte, Plus/Minus mit echten Thermostatgrenzen sowie typgerechte Raum- und Esstischbefehle, Prozentrohwerte, Lautstärke, Farbe, native Bedienung, Gerätebündelung, getrenntes Herz/Esstisch, geöffnete Details, Soll-/Ist-Zuordnung, fehlende Sollquellen und Regenphasen mit unbekannter Vorgeschichte, Zeitfenstergrenzen, gleichen Wiederholungen und fehlenden Archiven. Die PHP-Syntax wurde mit einem PHP-Parser geprüft. JSON, UTF-8, Quellenzuordnung, erforderliche Dateien und der Erhalt aller 46 bisherigen Konfigurationsfelder wurden ebenfalls geprüft.
-
-Eine Symcon-Laufzeit, echte Browserdarstellung und die physischen Geräte sind hier nicht verfügbar. Zusätzliche Raumquellen werden beim manuellen Einrichtungslauf in Symcon eingelesen. Die tatsächliche Darstellung auf dem Handy und Geräteaktionen sind dort zu prüfen.
-
-Offizielle Dokumentation: [HTML SDK](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/), [Variablendarstellung](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenverwaltung/ips-getvariablepresentation/), [Schieberegler](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/presentations/slider/), [Aufzählung](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/darstellungen/aufzaehlung/).
-
-Regenarchiv: [AC_GetLoggedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/) und [AC_SetLoggingStatus](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-setloggingstatus/).
+Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).

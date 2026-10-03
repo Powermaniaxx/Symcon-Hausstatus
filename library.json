@@ -1,12 +1,12 @@
 {
   "id": "{2AC4EF61-E417-423C-A0E7-A0A797A0357A}",
   "author": "Sven",
-  "name": "Sven Hausstatus",
+  "name": "Hausstatus",
   "url": "",
   "compatibility": {
     "version": "9.0"
   },
-  "version": "0.13",
-  "build": 13,
-  "date": 1791028067
+  "version": "0.14",
+  "build": 14,
+  "date": 1791029807
 }

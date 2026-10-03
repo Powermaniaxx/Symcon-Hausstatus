@@ -4,6 +4,8 @@ require_once __DIR__ . '/RoomSupport.php';
 require_once __DIR__ . '/ComfortSupport.php';
 require_once __DIR__ . '/RainSupport.php';
 require_once __DIR__ . '/NavigationSupport.php';
+require_once __DIR__ . '/DisplaySupport.php';
+require_once __DIR__ . '/NetworkSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -11,16 +13,20 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusComfortSupport;
     use HausstatusRainSupport;
     use HausstatusNavigationSupport;
+    use HausstatusDisplaySupport;
+    use HausstatusNetworkSupport;
     private const SOURCES = [
-        'Presence' => 12936, 'Lock' => 14438, 'DoorContact' => 47467,
-        'DoorControl' => 30053, 'DoorPermission' => 33983, 'Alarm' => 14477, 'BatteryWarnings' => 0,
-        'LightState' => 57731, 'Brightness' => 31102, 'CinemaState' => 45754,
-        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 45376, 'PVPower' => 55194, 'PVEnergy' => 50290,
-        'Weather' => 43788, 'Wind' => 29921, 'Rain' => 54690, 'Warning' => 37768,
-        'Sunrise' => 33479, 'Sunset' => 16488,
-        'DoorOpened' => 19534, 'DoorClosed' => 55355,
-        'AwningPosition' => 20434, 'AwningAuto' => 44425, 'AwningStatus' => 35313,
-        'RoofPosition' => 37131, 'RoofAuto' => 30082, 'RoofNight' => 44013, 'RoofStatus' => 25259
+        
+        'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
+        'HeatingProfile' => 0, 'Presence' => 0, 'Lock' => 0, 'DoorContact' => 0,
+        'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
+        'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
+        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
+        'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
+        'Sunrise' => 0, 'Sunset' => 0,
+        'DoorOpened' => 0, 'DoorClosed' => 0,
+        'AwningPosition' => 0, 'AwningAuto' => 0, 'AwningStatus' => 0,
+        'RoofPosition' => 0, 'RoofAuto' => 0, 'RoofNight' => 0, 'RoofStatus' => 0
     ];
 
     public function Create(): void
@@ -35,23 +41,27 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
         $this->RegisterPropertyInteger('ConfigSource', 0);
         $this->RegisterPropertyString('RoomFilter', '');
+        $this->RegisterPropertyString('DiningRoom', 'Wohnzimmer');
+        $this->RegisterPropertyString('PVRoom', 'PV-Anlage');
+        $this->RegisterPropertyString('DisplayTexts', $this->DefaultDisplayTexts());
+        $this->RegisterPropertyString('WirelessNetworks', '[]');
         $this->RegisterPropertyString('RoomEntries', $this->GetRoomDefaults());
         $this->RegisterPropertyBoolean('RoomControlsEnabled', true);
-        $this->RegisterPropertyInteger('DiningInstance', 54491);
-        $this->RegisterPropertyInteger('DiningState', 58764);
-        $this->RegisterPropertyInteger('DiningBrightness', 57302);
+        $this->RegisterPropertyInteger('DiningInstance', 0);
+        $this->RegisterPropertyInteger('DiningState', 0);
+        $this->RegisterPropertyInteger('DiningBrightness', 0);
         $this->RegisterPropertyBoolean('DiningEnabled', true);
-        $this->RegisterPropertyInteger('Raining', 54692);
+        $this->RegisterPropertyInteger('Raining', 0);
         $this->RegisterPropertyInteger('RainArchive', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
-        $this->RegisterPropertyString('MotionSensors', '[{"Name":"Flur","Variable":26325},{"Name":"Wohnzimmer Bewegung","Variable":58943},{"Name":"Wohnzimmer Präsenz","Variable":37345},{"Name":"Terrasse","Variable":34118},{"Name":"Schlafzimmer Präsenz","Variable":22412},{"Name":"Keller","Variable":16931}]');
+        $this->RegisterPropertyString('MotionSensors', '[]');
         $this->RegisterPropertyBoolean('DoorEnabled', false);
         $this->RegisterPropertyBoolean('LightEnabled', false);
         $this->RegisterPropertyBoolean('CinemaEnabled', false);
         $this->RegisterPropertyInteger('LightCommandScript', 0);
-        $this->RegisterPropertyString('Rooms', '[{"Name":"Wohnzimmer","Variable":50943},{"Name":"Schlafzimmer","Variable":47495},{"Name":"Flur","Variable":20554},{"Name":"Ankleidezimmer","Variable":45685},{"Name":"Bad","Variable":47658},{"Name":"B\u00fcro","Variable":58625},{"Name":"B\u00fcro Keller","Variable":17053},{"Name":"Sportraum","Variable":13673},{"Name":"Keller","Variable":47839}]');
+        $this->RegisterPropertyString('Rooms', '[]');
         $this->RegisterTimer('Refresh', 0, 'SVHS_Refresh($_IPS["TARGET"]);');
     }
 
@@ -68,9 +78,9 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->SetSummary('Ansicht pausiert');
             return;
         }
-        // Subpages opened via openObject also need the HTML renderer in fullscreen (Symcon 9).
-        // Keep the homepage presentation mode unchanged.
-        $this->SetVisualizationType($this->ReadPropertyInteger('View') === 0 ? 1 : 2);
+        // Use fullscreen only when the installed SDK declares support for it.
+        // Older installations and the homepage keep the existing HTML tile mode.
+        $this->SetVisualizationType($this->HtmlVisualizationType());
         $this->SetBuffer('DoorChallenges', '{}');
         foreach ($this->GetMessageList() as $id => $messages) {
             foreach ($messages as $message) { $this->UnregisterMessage($id, $message); }
@@ -118,6 +128,12 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $source = $this->ReadPropertyInteger('ConfigSource');
         if ($source > 0 && IPS_InstanceExists($source)) { $this->RegisterReference($source); }
+        if ($this->ReadPropertyInteger('View') === 13) {
+            foreach ($this->WirelessNetworks() as $wifi) {
+                foreach (['State', 'SSID', 'Devices'] as $name) { $ids[] = $wifi[$name]; }
+                if ($wifi['QRCode'] > 0 && IPS_MediaExists($wifi['QRCode'])) { $this->RegisterReference($wifi['QRCode']); }
+            }
+        }
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
@@ -168,6 +184,10 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $form = json_decode((string)file_get_contents(__DIR__ . '/form.json'), true, 512, JSON_THROW_ON_ERROR);
         $fields = $this->SettingsFormFields($this->ReadPropertyInteger('ConfigSource'), $this->ReadPropertyInteger('View'));
+        if ($this->ReadPropertyInteger('ConfigSource') === 0) {
+            // Reconstruct read-only captions; only editable texts and their stable keys are saved.
+            $fields['DisplayTexts'] = ['values' => $this->DisplayRows(), 'loadValuesFromConfiguration' => false];
+        }
         $this->ApplyFormFields($form['elements'], $fields);
         return json_encode($form, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
     }
@@ -201,10 +221,11 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields = [];
         foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
-            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12] as $name => $sectionView) {
+            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
+        $fields['DisplaySettings'] = ['visible' => $own];
         $fields['RoomFilter'] = ['visible' => $view === 12];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
@@ -244,11 +265,21 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
-        $html = file_get_contents(__DIR__ . '/module.html');
-        if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
-        $initial = json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
-            | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        return str_replace('/*INITIAL_STATE*/null', $initial, $html);
+        try {
+            $html = file_get_contents(__DIR__ . '/module.html');
+            if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
+            if (!str_contains($html, '/*INITIAL_STATE*/null')) { throw new RuntimeException('Die HTML-Vorlage enthält keinen Platzhalter für Zustandsdaten.'); }
+            $initial = json_encode($this->State(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
+                | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+            return str_replace('/*INITIAL_STATE*/null', $initial, $html);
+        } catch (Throwable $e) {
+            $this->SendDebug('HTML-Darstellung', $e->getMessage(), 0);
+            $message = htmlspecialchars($e->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            return '<!doctype html><html lang="de"><head><meta charset="utf-8"></head><body '
+                . 'style="margin:0;padding:56px 12px 12px;font:14px system-ui;color:inherit" data-svhs-error="true">'
+                . '<div role="alert"><strong>Darstellung konnte nicht geladen werden.</strong><p>' . $message
+                . '</p><p>Instanz ' . $this->InstanceID . ': Konfiguration und Quellen prüfen.</p></div></body></html>';
+        }
     }
 
     public function RequestAction(string $Ident, mixed $Value): void
@@ -305,18 +336,7 @@ class HausstatusBedienung extends IPSModuleStrict
                 $this->ValidateAction($id, 0);
                 RequestAction($id, $Value);
             } else {
-                if (!$this->ConfigBoolean('LightEnabled')) { throw new RuntimeException('Lichtbedienung ist deaktiviert.'); }
-                if ($Ident === 'Light' && !is_bool($Value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
-                if ($Ident === 'Brightness' && (!is_int($Value) || $Value < 1 || $Value > 100)) {
-                    throw new InvalidArgumentException('Helligkeit muss zwischen 1 und 100 liegen.');
-                }
-                $script = $this->ConfigInteger('LightCommandScript');
-                if ($script <= 0) { throw new RuntimeException('Zuerst Lichtautomatik 3.3 als Licht-Bedienskript auswählen.'); }
-                if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
-                // The selected script performs the command AND informs the light automation.
-                if (!IPS_RunScriptEx($script, ['COMMAND' => $Ident, 'VALUE' => $Value, 'SOURCE' => 'HausstatusBedienung'])) {
-                    throw new RuntimeException('Licht-Bedienskript konnte nicht gestartet werden.');
-                }
+                $this->SetLight($Ident, $Value);
             }
             $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->State()], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         } catch (Throwable $e) {
@@ -358,9 +378,9 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
-            6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => [],
+            6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
-            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => []];
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => [], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->ReadPropertyInteger('View');
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
             return array_keys(self::SOURCES);
@@ -727,6 +747,9 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $state = ['View' => $this->ReadPropertyInteger('View'), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
+        $state['DisplaySettings'] = $this->DisplaySettings();
+        $state['Network'] = $this->NetworkState();
+        $state['HeatingProfileItem'] = $this->HeatingProfileItem();
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
@@ -739,7 +762,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Rooms'] = [];
         $state['RoomSections'] = $this->RoomSections();
         $state['TemperatureRows'] = $this->TemperatureRows();
-        $state['Dining'] = in_array($this->ReadPropertyInteger('View'), [0, 5], true) ? $this->DiningState() : null;
+        $state['Dining'] = in_array($this->ReadPropertyInteger('View'), [0, 5], true)
+            && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVDetailsTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->PVDetailsTarget() : 0;
         $state['RoomNavigationTarget'] = $this->ReadPropertyInteger('View') === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
@@ -753,9 +777,9 @@ class HausstatusBedienung extends IPSModuleStrict
             'DoorPermission' => $this->CanSetDoorPermission(),
             'Door' => $this->DoorAvailable(),
             'Light' => $this->ConfigBoolean('LightEnabled')
-                && $scriptOK,
+                && ($script > 0 ? $scriptOK : $this->HasAction($this->ConfigInteger('LightState'), 0)),
             'Brightness' => $this->ConfigBoolean('LightEnabled')
-                && $scriptOK,
+                && ($script > 0 ? $scriptOK : $this->HasAction($this->ConfigInteger('Brightness'), 1)),
             'Cinema' => $this->ConfigBoolean('CinemaEnabled')
                 && $this->HasAction($this->ConfigInteger('CinemaControl'), 0)
         ];

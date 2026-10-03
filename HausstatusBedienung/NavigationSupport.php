@@ -3,6 +3,32 @@ declare(strict_types=1);
 
 trait HausstatusNavigationSupport
 {
+    private function SupportsHtmlFullscreen(): bool
+    {
+        return version_compare(IPS_GetKernelVersion(), '9.1', '>=')
+            && defined('INSTANCE_VISUALIZATION_TYPE_HTML_FULLSCREEN')
+            && constant('INSTANCE_VISUALIZATION_TYPE_HTML_FULLSCREEN') === 2;
+    }
+
+    private function HtmlVisualizationType(): int
+    {
+        return $this->ReadPropertyInteger('View') !== 0 && $this->SupportsHtmlFullscreen() ? 2 : 1;
+    }
+
+    public function GetVisualizationDiagnostics(): string
+    {
+        $html = $this->GetVisualizationTile();
+        $data = ['instance' => $this->InstanceID, 'kernel' => IPS_GetKernelVersion(),
+            'view' => $this->ReadPropertyInteger('View'), 'room' => $this->ReadPropertyString('RoomFilter'),
+            'source' => $this->ReadPropertyInteger('ConfigSource'), 'active' => $this->ReadPropertyBoolean('ActiveView'),
+            'fullscreenSupported' => $this->SupportsHtmlFullscreen(), 'expectedType' => $this->HtmlVisualizationType(),
+            'actualType' => IPS_GetInstance($this->InstanceID)['InstanceVisualizationType'],
+            'htmlBytes' => strlen($html), 'initialStateInserted' => str_contains($html, 'let state=') && !str_contains($html, '/*INITIAL_STATE*/null'),
+            'htmlError' => str_contains($html, 'data-svhs-error="true"')];
+        if ($data['htmlError']) { $data['error'] = trim(strip_tags($html)); }
+        return json_encode($data, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+    }
+
     public function GetNavigationTargets(): string
     {
         return json_encode(['pv' => $this->PVDetailsTarget(), 'rooms' => $this->RoomNavigationTarget()], JSON_THROW_ON_ERROR);
@@ -15,6 +41,19 @@ trait HausstatusNavigationSupport
     }
 
     private function PVDetailsTarget(): int
+    {
+        $pv = $this->PVDetailsInstance();
+        if ($pv === 0 || $this->SupportsHtmlFullscreen()) { return $pv; }
+        // openObject(instance) maximizes a tile; older SDKs cannot show its HTML there.
+        // Navigate to a category containing the existing normal HTML tile instead.
+        $root = IPS_GetParent($this->NavigationOwner());
+        $category = @IPS_GetObjectIDByIdent('SVHSPVPage', $root);
+        if ($category === false || IPS_GetObject($category)['ObjectType'] !== 0) { return $pv; }
+        $link = @IPS_GetObjectIDByIdent('SVHSPVPageLink', $category);
+        return $link !== false && IPS_LinkExists($link) && IPS_GetLink($link)['TargetID'] === $pv ? $category : $pv;
+    }
+
+    private function PVDetailsInstance(): int
     {
         $owner = $this->NavigationOwner();
         if (!IPS_InstanceExists($owner)) { return 0; }
@@ -39,17 +78,39 @@ trait HausstatusNavigationSupport
     private function OrganizeHomepageDetails(): void
     {
         if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
-        $pv = $this->PVDetailsTarget();
+        $pv = $this->PVDetailsInstance();
         if ($pv > 0) {
             $link = @IPS_GetObjectIDByIdent('SVHSTileLink_7', IPS_GetParent($this->InstanceID));
             if ($link !== false && IPS_LinkExists($link) && IPS_GetLink($link)['TargetID'] === $pv) {
                 // The full PV view remains active and opens from the compact power card.
                 IPS_SetHidden($link, true);
             }
+            if (!$this->SupportsHtmlFullscreen()) { $this->EnsureLegacyPVPage($pv); }
         }
         $rooms = $this->RoomNavigationTarget();
         if ($rooms > 0 && in_array(IPS_GetName($rooms), ['Räume und Geräte', 'Raumsteuerung'], true)) {
             IPS_SetName($rooms, 'Räume');
+        }
+    }
+
+    private function EnsureLegacyPVPage(int $pv): void
+    {
+        $root = IPS_GetParent($this->InstanceID);
+        $category = @IPS_GetObjectIDByIdent('SVHSPVPage', $root);
+        if ($category !== false && IPS_GetObject($category)['ObjectType'] !== 0) {
+            $this->SendDebug('PV-Navigation', 'SVHSPVPage ist anders belegt; nichts verändert.', 0); return;
+        }
+        $link = $category !== false ? @IPS_GetObjectIDByIdent('SVHSPVPageLink', $category) : false;
+        if ($link !== false && (!IPS_LinkExists($link) || IPS_GetLink($link)['TargetID'] !== $pv)) {
+            $this->SendDebug('PV-Navigation', 'SVHSPVPageLink ist anders belegt; nichts verändert.', 0); return;
+        }
+        if ($category === false) {
+            $category = IPS_CreateCategory(); IPS_SetParent($category, $root); IPS_SetIdent($category, 'SVHSPVPage');
+            IPS_SetName($category, 'PV-Details'); IPS_SetHidden($category, true);
+        }
+        if ($link === false) {
+            $link = IPS_CreateLink(); IPS_SetParent($link, $category); IPS_SetIdent($link, 'SVHSPVPageLink');
+            IPS_SetName($link, 'PV-Details'); IPS_SetLinkTargetID($link, $pv); IPS_SetHidden($link, false);
         }
     }
 }
