@@ -73,8 +73,8 @@ trait HausstatusPageSupport
 
     private function UsesInlinePages(): bool
     {
-        return $this->ReadPropertyInteger('View') === 12 || (in_array($this->ReadPropertyInteger('View'), [0, 15], true)
-            && ($this->ReadPropertyInteger('View') === 15 || $this->ReadPropertyInteger('ConfigSource') === 0) && !$this->SupportsHtmlFullscreen());
+        return $this->ReadPropertyInteger('View') === 12 || ($this->ReadPropertyInteger('View') === 0
+            && $this->ReadPropertyInteger('ConfigSource') === 0 && !$this->SupportsHtmlFullscreen());
     }
 
     private function NavigationRooms(): array
@@ -121,7 +121,7 @@ trait HausstatusPageSupport
             $view = $payload['view'] ?? null;
             $room = $payload['room'] ?? '';
             if (!is_int($view) || !in_array($view, [7, 12], true) || !is_string($room)
-                || ($view === 7 && ($room !== '' || !in_array($this->ReadPropertyInteger('View'), [0, 15], true))) || ($view === 12 && $room !== '' && !in_array($room, $this->NavigationRooms(), true))) {
+                || ($view === 7 && ($room !== '' || $this->ReadPropertyInteger('View') !== 0)) || ($view === 12 && $room !== '' && !in_array($room, $this->NavigationRooms(), true))) {
                 throw new InvalidArgumentException('Diese Seite ist nicht eingerichtet.');
             }
             $this->pageContext = ['view' => $view, 'room' => $room];

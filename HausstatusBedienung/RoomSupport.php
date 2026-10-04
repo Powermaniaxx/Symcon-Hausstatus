@@ -23,7 +23,7 @@ trait HausstatusRoomSupport
 
     private function PVInverters(): array
     {
-        if (!in_array($this->CurrentView(), [0, 7, 15], true)) { return []; }
+        if (!in_array($this->CurrentView(), [0, 7], true)) { return []; }
         $result = [];
         foreach ($this->PVInverterSources() as $device) {
             $production = $this->Read($device['producing']);
@@ -288,9 +288,9 @@ trait HausstatusRoomSupport
         $statusID = $this->ConfigInteger('HeosStatus');
         if ($statusID > 0 && IPS_VariableExists($statusID)) {
             foreach ($receivers as $room => $receiver) {
-                if ($this->IsHeosSelection($statusID) || !array_filter($entries, static fn(array $entry): bool => $entry['id'] === $statusID && $entry['room'] === $room)) {
+                if (!array_filter($entries, static fn(array $entry): bool => $entry['id'] === $statusID && $entry['room'] === $room)) {
                     $entries[] = ['room' => $room, 'group' => $receiver['group'], 'name' => 'HEOS aktuell',
-                        'id' => $statusID, 'type' => 2, 'operate' => false, 'heosStatusOnly' => true,
+                        'id' => $statusID, 'type' => 2, 'operate' => false,
                         'deviceKey' => $receiver['deviceKey'], 'deviceName' => $this->DisplayText('CinemaState')];
                 }
             }
@@ -303,7 +303,7 @@ trait HausstatusRoomSupport
             }
             if (in_array($entry['id'], $climateIDs, true)) { continue; }
             $item = $this->RoomItem($entry);
-            if ($statusID > 0 && $entry['id'] === $statusID && (($entry['heosStatusOnly'] ?? false) || !$this->IsHeosSelection($statusID))) {
+            if ($statusID > 0 && $entry['id'] === $statusID) {
                 $item['label'] = $item['name'] = 'HEOS aktuell'; $item['control'] = null;
                 $item['role'] = 'heosStatus'; $item['primary'] = true;
             }

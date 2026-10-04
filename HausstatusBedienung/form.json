@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.28 – Einstellungen"
+      "caption": "Hausstatus 0.21 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -71,22 +71,6 @@
             {
               "caption": "Detail: Netzwerk / FritzBox",
               "value": 13
-            },
-            {
-              "value": 14,
-              "caption": "Einzeln: Zusatzheizung"
-            },
-            {
-              "value": 15,
-              "caption": "Einzeln: PV kompakt"
-            },
-            {
-              "value": 16,
-              "caption": "Einzeln: Wetter kompakt"
-            },
-            {
-              "value": 17,
-              "caption": "Einzeln: zusätzliche Lampe / Esstisch"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -279,11 +263,6 @@
       "caption": "Übersicht und Detailkacheln",
       "expanded": true,
       "items": [
-        {
-          "type": "CheckBox",
-          "name": "SeparateHomepageTiles",
-          "caption": "Startseite in einzeln verschiebbare Symcon-Kacheln aufteilen"
-        },
         {
           "type": "CheckBox",
           "name": "SeparateDetails",
