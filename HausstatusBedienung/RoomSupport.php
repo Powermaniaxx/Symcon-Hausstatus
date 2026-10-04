@@ -285,14 +285,29 @@ trait HausstatusRoomSupport
         foreach ($entries as $entry) {
             if ($this->IsCinemaVariable($entry['id'])) { $receivers[$entry['room']] = $entry; }
         }
+        $statusID = $this->ConfigInteger('HeosStatus');
+        if ($statusID > 0 && IPS_VariableExists($statusID)) {
+            foreach ($receivers as $room => $receiver) {
+                if ($this->IsHeosSelection($statusID) || !array_filter($entries, static fn(array $entry): bool => $entry['id'] === $statusID && $entry['room'] === $room)) {
+                    $entries[] = ['room' => $room, 'group' => $receiver['group'], 'name' => 'HEOS aktuell',
+                        'id' => $statusID, 'type' => 2, 'operate' => false, 'heosStatusOnly' => true,
+                        'deviceKey' => $receiver['deviceKey'], 'deviceName' => $this->DisplayText('CinemaState')];
+                }
+            }
+        }
         foreach ($entries as $entry) {
-            if ($this->IsHeosSelection($entry['id']) && isset($receivers[$entry['room']])) {
+            if (($this->IsHeosSelection($entry['id']) || ($statusID > 0 && $entry['id'] === $statusID)) && isset($receivers[$entry['room']])) {
                 $receiver = $receivers[$entry['room']];
                 $entry['deviceKey'] = $receiver['deviceKey']; $entry['deviceName'] = $this->DisplayText('CinemaState');
                 $entry['group'] = $receiver['group'];
             }
             if (in_array($entry['id'], $climateIDs, true)) { continue; }
-            $sections[$entry['room']][$entry['group']][] = $this->RoomItem($entry);
+            $item = $this->RoomItem($entry);
+            if ($statusID > 0 && $entry['id'] === $statusID && (($entry['heosStatusOnly'] ?? false) || !$this->IsHeosSelection($statusID))) {
+                $item['label'] = $item['name'] = 'HEOS aktuell'; $item['control'] = null;
+                $item['role'] = 'heosStatus'; $item['primary'] = true;
+            }
+            $sections[$entry['room']][$entry['group']][] = $item;
         }
         $result = [];
         foreach ($sections as $room => $groups) {

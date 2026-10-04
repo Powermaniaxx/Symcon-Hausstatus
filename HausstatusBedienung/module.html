@@ -118,7 +118,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span class="small">0.20</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.20">&#8635; Aktualisieren</button></div>
+<div class="head"><span class="small">0.21</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.21">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -294,7 +294,8 @@ function renderCinemaFields(box,s){
  }else if(s.VolumeReason){
   const reason=document.createElement('div');reason.className='small';text(reason,'Regler nicht verf\u00fcgbar: '+s.VolumeReason);fields.append(reason);
  }
- if(s.HeosItem){const item={...s.HeosItem,command:'HeosSelection'};const title=document.createElement('label');text(title,'HEOS Radio / Playlist');fields.append(title);const heos=document.createElement('div'),value=document.createElement('span');text(value,item.value.text);heos.append(value);renderRoomControl(heos,item,value);if(item.note){const note=document.createElement('div');note.className='small';text(note,item.note);heos.append(note);}fields.append(heos);}
+ if(s.HeosStatusConfigured){const current=document.createElement('div');current.className='heosStatus';current.setAttribute('role','status');text(current,'HEOS aktuell: '+(s.HeosStatus?.text??'Unbekannt'));fields.append(current);}
+ if(s.HeosItem){const item={...s.HeosItem,command:'HeosSelection'};const title=document.createElement('label');text(title,'HEOS Radio / Playlist auswählen');fields.append(title);const heos=document.createElement('div'),value=document.createElement('span');text(value,item.value.text);renderRoomControl(heos,item,value);if(item.note){const note=document.createElement('div');note.className='small';text(note,item.note);heos.append(note);}fields.append(heos);}
  box.append(fields);
 }
 function renderDining(box,d){
@@ -470,7 +471,7 @@ function roomDevicePanel(items,key,kind){
  const title=document.createElement('h4');text(title,items[0].deviceName??items[0].name);header.append(title);box.append(header);
  const toggle=selected.primary.find(item=>item.role==='switch');
  if(toggle){if(toggle.value.raw===true)box.className+=' isOn';renderDeviceSwitch(header,toggle,items[0].deviceName??items[0].name);}
- const heos=items.filter(item=>item.role==='heos');
+ const heos=items.filter(item=>['heos','heosStatus'].includes(item.role));
  for(const item of heos)box.append(roomItemBox(item));
  const remaining=items.filter(item=>item!==toggle&&!heos.includes(item));
  if(remaining.length){

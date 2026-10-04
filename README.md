@@ -1,4 +1,4 @@
-# Hausstatus 0.20 für IP-Symcon
+# Hausstatus 0.21 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,7 +74,7 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.20**, Build **20**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.21**, Build **21**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
@@ -86,7 +86,7 @@ Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.20** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.21** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).
 
@@ -105,3 +105,7 @@ Raumbefehle, einschließlich HEOS-Auswahl, werden als JSON-Text an das Modul üb
 Die HEOS-Auswahl steht im Mediengerät-Bereich der Startseite und in der Raumansicht direkt beim zugehörigen Receiver, statt unter weiteren Werten. Eine eindeutige HEOS-Radio-/Playlist-Auswahl wird aus vorhandenen Raumeinträgen erkannt. Alternativ lässt sich die Variable unter Mediengerät ausdrücklich auswählen. Mehrere mögliche Quellen müssen dort zugeordnet werden. Die bestehende Variablenaktion bleibt zuständig.
 
 Direkte Raumregler senden den skalaren Wert und die Ziel-ID im Befehlsnamen. Der Server prüft weiterhin Raumzugehörigkeit, Datentyp und Optionen. „Bedienung prüfen / HEOS-Fehlerdetails“ zeigt in der betroffenen Rauminstanz die zuletzt empfangene Aktion und den gespeicherten Bedienfehler, ohne einen Gerätebefehl auszuführen. Die Fußzeile zeigt die geladene HTML-Version auch auf dem Handy.
+
+## Änderungen in 0.21
+
+Unter Mediengerät lässt sich eine separate Variable „HEOS – aktueller Status (nur Anzeige)“ zuordnen. Ihr formatierter Symcon-Wert wird in der Cinema-Kachel als „HEOS aktuell“ und in der Raumansicht direkt beim Receiver angezeigt. Die Radio-/Playlist-Auswahl bleibt die Bedienung und wird nicht als Wiedergabestatus ausgegeben. Änderungen der Statusvariable aktualisieren die Anzeige automatisch. Die Statuszeile ist nicht schaltbar. Ohne konfigurierte Statusquelle wird kein Wiedergabestatus aus der Auswahl abgeleitet.

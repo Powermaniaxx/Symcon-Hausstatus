@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.20 – Einstellungen"
+      "caption": "Hausstatus 0.21 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -429,6 +429,11 @@
           "type": "SelectVariable",
           "name": "HeosSelection",
           "caption": "HEOS Radio / Playlist – Auswahlvariable (optional; sonst aus Raumeinträgen)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeosStatus",
+          "caption": "HEOS – aktueller Status (nur Anzeige)"
         },
         {
           "type": "CheckBox",
