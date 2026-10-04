@@ -1,4 +1,4 @@
-# Hausstatus 0.27 für IP-Symcon
+# Hausstatus 0.28 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,7 +74,7 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.27**, Build **27**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.28**, Build **28**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
@@ -86,7 +86,7 @@ Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.27** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.28** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).
 
@@ -130,7 +130,7 @@ Der Menüpunkt „Räume“ startet mit der Raumauswahl und einer kompakten Übe
 
 Eine optionale Startseiten-Kachel „Zusatzheizung“ enthält den Schalter eines Elektroheizkörpers, Minimal- und Maximaltemperatur sowie den bestehenden Manuell-/Automatik-Schalter. Die Aktivierung des vorhandenen Wochenplans liegt in einem aufklappbaren Bereich. Quellen und Bezeichnung werden unter „Zusatzheizung auf der Startseite“ frei zugeordnet; keine persönlichen Variablen-IDs sind vorbelegt. Regler verwenden die vorhandenen Variablendarstellungen und Aktionen. Ohne Aktion bleiben Werte lesbar. Temperaturgrenzen werden auf Bereich, Schrittweite und Minimal ≤ Maximal geprüft. Eine neue Heizungsautomatik oder ein neuer Zeitplan wird nicht erzeugt.
 
-## Änderungen in 0.27
+## Änderungen in 0.28
 
 Die Startseite wird in **einzeln verschiebbare und skalierbare Symcon-Kacheln** aufgeteilt. Anwesenheit mit Alarm, Haustür mit Bedienung, Wohnzimmerlicht, Esstisch, Cinema, Zusatzheizung, Gerätewarnungen, PV, Markise mit Dachfenster und Wetter erhalten jeweils eine eigene Kachel, sofern Quellen eingerichtet sind. Bewegung und Temperaturen bleiben bei aktivierter separater Detailansicht im Menü.
 
@@ -139,3 +139,7 @@ Nach dem Modulupdate in der zentralen Hausstatus-Instanz **Änderungen übernehm
 Die bisherige Gesamtkachel wird ausgeblendet, die zentrale Instanz und vorhandene Einstellungen bleiben erhalten. Über **Startseite in einzeln verschiebbare Symcon-Kacheln aufteilen** kann zur bisherigen Gesamtkachel zurückgewechselt werden. PV und Wetter bleiben auf der Startseite kompakt; ihre Detailansichten bleiben erreichbar.
 
 Temperaturwerte der Zusatzheizung bleiben auch auf schmalen Bildschirmen in einer Zeile. Der Wochenplan bleibt zum Aufklappen; Gerätewarnungen werden durch die Höhe der Heizungsbedienung nicht mehr gestreckt.
+
+## Korrektur in 0.28
+
+Die einzelnen Startseiten-Kacheln werden direkt als sichtbare Modulinstanzen angezeigt. Die Links aus 0.27 werden ausgeblendet, die dazugehörigen Instanzen eingeblendet. Damit hängt die Darstellung nicht mehr von Links auf ausgeblendete HTML-Instanzen ab. Die zentrale Gesamtkachel bleibt als Konfigurationsquelle erhalten. Modul aktualisieren und in dieser Instanz Änderungen übernehmen.

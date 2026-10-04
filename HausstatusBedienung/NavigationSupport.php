@@ -138,6 +138,8 @@ trait HausstatusNavigationSupport
             if (!$active || !$configured) {
                 if ($link !== false && IPS_LinkExists($link)
                     && $this->OwnedHomepageTile(IPS_GetLink($link)['TargetID'], $view)) { IPS_SetHidden($link, true); }
+                $instance = @IPS_GetObjectIDByIdent('SVHSHomeInstance_' . $view, $root);
+                if ($instance !== false && $this->OwnedHomepageTile($instance, $view)) { IPS_SetHidden($instance, true); }
                 continue;
             }
             $instance = @IPS_GetObjectIDByIdent('SVHSHomeInstance_' . $view, $root);
@@ -149,17 +151,22 @@ trait HausstatusNavigationSupport
             if ($instance === false) {
                 $instance = IPS_CreateInstance('{9E33E109-4881-4E78-9906-38CAC2F1E210}');
                 IPS_SetParent($instance, $root); IPS_SetIdent($instance, 'SVHSHomeInstance_' . $view);
-                IPS_SetName($instance, $title); IPS_SetHidden($instance, true);
+                IPS_SetName($instance, $title); IPS_SetPosition($instance, $position); IPS_SetHidden($instance, false);
                 IPS_SetProperty($instance, 'ConfigSource', $this->InstanceID); IPS_SetProperty($instance, 'View', $view);
                 IPS_ApplyChanges($instance);
             }
-            if ($link === false) {
-                $link = IPS_CreateLink(); IPS_SetParent($link, $root); IPS_SetIdent($link, 'SVHSHomeTile_' . $view);
-                IPS_SetName($link, $title); IPS_SetLinkTargetID($link, $instance); IPS_SetPosition($link, $position);
+            // Native visualization must use the instance itself. Linked hidden HTML instances
+            // are not rendered reliably as independent tiles by all supported clients.
+            if ($link !== false) {
+                if ((IPS_GetObject($instance)['ObjectIsHidden'] ?? false) && !(IPS_GetObject($link)['ObjectIsHidden'] ?? false)) {
+                    IPS_SetPosition($instance, (int)IPS_GetObject($link)['ObjectPosition']);
+                    IPS_SetName($instance, IPS_GetName($link));
+                }
+                if (!(IPS_GetObject($link)['ObjectIsHidden'] ?? false)) { IPS_SetHidden($link, true); }
             }
             $visibleTiles++;
-            if (IPS_GetObject($link)['ObjectIsHidden'] ?? false) { IPS_SetHidden($link, false); }
-            if (function_exists('IPS_SetHiddenMaximize') && version_compare(IPS_GetKernelVersion(), '9.1', '>=')) { IPS_SetHiddenMaximize($link, true); }
+            if (IPS_GetObject($instance)['ObjectIsHidden'] ?? false) { IPS_SetHidden($instance, false); }
+            if (function_exists('IPS_SetHiddenMaximize') && version_compare(IPS_GetKernelVersion(), '9.1', '>=')) { IPS_SetHiddenMaximize($instance, true); }
         }
         // Save only the visibility flags changed by this feature. Never remove the master or legacy tiles.
         $previous = json_decode($this->GetBuffer('HomepageVisibility'), true) ?: [];
