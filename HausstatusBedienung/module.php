@@ -148,6 +148,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $script = $this->ConfigInteger('LightCommandScript');
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
+        $this->HideTileMaximize();
         $this->OrganizeHomepageDetails();
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }

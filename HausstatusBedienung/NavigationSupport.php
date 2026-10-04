@@ -3,6 +3,18 @@ declare(strict_types=1);
 
 trait HausstatusNavigationSupport
 {
+    private function HideTileMaximize(): void
+    {
+        // The native tile header is outside the HTML frame. This API exists from 9.1.
+        if (!function_exists('IPS_SetHiddenMaximize') || version_compare(IPS_GetKernelVersion(), '9.1', '<')) { return; }
+        IPS_SetHiddenMaximize($this->InstanceID, true);
+        foreach (IPS_GetObjectList() as $id) {
+            if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) {
+                IPS_SetHiddenMaximize($id, true);
+            }
+        }
+    }
+
     private function SupportsHtmlFullscreen(): bool
     {
         return version_compare(IPS_GetKernelVersion(), '9.1', '>=')
