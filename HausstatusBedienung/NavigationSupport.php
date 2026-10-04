@@ -90,9 +90,39 @@ trait HausstatusNavigationSupport
             if (!$this->SupportsHtmlFullscreen()) { $this->EnsureLegacyPVPage($pv); }
         }
         $rooms = $this->RoomNavigationTarget();
+        if ($rooms > 0) { $this->OrganizeRoomSelector($rooms); }
         if ($rooms > 0 && in_array(IPS_GetName($rooms), ['Räume und Geräte', 'Raumsteuerung'], true)) {
             IPS_SetName($rooms, 'Räume');
         }
+    }
+
+    private function OrganizeRoomSelector(int $category): void
+    {
+        // Consolidate only this dashboard's room tiles inside its existing room menu.
+        // Keep the instances and their configuration available for the selector and other links.
+        $candidates = [];
+        foreach (IPS_GetChildrenIDs($category) as $object) {
+            $target = IPS_LinkExists($object) ? IPS_GetLink($object)['TargetID'] : $object;
+            if (!IPS_InstanceExists($target)
+                || IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+                || IPS_GetProperty($target, 'ConfigSource') !== $this->InstanceID
+                || IPS_GetProperty($target, 'View') !== 12 || !IPS_GetProperty($target, 'ActiveView')) { continue; }
+            $candidates[] = ['object' => $object, 'target' => $target];
+        }
+        if (!$candidates) { return; }
+        $visible = array_values(array_filter($candidates, static fn(array $c): bool => !(IPS_GetObject($c['object'])['ObjectIsHidden'] ?? false)));
+        $pool = $visible ?: $candidates;
+        $keeper = $pool[0]['object'];
+        foreach ($pool as $candidate) {
+            if (IPS_GetName($candidate['object']) === 'Räume' || IPS_GetProperty($candidate['target'], 'RoomFilter') === '') {
+                $keeper = $candidate['object']; break;
+            }
+        }
+        foreach ($candidates as $candidate) {
+            $id = $candidate['object']; $hidden = $id !== $keeper;
+            if ((IPS_GetObject($id)['ObjectIsHidden'] ?? false) !== $hidden) { IPS_SetHidden($id, $hidden); }
+        }
+        if (IPS_GetName($keeper) !== 'Räume') { IPS_SetName($keeper, 'Räume'); }
     }
 
     private function EnsureLegacyPVPage(int $pv): void

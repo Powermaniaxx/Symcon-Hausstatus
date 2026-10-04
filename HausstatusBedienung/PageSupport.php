@@ -13,7 +13,10 @@ trait HausstatusPageSupport
 
     private function CurrentRoom(): string
     {
-        return $this->pageContext['room'] ?? $this->ReadPropertyString('RoomFilter');
+        if ($this->pageContext !== null) { return $this->pageContext['room']; }
+        $room = $this->ReadPropertyString('RoomFilter');
+        // A room page displays one room; an unset filter starts with the first configured room.
+        return $room === '' && $this->CurrentView() === 12 ? ($this->NavigationRooms()[0] ?? '') : $room;
     }
 
     private function BaseState(): array
@@ -27,18 +30,22 @@ trait HausstatusPageSupport
 
     private function UsesInlinePages(): bool
     {
-        return $this->ReadPropertyInteger('View') === 0
-            && $this->ReadPropertyInteger('ConfigSource') === 0 && !$this->SupportsHtmlFullscreen();
+        return $this->ReadPropertyInteger('View') === 12 || ($this->ReadPropertyInteger('View') === 0
+            && $this->ReadPropertyInteger('ConfigSource') === 0 && !$this->SupportsHtmlFullscreen());
     }
 
     private function NavigationRooms(): array
     {
         $names = [];
+        $owner = $this->NavigationOwner();
+        if ($this->ReadPropertyInteger('View') === 12 && $this->ReadPropertyString('RoomFilter') !== '') {
+            $names[$this->ReadPropertyString('RoomFilter')] = true;
+        }
         foreach ($this->RoomEntries() as $entry) { $names[$entry['Room']] = true; }
         foreach ($this->Rooms() as $entry) { $names[$entry['Name']] = true; }
         // Keep the already configured room pages reachable, including rooms without devices yet.
         foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $id) {
-            if ($id !== $this->InstanceID && IPS_GetProperty($id, 'ConfigSource') === $this->InstanceID
+            if ($id !== $this->InstanceID && IPS_GetProperty($id, 'ConfigSource') === $owner
                 && IPS_GetProperty($id, 'View') === 12 && IPS_GetProperty($id, 'ActiveView')) {
                 $name = IPS_GetProperty($id, 'RoomFilter');
                 if (is_string($name) && $name !== '') { $names[$name] = true; }
@@ -71,7 +78,7 @@ trait HausstatusPageSupport
             $view = $payload['view'] ?? null;
             $room = $payload['room'] ?? '';
             if (!is_int($view) || !in_array($view, [7, 12], true) || !is_string($room)
-                || ($view === 7 && $room !== '') || ($view === 12 && !in_array($room, $this->NavigationRooms(), true))) {
+                || ($view === 7 && ($room !== '' || $this->ReadPropertyInteger('View') !== 0)) || ($view === 12 && !in_array($room, $this->NavigationRooms(), true))) {
                 throw new InvalidArgumentException('Diese Seite ist nicht eingerichtet.');
             }
             $this->pageContext = ['view' => $view, 'room' => $room];
