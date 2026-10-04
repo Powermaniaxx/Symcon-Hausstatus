@@ -1,4 +1,4 @@
-# Hausstatus 0.26 für IP-Symcon
+# Hausstatus 0.29 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,7 +74,7 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.26**, Build **26**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.29**, Build **30**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
@@ -86,7 +86,7 @@ Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.26** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.29** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).
 
@@ -129,3 +129,19 @@ Der Menüpunkt „Räume“ startet mit der Raumauswahl und einer kompakten Übe
 ## Änderungen in 0.26
 
 Eine optionale Startseiten-Kachel „Zusatzheizung“ enthält den Schalter eines Elektroheizkörpers, Minimal- und Maximaltemperatur sowie den bestehenden Manuell-/Automatik-Schalter. Die Aktivierung des vorhandenen Wochenplans liegt in einem aufklappbaren Bereich. Quellen und Bezeichnung werden unter „Zusatzheizung auf der Startseite“ frei zugeordnet; keine persönlichen Variablen-IDs sind vorbelegt. Regler verwenden die vorhandenen Variablendarstellungen und Aktionen. Ohne Aktion bleiben Werte lesbar. Temperaturgrenzen werden auf Bereich, Schrittweite und Minimal ≤ Maximal geprüft. Eine neue Heizungsautomatik oder ein neuer Zeitplan wird nicht erzeugt.
+
+## Einzelne Startseiten-Kacheln ab 0.29
+
+In der zentralen Instanz unter **Übersicht und Detailkacheln** die **Zielkategorie der Startseite** wählen, **Startseite in einzeln verschiebbare Symcon-Kacheln aufteilen** aktivieren und Änderungen übernehmen. Die Kategorie muss in der eigenen Visualisierung sichtbar sein. Die Quellen bleiben in der zentralen Instanz gespeichert; die einzelnen Kacheln erben sie. Anwesenheit/Alarm, Haustür, Wohnzimmerlicht, Esstisch, Cinema, Zusatzheizung, Gerätewarnungen, PV, Außensteuerung und Wetter erhalten eigene Instanzen, wenn Quellen eingerichtet sind. Bewegung und Temperaturen folgen der bisherigen Detail-Einstellung. Räume bleiben im Menü.
+
+Die Kacheln werden direkt in der gewählten Kategorie angelegt. Bestehende eigene Einzelinstanzen aus 0.27/0.28 werden wiederverwendet und dorthin verschoben. Eigene Bezeichnungen und Positionen bleiben erhalten. Ohne eindeutiges Ziel oder bei fremden Kennungen bleibt die gemeinsame Kachel sichtbar; der Fehler steht in der Instanz-Zusammenfassung und unter **Startseiten-Kacheln / Ziel prüfen**. Die gemeinsame Kachel wird erst nach dem vollständigen Anlegen aller eingerichteten Bereiche ausgeblendet.
+
+Zum Zurückkehren den Schalter für die Aufteilung deaktivieren und Änderungen übernehmen. Sichtbarkeitseinstellungen werden dauerhaft gespeichert und bleiben nach einem Neustart erhalten. Instanzen, Quellen, Geräte und Automationen werden nicht gelöscht.
+
+## Downgrade direkt in Symcon
+
+Unter **Module Control** beim Hausstatus auf das **Zahnrad** klicken und den Zweig **rollback-0.26** wählen. Danach in der zentralen Hausstatus-Instanz **Änderungen übernehmen** und die Visualisierung neu laden. Der Zweig enthält das gemeinsame Layout aus 0.26 mit der Wiederherstellung der Sichtbarkeit und dauerhaft gespeicherten Rückkehrdaten (Wartungsstand 0.26.2). Er wird unabhängig von main bereitgehalten.
+
+Zur aktuellen Version über dasselbe Zahnrad wieder **main** wählen. Die Quellen bleiben erhalten. Das Downgrade betrifft dieses Modul, nicht die installierte Symcon-Version. Alte ungepflegte Code-Stände ohne Wiederherstellung sind nicht als Rückkehrweg vorgesehen.
+
+[Offizielle Dokumentation: Module Control – Zweig wechseln](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/module-control/)

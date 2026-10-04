@@ -5,7 +5,7 @@ trait HausstatusRainSupport
 {
     private function HasRainView(): bool
     {
-        return in_array($this->CurrentView(), [0, 10], true);
+        return in_array($this->CurrentView(), [0, 10, 16], true);
     }
 
     private function RainArchive(): int

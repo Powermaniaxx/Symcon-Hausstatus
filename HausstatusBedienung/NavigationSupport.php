@@ -92,7 +92,6 @@ trait HausstatusNavigationSupport
     private function OrganizeHomepageDetails(): void
     {
         if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
-        $this->RestoreCombinedHomepage();
         $pv = $this->PVDetailsInstance();
         if ($pv > 0) {
             $link = @IPS_GetObjectIDByIdent('SVHSTileLink_7', IPS_GetParent($this->InstanceID));
@@ -107,45 +106,6 @@ trait HausstatusNavigationSupport
         if ($rooms > 0 && in_array(IPS_GetName($rooms), ['Räume und Geräte', 'Raumsteuerung'], true)) {
             IPS_SetName($rooms, 'Räume');
         }
-    }
-
-
-    private function RestoreCombinedHomepage(): void
-    {
-        $owns = function (int $id): bool {
-            return $id === $this->InstanceID || (IPS_InstanceExists($id)
-                && IPS_GetInstance($id)['ModuleInfo']['ModuleID'] === '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
-                && IPS_GetProperty($id, 'ConfigSource') === $this->InstanceID);
-        };
-        $previous = json_decode($this->GetBuffer('HomepageVisibility'), true);
-        $split = [];
-        foreach (IPS_GetObjectList() as $id) {
-            $object = IPS_GetObject($id);
-            if (!preg_match('/^SVHSHome(?:Instance|Tile)_([0-9]+)$/D', $object['ObjectIdent'] ?? '', $match)) { continue; }
-            $target = IPS_LinkExists($id) ? (int)IPS_GetLink($id)['TargetID'] : $id;
-            if ($target !== $this->InstanceID && $owns($target)
-                && (int)IPS_GetProperty($target, 'View') === (int)$match[1]) { $split[] = $id; }
-        }
-        if ($this->GetBuffer('CombinedHomepageRestored') === '1' && !$previous) { return; }
-        if (!$split && !is_array($previous)) { return; }
-        if (is_array($previous)) {
-            foreach ($previous as $id => $hidden) {
-                $id = (int)$id;
-                if (!is_bool($hidden) || !IPS_ObjectExists($id)) { continue; }
-                $target = IPS_LinkExists($id) ? (int)IPS_GetLink($id)['TargetID'] : $id;
-                if ($owns($target)) { IPS_SetHidden($id, $hidden); }
-            }
-        }
-        // Module buffers may have been lost during reload: make the combined tile reachable.
-        if (!$previous && $split) {
-            IPS_SetHidden($this->InstanceID, false);
-            foreach (IPS_GetObjectList() as $id) {
-                if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) { IPS_SetHidden($id, false); }
-            }
-        }
-        foreach ($split as $id) { IPS_SetHidden($id, true); }
-        $this->SetBuffer('HomepageVisibility', '');
-        $this->SetBuffer('CombinedHomepageRestored', '1');
     }
 
     private function OrganizeRoomSelector(int $category): void

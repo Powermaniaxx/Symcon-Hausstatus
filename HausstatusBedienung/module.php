@@ -7,6 +7,7 @@ require_once __DIR__ . '/NavigationSupport.php';
 require_once __DIR__ . '/DisplaySupport.php';
 require_once __DIR__ . '/NetworkSupport.php';
 require_once __DIR__ . '/PageSupport.php';
+require_once __DIR__ . '/HomepageSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -17,6 +18,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusDisplaySupport;
     use HausstatusNetworkSupport;
     use HausstatusPageSupport;
+    use HausstatusHomepageSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -38,6 +40,9 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('View', 0);
+        $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
+        $this->RegisterPropertyInteger('HomepageCategory', 0);
+        $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
@@ -118,15 +123,15 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
-        if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12], true)) {
+        if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12, 17], true)) {
             try { foreach ($this->DiningSources() as $id) { if ($id > 0) { $ids[] = $id; } } } catch (Throwable $e) { /* Missing sources are explained in the tile. */ }
         }
         if ($this->ReadPropertyInteger('View') === 12) {
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
         }
-        if ($this->ReadPropertyInteger('View') === 0) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
+        if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
-        if (in_array($this->ReadPropertyInteger('View'), [0, 7], true)) {
+        if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
         }
         if ($this->HasTemperatureView()) {
@@ -154,12 +159,13 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
         $this->HideTileMaximize();
         $this->OrganizeHomepageDetails();
+        $this->OrganizeSeparateHomepage();
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
         $this->SetTimerInterval('Refresh', 30000);
         $this->SetStatus(102);
-        $this->SetSummary('Hausstatus mit HTML-Bedienung');
+        $this->SetSummary($this->GetBuffer('HomepageLayoutError') ?: 'Hausstatus mit HTML-Bedienung');
         $this->SetBuffer('LastState', '');
         $this->Refresh();
         if ($this->ReadPropertyInteger('ConfigSource') === 0) {
@@ -229,7 +235,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $own = $source === 0;
         $fields = [];
-        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 0,
+        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 14,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
             'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
@@ -411,7 +417,7 @@ class HausstatusBedienung extends IPSModuleStrict
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
-            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->CurrentView();
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
             return array_keys(self::SOURCES);
@@ -803,11 +809,12 @@ class HausstatusBedienung extends IPSModuleStrict
             $state['RoomSummary'] = $this->RoomSummary($state['RoomSections'], $state['TemperatureRows']);
             $state['RoomSections'] = []; $state['TemperatureRows'] = [];
         }
-        $state['Heater'] = $this->CurrentView() === 0 ? $this->HeaterState() : null;
-        $state['Dining'] = in_array($this->CurrentView(), [0, 5], true)
+        $state['SeparateHomepageTiles'] = $this->ConfigBoolean('SeparateHomepageTiles');
+        $state['Heater'] = in_array($this->CurrentView(), [0, 14], true) ? $this->HeaterState() : null;
+        $state['Dining'] = in_array($this->CurrentView(), [0, 5, 17], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVInverters'] = $this->PVInverters();
-        $state['PVDetailsTarget'] = $this->CurrentView() === 0 ? $this->PVDetailsTarget() : 0;
+        $state['PVDetailsTarget'] = in_array($this->CurrentView(), [0, 15], true) ? $this->PVDetailsTarget() : 0;
         $state['RoomNavigationTarget'] = $this->CurrentView() === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {

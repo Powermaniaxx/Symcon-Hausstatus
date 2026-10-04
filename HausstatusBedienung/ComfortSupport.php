@@ -34,7 +34,7 @@ trait HausstatusComfortSupport
 
     private function SetHeater(string $command, mixed $value): void
     {
-        if ($this->CurrentView() !== 0 || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
+        if (!in_array($this->CurrentView(), [0, 14], true) || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
             throw new RuntimeException('Zusatzheizung ist in dieser Ansicht nicht bedienbar.');
         }
         $ids = $this->HeaterIDs(); $id = $ids[$command] ?? 0;

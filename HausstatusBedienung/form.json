@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.21 – Einstellungen"
+      "caption": "Hausstatus 0.29 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -71,6 +71,22 @@
             {
               "caption": "Detail: Netzwerk / FritzBox",
               "value": 13
+            },
+            {
+              "value": 14,
+              "caption": "Einzeln: Zusatzheizung"
+            },
+            {
+              "value": 15,
+              "caption": "Einzeln: PV kompakt"
+            },
+            {
+              "value": 16,
+              "caption": "Einzeln: Wetter kompakt"
+            },
+            {
+              "value": 17,
+              "caption": "Einzeln: zusätzliche Lampe / Esstisch"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -265,12 +281,30 @@
       "items": [
         {
           "type": "CheckBox",
+          "name": "SeparateHomepageTiles",
+          "caption": "Startseite in einzeln verschiebbare Symcon-Kacheln aufteilen"
+        },
+        {
+          "type": "SelectCategory",
+          "name": "HomepageCategory",
+          "caption": "Zielkategorie der Startseite für einzelne Kacheln"
+        },
+        {
+          "type": "Label",
+          "caption": "Die Kategorie auswählen, die in der Visualisierung deine Startseite enthält. Ohne Auswahl wird nur ein eindeutiger Link auf die gemeinsame Hausstatus-Kachel als Ziel verwendet. Zum Zurückkehren die Aufteilung deaktivieren und Änderungen übernehmen."
+        },
+        {
+          "type": "CheckBox",
           "name": "SeparateDetails",
           "caption": "Bewegung, Temperaturen und Wetter aus der Übersicht ausblenden"
         },
         {
           "type": "Label",
           "caption": "Unterseiten als weitere Hausstatus-Instanzen anlegen: Inhalt wählen und die zentrale Instanz als gemeinsame Konfiguration auswählen."
+        },
+        {
+          "type": "Label",
+          "caption": "Downgrade: In Module Control beim Hausstatus-Zahnrad den Zweig rollback-0.26 wählen. Danach in der zentralen Instanz Änderungen übernehmen. main enthält die aktuelle Version."
         }
       ]
     },
@@ -988,6 +1022,11 @@
       "caption": "Bedienung prüfen / HEOS-Fehlerdetails",
       "onClick": "echo SVHS_CheckCommands($id);",
       "link": false
+    },
+    {
+      "type": "Button",
+      "caption": "Startseiten-Kacheln / Ziel prüfen",
+      "onClick": "echo SVHS_GetHomepageLayoutDiagnostics($id);"
     }
   ]
 }
