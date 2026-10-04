@@ -199,3 +199,4 @@ trait HausstatusComfortSupport
         return $result;
     }
 }
+

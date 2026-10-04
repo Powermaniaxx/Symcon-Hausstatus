@@ -54,3 +54,4 @@ trait HausstatusNetworkSupport
         return ['metrics' => $metrics, 'wifi' => $wifi];
     }
 }
+

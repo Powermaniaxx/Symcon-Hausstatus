@@ -2,7 +2,11 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.21 – Einstellungen"
+      "caption": "Hausstatus 0.26.2 – Rückkehrstand"
+    },
+    {
+      "type": "Label",
+      "caption": "Rückkehrzweig rollback-0.26: gemeinsame Übersicht aus 0.26. Nach dem Wechsel in der zentralen Instanz Änderungen übernehmen, damit sie wieder sichtbar wird. Zur aktuellen Version in Module Control den Zweig main wählen."
     },
     {
       "type": "ExpansionPanel",

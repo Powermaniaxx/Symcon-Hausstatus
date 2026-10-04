@@ -7,6 +7,7 @@ require_once __DIR__ . '/NavigationSupport.php';
 require_once __DIR__ . '/DisplaySupport.php';
 require_once __DIR__ . '/NetworkSupport.php';
 require_once __DIR__ . '/PageSupport.php';
+require_once __DIR__ . '/HomepageSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -17,6 +18,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusDisplaySupport;
     use HausstatusNetworkSupport;
     use HausstatusPageSupport;
+    use HausstatusHomepageSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -38,6 +40,9 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('View', 0);
+        $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
+        $this->RegisterPropertyInteger('HomepageCategory', 0);
+        $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
@@ -829,3 +834,4 @@ class HausstatusBedienung extends IPSModuleStrict
         return $state;
     }
 }
+

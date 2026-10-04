@@ -471,3 +471,4 @@ trait HausstatusRoomSupport
     }
 
 }
+

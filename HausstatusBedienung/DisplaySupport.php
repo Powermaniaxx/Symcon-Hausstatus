@@ -112,3 +112,4 @@ trait HausstatusDisplaySupport
         if (!RequestAction($id, $value)) { throw new RuntimeException('Lichtaktion fehlgeschlagen.'); }
     }
 }
+

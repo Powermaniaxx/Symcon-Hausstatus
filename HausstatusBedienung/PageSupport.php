@@ -184,3 +184,4 @@ trait HausstatusPageSupport
         return implode(PHP_EOL, $lines);
     }
 }
+

@@ -52,3 +52,4 @@ trait HausstatusRainSupport
         return ['start' => $start, 'end' => $now, 'current' => $current, 'history' => $cache['history']];
     }
 }
+
