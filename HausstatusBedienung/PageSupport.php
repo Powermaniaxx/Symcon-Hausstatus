@@ -15,8 +15,51 @@ trait HausstatusPageSupport
     {
         if ($this->pageContext !== null) { return $this->pageContext['room']; }
         $room = $this->ReadPropertyString('RoomFilter');
-        // A room page displays one room; an unset filter starts with the first configured room.
-        return $room === '' && $this->CurrentView() === 12 ? ($this->NavigationRooms()[0] ?? '') : $room;
+        if ($this->CurrentView() === 12 && $this->IsRoomLanding()) { return ''; }
+        return $room;
+    }
+
+    private function IsRoomLanding(): bool
+    {
+        if ($this->ReadPropertyString('RoomFilter') === '' || IPS_GetName($this->InstanceID) === 'Räume') { return true; }
+        $category = $this->RoomNavigationTarget();
+        if ($category > 0) {
+            foreach (IPS_GetChildrenIDs($category) as $id) {
+                if (IPS_GetName($id) === 'Räume' && IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID
+                    && !(IPS_GetObject($id)['ObjectIsHidden'] ?? false)) { return true; }
+            }
+        }
+        return false;
+    }
+
+    private function RoomSummary(array $sections, array $climate): array
+    {
+        $result = [];
+        foreach ($this->NavigationRooms() as $name) {
+            $metrics = [];
+            foreach ($climate as $row) {
+                if ($row['name'] === $name && is_numeric($row['actual']['raw'] ?? null)) {
+                    $metrics[] = ['label' => 'Temperatur', 'text' => $row['actual']['text']]; break;
+                }
+            }
+            $motion = []; $lights = [];
+            foreach ($sections as $room) {
+                if ($room['name'] !== $name) { continue; }
+                foreach ($room['groups'] as $group) {
+                    foreach ($group['items'] as $item) {
+                        if (in_array($item['role'], ['motion', 'presence'], true)) { $motion[] = $item['value']['raw']; }
+                        if ($item['role'] === 'switch' && preg_match('/licht|light|beleuchtung/iu', $group['name'])) { $lights[] = $item['value']['raw']; }
+                    }
+                }
+            }
+            foreach ([['Bewegung', $motion, 'Erkannt', 'Keine'], ['Licht', $lights, 'An', 'Aus']] as [$label, $values, $on, $off]) {
+                if (!$values) { continue; }
+                $text = in_array(true, $values, true) ? $on : (count(array_filter($values, 'is_bool')) === count($values) ? $off : 'Unbekannt');
+                $metrics[] = ['label' => $label, 'text' => $text];
+            }
+            $result[] = ['name' => $name, 'metrics' => $metrics];
+        }
+        return $result;
     }
 
     private function BaseState(): array
@@ -78,11 +121,12 @@ trait HausstatusPageSupport
             $view = $payload['view'] ?? null;
             $room = $payload['room'] ?? '';
             if (!is_int($view) || !in_array($view, [7, 12], true) || !is_string($room)
-                || ($view === 7 && ($room !== '' || $this->ReadPropertyInteger('View') !== 0)) || ($view === 12 && !in_array($room, $this->NavigationRooms(), true))) {
+                || ($view === 7 && ($room !== '' || $this->ReadPropertyInteger('View') !== 0)) || ($view === 12 && $room !== '' && !in_array($room, $this->NavigationRooms(), true))) {
                 throw new InvalidArgumentException('Diese Seite ist nicht eingerichtet.');
             }
             $this->pageContext = ['view' => $view, 'room' => $room];
             if ($action === 'PageValue') {
+                if ($view === 12 && $room === '') { throw new RuntimeException('Bitte zuerst einen Raum auswählen.'); }
                 if (!IPS_SemaphoreEnter($key, 1000)) { throw new RuntimeException('Bitte kurz warten und erneut bedienen.'); }
                 $locked = true;
                 // The existing room validator checks membership, type, bounds and action route.

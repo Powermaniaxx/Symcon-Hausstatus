@@ -792,6 +792,11 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Rooms'] = [];
         $state['RoomSections'] = $this->RoomSections();
         $state['TemperatureRows'] = $this->TemperatureRows();
+        $state['RoomSummary'] = [];
+        if ($state['View'] === 12 && $state['PageRoom'] === '') {
+            $state['RoomSummary'] = $this->RoomSummary($state['RoomSections'], $state['TemperatureRows']);
+            $state['RoomSections'] = []; $state['TemperatureRows'] = [];
+        }
         $state['Dining'] = in_array($this->CurrentView(), [0, 5], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVInverters'] = $this->PVInverters();

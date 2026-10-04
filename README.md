@@ -1,4 +1,4 @@
-# Hausstatus 0.24 für IP-Symcon
+# Hausstatus 0.25 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,7 +74,7 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.24**, Build **24**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.25**, Build **25**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
 
@@ -86,7 +86,7 @@ Das native Maximieren einer Instanz oder eines Instanzlinks kann unter Symcon 9.
 
 **0.14 korrigierte die ungeprüfte Vollbildumstellung aus 0.13.** Statt auf jeder Unterseite grundsätzlich Typ 2 zu setzen, prüft das Modul Version und SDK-Unterstützung. Das gilt auch für Bewegung, Temperaturen, PV und Raumseiten. HTML-Erzeugungsfehler erscheinen als Hinweis; die Diagnose zeigt Version, Darstellungsart und die Größe der tatsächlich erzeugten HTML-Ausgabe. Die Darstellungswahl **Liste / Instanzspezifisch** im Browser kann das Modul nicht selbst ändern.
 
-Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.24** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
+Bei weiterhin leeren Ansichten zuerst den Öffnungsweg prüfen: Unter Symcon 9.0 **Details öffnen** bei PV innerhalb der Hausstatus-Kachel verwenden; Räume über den vorhandenen Menüpunkt öffnen. Der Tooltip von **Aktualisieren** muss nach dem Update **Hausstatus 0.25** anzeigen. Änderungen in der zentralen Instanz übernehmen und die Visualisierung vollständig neu laden, damit auch das aktualisierte HTML geladen wird.
 
 Offizielle SDK-Referenzen: [Visualisierungskonstanten](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/konstanten/), [SetVisualizationType](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/module/setvisualizationtype/), [openObject](https://www.symcon.de/en/service/documentation/developer-area/sdk-tools/sdk-php/html-sdk/openobject/) und [IPS_GetMediaContent](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/medienverwaltung/ips-getmediacontent/).
 
@@ -121,3 +121,7 @@ Raumseiten haben oben eine kompakte Raumauswahl. Die Auswahl lädt ausschließli
 ## Änderungen in 0.24
 
 Ab Symcon 9.1 blendet das Modul den nativen Vergrößerungspfeil seiner Kacheln und der auf diese Instanzen zeigenden Links aus. Die Raumauswahl und internen Detailseiten bleiben erreichbar. Unter Symcon 9.0 bleibt der Pfeil sichtbar: Die erforderliche Funktion steht dort nicht zur Verfügung, und das Kachel-HTML kann den äußeren Symcon-Kopf nicht ändern. Es werden keine fremden Kacheln verändert. [Offizielle Referenz: IPS_SetHiddenMaximize](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/objektverwaltung/ips-sethiddenmaximize/).
+
+## Änderungen in 0.25
+
+Der Menüpunkt „Räume“ startet mit der Raumauswahl und einer kompakten Übersicht: je Raum vorhandene Temperatur, Bewegung und Lichtstatus. Geräte und Regler erscheinen erst nach Auswahl eines einzelnen Raums. „Übersicht · Raum auswählen“ führt zurück zur Zusammenfassung. Die Übersicht ist nur lesbar; fehlende Werte werden nicht erfunden. Separate Raumseiten behalten ihren Ausgangsraum. Die Startseite bleibt unverändert.
