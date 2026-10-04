@@ -280,7 +280,17 @@ trait HausstatusRoomSupport
         foreach ($this->TemperatureSources() as $row) {
             $climateIDs[] = $row['actualID']; foreach ($row['setpoints'] as $entry) { $climateIDs[] = $entry['id']; }
         }
-        foreach ($this->SelectedRoomEntries() as $entry) {
+        $entries = $this->SelectedRoomEntries();
+        $receivers = [];
+        foreach ($entries as $entry) {
+            if ($this->IsCinemaVariable($entry['id'])) { $receivers[$entry['room']] = $entry; }
+        }
+        foreach ($entries as $entry) {
+            if ($this->IsHeosSelection($entry['id']) && isset($receivers[$entry['room']])) {
+                $receiver = $receivers[$entry['room']];
+                $entry['deviceKey'] = $receiver['deviceKey']; $entry['deviceName'] = $this->DisplayText('CinemaState');
+                $entry['group'] = $receiver['group'];
+            }
             if (in_array($entry['id'], $climateIDs, true)) { continue; }
             $sections[$entry['room']][$entry['group']][] = $this->RoomItem($entry);
         }
@@ -308,7 +318,7 @@ trait HausstatusRoomSupport
         $role = $this->RoomItemRole($entry, $control);
         if (in_array($this->CurrentView(), [9, 12], true)) {
             $primary = in_array($role, ['switch', 'brightness', 'setpoint', 'source', 'volume', 'temperature',
-                'humidity', 'motion', 'presence', 'illuminance', 'position', 'power', 'control'], true);
+                'humidity', 'motion', 'presence', 'illuminance', 'position', 'power', 'control', 'heos'], true);
         }
         return ['id' => $id, 'name' => $entry['name'], 'label' => $label, 'value' => $value, 'control' => $control, 'note' => $note,
             'primary' => $primary, 'role' => $role, 'deviceKey' => $entry['deviceKey'] ?? ('source:' . $id), 'deviceName' => $entry['deviceName'] ?? $entry['name']];
@@ -325,6 +335,7 @@ trait HausstatusRoomSupport
             'DiningBrightness' => 'brightness', 'CinemaVolume' => 'volume', 'CinemaSource' => 'source'];
         if (isset($roles[$route])) { return $roles[$route]; }
         if (in_array($id, [$this->ConfigInteger('CinemaState'), $this->ConfigInteger('CinemaControl')], true)) { return 'switch'; }
+        if ($this->IsHeosSelection($id)) { return 'heos'; }
         if (($entry['temperature'] ?? false) || $this->IsRoomSetpoint($entry)) { return 'setpoint'; }
         if (preg_match('/(?:_status|detection_active|current_illumination|übergang|transition|farbtemperatur|colou?r.?temperature|channel volume|batter|voltage|minimum|maximum|\bmin\b|\bmax\b|kosten|energie|verbrauch)/iu', $text)) { return 'other'; }
         if (preg_match('/(?:presence_detection_state|präsenz|praesenz)/iu', $text)) { return 'presence'; }
@@ -376,4 +387,72 @@ trait HausstatusRoomSupport
         }
         if (!RequestAction($id, $value)) { throw new RuntimeException('Die vorhandene Variablenaktion ist fehlgeschlagen.'); }
     }
+    private function IsHeosSelection(int $id): bool
+    {
+        return $id > 0 && IPS_VariableExists($id) && ($id === $this->ConfigInteger('HeosSelection')
+            || preg_match('/heos.*(?:radio|playlist|auswahl)|(?:radio|playlist).*heos/iu', IPS_GetName($id)) === 1);
+    }
+
+    private function HeosEntry(): ?array
+    {
+        $id = $this->ConfigInteger('HeosSelection');
+        if ($id > 0) {
+            if (!IPS_VariableExists($id)) { throw new RuntimeException('Die gewählte HEOS-Auswahlvariable fehlt.'); }
+            return ['id' => $id, 'type' => IPS_ObjectExists($id) ? (int)IPS_GetObject($id)['ObjectType'] : -1,
+                'operate' => true, 'name' => 'HEOS Radio / Playlist', 'room' => '', 'group' => 'Medien'];
+        }
+        $matches = [];
+        foreach ($this->ExpandedRoomEntries('') as $entry) {
+            if ($this->IsHeosSelection($entry['id'])) { $matches[$entry['id']] = $entry; }
+        }
+        if (count($matches) > 1) { throw new RuntimeException('Mehrere HEOS-Auswahlen vorhanden. Die gewünschte Variable unter Mediengerät auswählen.'); }
+        return $matches === [] ? null : array_values($matches)[0];
+    }
+
+    private function HeosItem(): ?array
+    {
+        try {
+            $entry = $this->HeosEntry();
+            if ($entry === null) { return null; }
+            $item = $this->RoomItem($entry);
+            if (!$this->ConfigBoolean('CinemaEnabled')) { $item['control'] = null; $item['note'] = 'Mediengerät-Bedienung ist deaktiviert.'; }
+            return $item;
+        } catch (Throwable $e) { return ['name' => 'HEOS Radio / Playlist', 'label' => 'HEOS Radio / Playlist', 'value' => ['raw' => null, 'text' => 'Nicht verfügbar'], 'control' => null, 'note' => $e->getMessage()]; }
+    }
+
+    private function SetHeosSelection(mixed $value): void
+    {
+        if (!$this->ConfigBoolean('CinemaEnabled')) { throw new RuntimeException('Mediengerät-Bedienung ist deaktiviert.'); }
+        $entry = $this->HeosEntry();
+        if ($entry === null) { throw new RuntimeException('HEOS-Auswahl ist nicht eingerichtet.'); }
+        $control = $this->RoomControl($entry);
+        if (($control['kind'] ?? '') !== 'enum') { throw new RuntimeException('HEOS benötigt eine schaltbare Auswahlvariable mit hinterlegten Optionen.'); }
+        $type = IPS_GetVariable($entry['id'])['VariableType'];
+        if ($type === 2 && (is_int($value) || is_float($value))) { $value = (float)$value; }
+        if (!in_array($value, array_column($control['options'], 'value'), true)) { throw new RuntimeException('HEOS-Auswahlwert oder Datentyp ist ungültig.'); }
+        if (!RequestAction($entry['id'], $value)) { throw new RuntimeException('Die vorhandene HEOS-Variablenaktion ist fehlgeschlagen.'); }
+    }
+
+    public function CheckCommands(): string
+    {
+        $version = json_decode((string)file_get_contents(__DIR__ . '/../library.json'), true)['version'] ?? '?';
+        $lines = ['Hausstatus ' . $version . ' | Instanz ' . $this->InstanceID,
+            'Letzte empfangene Aktion: ' . ($this->GetBuffer('LastCommandReceipt') ?: 'Noch keine Aktion angekommen.'),
+            'Letzter Bedienfehler: ' . ($this->GetBuffer('LastCommandError') ?: 'Kein Fehler gespeichert.')];
+        try {
+            $entry = $this->HeosEntry();
+            if ($entry === null) { $lines[] = 'HEOS: Keine eindeutige Quelle eingerichtet.'; }
+            else {
+                $id = $entry['id']; $v = IPS_GetVariable($id); $control = $this->RoomControl($entry);
+                $lines[] = 'HEOS-Ziel: ' . $id . ' | Variablentyp: ' . $v['VariableType']
+                    . ' | Aktion: ' . ($v['VariableCustomAction'] > 1 ? $v['VariableCustomAction'] : $v['VariableAction'])
+                    . ' | Darstellung: ' . ($control['kind'] ?? 'nur Anzeige');
+                $types = array_unique(array_map(static fn(array $option): string => get_debug_type($option['value']), $control['options'] ?? []));
+                $lines[] = 'Option-Datentypen: ' . implode(', ', $types);
+            }
+        } catch (Throwable $e) { $lines[] = 'HEOS-Prüfung: ' . get_class($e) . ': ' . $e->getMessage(); }
+        $lines[] = 'Keine Gerätebefehle gesendet.';
+        return implode(PHP_EOL, $lines);
+    }
+
 }

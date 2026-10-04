@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.19 – Einstellungen"
+      "caption": "Hausstatus 0.20 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -424,6 +424,11 @@
           "type": "SelectVariable",
           "name": "CinemaVolume",
           "caption": "Lautstärke – numerische Variable"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeosSelection",
+          "caption": "HEOS Radio / Playlist – Auswahlvariable (optional; sonst aus Raumeinträgen)"
         },
         {
           "type": "CheckBox",
@@ -921,6 +926,12 @@
     {
       "type": "Label",
       "caption": "Prüft PV- und Raumdaten auf dem Server und zeigt die letzte Seitenanfrage sowie Fehlerdetails. Sendet keine Gerätebefehle."
+    },
+    {
+      "type": "Button",
+      "caption": "Bedienung prüfen / HEOS-Fehlerdetails",
+      "onClick": "echo SVHS_CheckCommands($id);",
+      "link": false
     }
   ]
 }
