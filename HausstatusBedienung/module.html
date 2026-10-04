@@ -118,7 +118,7 @@
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.18">&#8635; Aktualisieren</button></div>
+<div class="head"><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.19">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -623,7 +623,7 @@ function send(command,value){
  if(typeof requestAction!=='function'){showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
  busy=true;editing=false;showStatus('Befehl wird gesendet ...');render();
  timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
- try{requestAction(command,value);if(busy)pendingTimer=setTimeout(()=>{pendingTimer=null;try{requestAction('Refresh',true);}catch(e){showStatus('Status konnte nicht nachgeladen werden.');}},1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
+ try{requestAction(command,['RoomValue','DoorConfirm','DoorOpen'].includes(command)?JSON.stringify(value):value);if(busy)pendingTimer=setTimeout(()=>{pendingTimer=null;try{requestAction('Refresh',true);}catch(e){showStatus('Status konnte nicht nachgeladen werden.');}},1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
 }
 function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
 function updateRefreshButton(){

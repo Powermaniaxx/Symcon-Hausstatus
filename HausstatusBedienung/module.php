@@ -320,6 +320,12 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         try {
+            // Structured HTML commands cross the SDK bridge as scalar JSON text.
+            // Keep arrays accepted for existing PHP callers and validate types afterwards.
+            if (in_array($Ident, ['RoomValue', 'DoorConfirm', 'DoorOpen'], true) && is_string($Value)) {
+                if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
+                $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
+            }
             if (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
                 $this->SetDining($Ident, $Value);
             } elseif ($Ident === 'RoomValue') {
