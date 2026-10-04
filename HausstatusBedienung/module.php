@@ -53,6 +53,9 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('DiningState', 0);
         $this->RegisterPropertyInteger('DiningBrightness', 0);
         $this->RegisterPropertyBoolean('DiningEnabled', true);
+        foreach (['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'] as $name) { $this->RegisterPropertyInteger($name, 0); }
+        $this->RegisterPropertyString('HeaterTitle', 'Zusatzheizung Wohnzimmer');
+        $this->RegisterPropertyBoolean('HeaterEnabled', true);
         $this->RegisterPropertyInteger('Raining', 0);
         $this->RegisterPropertyInteger('RainArchive', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
@@ -121,6 +124,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($this->ReadPropertyInteger('View') === 12) {
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
         }
+        if ($this->ReadPropertyInteger('View') === 0) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         if (in_array($this->ReadPropertyInteger('View'), [0, 7], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
@@ -225,7 +229,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $own = $source === 0;
         $fields = [];
-        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6,
+        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 0,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
             'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
@@ -318,7 +322,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -334,7 +338,9 @@ class HausstatusBedienung extends IPSModuleStrict
                 if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
                 $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
             }
-            if (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
+            if (in_array($Ident, ['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
+                $this->SetHeater($Ident, $Value);
+            } elseif (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
                 $this->SetDining($Ident, $Value);
             } elseif ($Ident === 'HeosSelection') {
                 $this->SetHeosSelection($Value);
@@ -797,6 +803,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $state['RoomSummary'] = $this->RoomSummary($state['RoomSections'], $state['TemperatureRows']);
             $state['RoomSections'] = []; $state['TemperatureRows'] = [];
         }
+        $state['Heater'] = $this->CurrentView() === 0 ? $this->HeaterState() : null;
         $state['Dining'] = in_array($this->CurrentView(), [0, 5], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVInverters'] = $this->PVInverters();

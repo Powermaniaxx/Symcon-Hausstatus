@@ -406,6 +406,57 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "HeaterSettings",
+      "caption": "Zusatzheizung auf der Startseite",
+      "items": [
+        {
+          "type": "ValidationTextBox",
+          "name": "HeaterTitle",
+          "caption": "Bezeichnung"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "HeaterInstance",
+          "caption": "Schaltinstanz (optional, eindeutiger Boolean-Status)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeaterSwitch",
+          "caption": "Elektroheizkörper – Schaltvariable"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeaterMinimum",
+          "caption": "Minimaltemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeaterMaximum",
+          "caption": "Maximaltemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeaterManual",
+          "caption": "Heizung Manuell / Automatik"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeaterWeekplan",
+          "caption": "Wochenplan – Aktivierung"
+        },
+        {
+          "type": "CheckBox",
+          "name": "HeaterEnabled",
+          "caption": "Zusatzheizung bedienen"
+        },
+        {
+          "type": "Label",
+          "caption": "Vorhandene Variablenaktionen, Beschriftungen und Reglergrenzen werden übernommen. Wochenplan ist die Aktivierung des bestehenden Plans; das Modul erzeugt keine neue Heizungsautomatik."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "CinemaSettings",
       "caption": "04 · Mediengerät",
       "expanded": false,

@@ -3,6 +3,57 @@ declare(strict_types=1);
 
 trait HausstatusComfortSupport
 {
+    private function HeaterIDs(): array
+    {
+        $ids = [];
+        foreach (['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'] as $name) { $ids[$name] = $this->ConfigInteger($name); }
+        $instance = $this->ConfigInteger('HeaterInstance');
+        if ($ids['HeaterSwitch'] === 0 && $instance > 0 && IPS_InstanceExists($instance)) {
+            try { $ids['HeaterSwitch'] = $this->DiningChild($instance, ['state', 'status', 'on'], [0]); }
+            catch (Throwable $e) { /* An explicit switch source resolves missing or ambiguous channels. */ }
+        }
+        return $ids;
+    }
+
+    private function HeaterState(): ?array
+    {
+        $ids = $this->HeaterIDs();
+        if (!array_filter($ids) && $this->ConfigInteger('HeaterInstance') === 0) { return null; }
+        $result = ['title' => $this->ConfigString('HeaterTitle'), 'items' => []];
+        foreach (['HeaterSwitch' => 'Elektroheizkörper', 'HeaterMinimum' => 'Minimaltemperatur', 'HeaterMaximum' => 'Maximaltemperatur',
+            'HeaterManual' => 'Heizung Manuell', 'HeaterWeekplan' => 'Wochenplan'] as $key => $name) {
+            $id = $ids[$key];
+            if ($id === 0) { continue; }
+            if (!IPS_VariableExists($id)) { $result['items'][$key] = ['name' => $name, 'value' => ['raw' => null, 'text' => 'Quelle fehlt'], 'control' => null]; continue; }
+            $item = $this->RoomItem(['id' => $id, 'type' => 2, 'name' => $name, 'operate' => $this->ConfigBoolean('HeaterEnabled')]);
+            $item['command'] = $key; $result['items'][$key] = $item;
+        }
+        if ($ids['HeaterSwitch'] === 0) { $result['note'] = 'Schaltvariable der Zusatzheizung in der Konfiguration auswählen.'; }
+        return $result;
+    }
+
+    private function SetHeater(string $command, mixed $value): void
+    {
+        if ($this->CurrentView() !== 0 || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
+            throw new RuntimeException('Zusatzheizung ist in dieser Ansicht nicht bedienbar.');
+        }
+        $ids = $this->HeaterIDs(); $id = $ids[$command] ?? 0;
+        if ($id <= 0 || !IPS_VariableExists($id) || $this->ProtectedDoorTarget($id)) { throw new RuntimeException('Ungültige Heizungsquelle.'); }
+        $type = IPS_GetVariable($id)['VariableType'];
+        $this->ValidateAction($id, $type);
+        if (in_array($command, ['HeaterMinimum', 'HeaterMaximum'], true)) {
+            if (!in_array($type, [1, 2], true)) { throw new RuntimeException('Temperaturgrenze benötigt eine Zahl.'); }
+            $other = $ids[$command === 'HeaterMinimum' ? 'HeaterMaximum' : 'HeaterMinimum'];
+            $otherValue = $this->Read($other)['raw'];
+            if (is_numeric($value) && is_numeric($otherValue) && ($command === 'HeaterMinimum' ? $value > $otherValue : $value < $otherValue)) {
+                throw new RuntimeException('Minimaltemperatur darf nicht über der Maximaltemperatur liegen.');
+            }
+            $this->SetSlider($id, $value, $this->SliderPlan($id)); return;
+        }
+        if ($type !== 0 || !is_bool($value)) { throw new RuntimeException('Heizungsschalter erwartet Boolean.'); }
+        if (!RequestAction($id, $value)) { throw new RuntimeException('Heizungsaktion fehlgeschlagen.'); }
+    }
+
     private function DiningSources(): array
     {
         $instance = $this->ConfigInteger('DiningInstance');
