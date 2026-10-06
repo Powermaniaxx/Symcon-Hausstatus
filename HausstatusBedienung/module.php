@@ -172,6 +172,19 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $child) {
                 if ($child !== $this->InstanceID && IPS_GetProperty($child, 'ConfigSource') === $this->InstanceID) { IPS_ApplyChanges($child); }
             }
+
+            // Child ApplyChanges calls may touch presentation objects after the split
+            // homepage was built. Enforce the intended final state once more: when
+            // separate homepage tiles are enabled, the combined master tile and every
+            // direct presentation link to it must stay hidden.
+            if ($this->ReadPropertyBoolean('SeparateHomepageTiles')) {
+                IPS_SetHidden($this->InstanceID, true);
+                foreach (IPS_GetObjectList() as $id) {
+                    if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) {
+                        IPS_SetHidden($id, true);
+                    }
+                }
+            }
         }
     }
 
