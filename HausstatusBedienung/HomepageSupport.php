@@ -55,8 +55,10 @@ trait HausstatusHomepageSupport
         $saved = $this->HomepageSavedLayout();
         $previous = $saved['visibility'] ?? json_decode($this->GetBuffer('HomepageVisibility'), true);
         $split = $this->HomepageObjects();
-        if (!($saved['active'] ?? false) && $this->GetBuffer('CombinedHomepageRestored') === '1' && !$previous) { return; }
-        if (!$split && !$previous && !($saved['active'] ?? false)) { return; }
+
+        // Always normalize the combined presentation. Older builds returned here
+        // after the first restore, which allowed a later-visible instance/link pair
+        // to remain on the start page and render the complete dashboard twice.
         foreach (is_array($previous) ? $previous : [] as $id => $hidden) {
             $id = (int)$id;
             if (!is_bool($hidden) || !IPS_ObjectExists($id)) { continue; }
