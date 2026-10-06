@@ -1,4 +1,4 @@
-# Hausstatus 0.31 für IP-Symcon
+# Hausstatus 0.32 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,9 +74,11 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.31**, Build **32**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.32**, Build **33**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
+
+**0.32 beseitigt doppelte kombinierte Startseiten-Kacheln dauerhaft.** Auch wenn Symcon nach einem früheren Wiederherstellen Instanz und Präsentationslink gleichzeitig sichtbar gemacht hat, wird bei jedem Übernehmen erneut genau eine Darstellung sichtbar gehalten.
 
 **0.31 korrigiert die kombinierte Startseite.** Wenn Instanz und Präsentationslink auf dieselbe Hausstatus-Instanz zeigen, bleibt nur eine sichtbare Kachel. In der kombinierten Ansicht steht Wetter jetzt direkt unter Markise und Dachfenster; Bewegung und Temperaturen folgen danach.
 
