@@ -150,9 +150,13 @@ trait HausstatusHomepageSupport
             if ($id === 0) {
                 $id = IPS_CreateInstance('{9E33E109-4881-4E78-9906-38CAC2F1E210}');
                 IPS_SetParent($id, $root); IPS_SetIdent($id, 'SVHSHomeInstance_' . $view);
-                IPS_SetName($id, $entry['title']); IPS_SetPosition($id, $position);
                 IPS_SetProperty($id, 'ConfigSource', $this->InstanceID); IPS_SetProperty($id, 'View', $view);
             } elseif (IPS_GetParent($id) !== $root) { IPS_SetParent($id, $root); }
+            // Keep existing split tiles in the configured order as well. Older versions
+            // only assigned a position when a tile was first created, so later ordering
+            // changes did not affect already existing homepage tiles.
+            IPS_SetName($id, $entry['title']);
+            IPS_SetPosition($id, $position);
             if (!IPS_GetProperty($id, 'ActiveView')) { IPS_SetProperty($id, 'ActiveView', true); }
             IPS_ApplyChanges($id);
             IPS_SetHidden($id, false);
