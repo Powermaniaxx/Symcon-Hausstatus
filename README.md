@@ -1,4 +1,4 @@
-# Hausstatus 0.29 für IP-Symcon
+# Hausstatus 0.30 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -74,9 +74,11 @@ Die Werte aktualisieren sich bei Variablenmeldungen und spätestens durch den re
 
 ## Bestehende Installation aktualisieren
 
-Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.29**, Build **30**.
+Repository in **Module Control** aktualisieren, anschließend in der **eigenen zentralen Hausstatus-Instanz Änderungen übernehmen** und die Visualisierung neu laden. Dadurch werden auch die zugeordneten aktiven Unterseiten übernommen. `library.json` und der Aktualisieren-Tooltip zeigen **0.30**, Build **31**.
 
 Gespeicherte Quellen, Listen, Freigaben und ausgewählte Bedienskripte werden nicht mit den neuen leeren Vorgaben überschrieben. Die leeren Vorgaben gelten für neu angelegte Instanzen. Neue Textfelder übernehmen die bisherigen Beschriftungen als Ausgangspunkt. Bestehende Raum- und Gerätelisten bleiben erhalten; neue Bereiche wie Heizungsprofil und Netzwerk werden ausdrücklich zugeordnet.
+
+**0.30 macht alle Schieberegler auf Touch-Geräten scrollsicher.** Vertikales Wischen über einem Regler scrollt die Seite weiter und verändert keinen Wert. Erst eine klare horizontale Bewegung aktiviert den Regler; übertragen wird der Wert beim Loslassen. Bereits vorhandene getrennte Startseiten-Kacheln werden beim Übernehmen außerdem neu positioniert, damit Wetter direkt unter Markise und Dachfenster einsortiert wird.
 
 **0.16 entfernt den Raumzugang aus der Startseite.** Der vorhandene Menüpunkt **Räume** und seine Links bleiben erhalten. PV-Details öffnen unter Symcon 9.0 weiterhin innerhalb der Hausstatus-Kachel; **← Startseite** führt zurück. Die sichtbare Unterseite wird regelmäßig neu gelesen; **Aktualisieren** fragt sie sofort ab. Raumregler behalten ihre vorhandenen Variablenaktionen und Bedienskripte.
 
