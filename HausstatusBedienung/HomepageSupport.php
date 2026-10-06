@@ -65,10 +65,33 @@ trait HausstatusHomepageSupport
                 && $this->OwnedHomepageTile($target, (int)IPS_GetProperty($target, 'View')));
             if ($owned) { IPS_SetHidden($id, $hidden); }
         }
-        // Recover the reachable combined view even when buffers from 0.27/0.28 were lost.
-        IPS_SetHidden($this->InstanceID, false);
-        foreach (IPS_GetObjectList() as $id) {
-            if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) { IPS_SetHidden($id, false); }
+        // Recover exactly one reachable combined homepage tile. The master instance
+        // and a presentation link to the same instance must never both be visible,
+        // otherwise Symcon renders the complete Hausstatus twice.
+        $root = $this->ReadPropertyInteger('HomepageCategory');
+        if ($root <= 0 || !IPS_ObjectExists($root) || IPS_GetObject($root)['ObjectType'] !== 0) {
+            $root = IPS_GetParent($this->InstanceID);
+        }
+        $links = [];
+        foreach (IPS_GetChildrenIDs($root) as $id) {
+            if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) {
+                $links[] = $id;
+            }
+        }
+        if ($links) {
+            usort($links, static function (int $a, int $b): int {
+                $pa = IPS_GetObject($a)['ObjectPosition'] ?? 0;
+                $pb = IPS_GetObject($b)['ObjectPosition'] ?? 0;
+                return $pa <=> $pb ?: $a <=> $b;
+            });
+            $keeper = $links[0];
+            foreach ($links as $id) {
+                if (($previous[(string)$id] ?? true) === false) { $keeper = $id; break; }
+            }
+            IPS_SetHidden($this->InstanceID, true);
+            foreach ($links as $id) { IPS_SetHidden($id, $id !== $keeper); }
+        } else {
+            IPS_SetHidden($this->InstanceID, false);
         }
         foreach ($split as $id) { IPS_SetHidden($id, true); }
         $this->WriteAttributeString('HomepageLayout', json_encode(['active' => false], JSON_THROW_ON_ERROR));
