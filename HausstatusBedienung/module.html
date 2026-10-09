@@ -134,7 +134,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 <section class="section" id="roomsSection"><h2 id="temperatureTitle">R&auml;ume</h2><div id="heatingProfile"></div><div id="rooms"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span class="small">0.32</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.32">&#8635; Aktualisieren</button></div>
+<div class="head"><span class="small">0.33</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.33">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -144,6 +144,13 @@ let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTime
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
 const openPanels=new Set();
+function viewerPing(){
+ if(document.visibilityState!=='visible'||typeof requestAction!=='function')return;
+ try{requestAction('ViewerPing',true);}catch(e){}
+}
+viewerPing();
+setInterval(viewerPing,30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){viewerPing();if(inlinePage!==null)schedulePagePoll();requestRefresh();}});
 const activeRoomCategories=new Map();
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
@@ -477,10 +484,10 @@ function cancelPageRequest(){
  clearTimeout(pageTimer);pageTimer=null;pageRequest=null;updateRefreshButton();
 }
 function schedulePagePoll(){
- clearTimeout(pagePollTimer);pagePollTimer=null;if(inlinePage===null)return;
+ clearTimeout(pagePollTimer);pagePollTimer=null;if(inlinePage===null||document.visibilityState!=='visible')return;
  pagePollTimer=setTimeout(()=>{
   pagePollTimer=null;
-  if(inlinePage!==null&&!busy&&!editing&&pageRequest===null)readInlinePage(inlinePage,'background');
+  if(inlinePage!==null&&document.visibilityState==='visible'&&!busy&&!editing&&pageRequest===null)readInlinePage(inlinePage,'background');
   schedulePagePoll();
  },30000);
 }
