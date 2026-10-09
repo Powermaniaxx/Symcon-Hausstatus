@@ -163,7 +163,9 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
-        $this->SetTimerInterval('Refresh', 30000);
+        // 0.33: Kein permanenter Refresh ohne aktive WebFront-Kachel.
+        // Bei geoeffnetem WebFront bleiben Variablenaenderungen ereignisgesteuert.
+        $this->SetTimerInterval('Refresh', 0);
         $this->SetStatus(102);
         $this->SetSummary($this->GetBuffer('HomepageLayoutError') ?: 'Hausstatus mit HTML-Bedienung');
         $this->SetBuffer('LastState', '');
@@ -188,9 +190,19 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+    // Ein Browser sendet alle 30 Sekunden ein Lebenszeichen.
+    // Ohne Browser kommen nach spaetestens 75 Sekunden keine Neuberechnungen mehr.
+    // Ein gemeinsamer Zeitstempel funktioniert auch mit mehreren geoeffneten Tabs.
+    private function HasLiveViewers(): bool
+    {
+        $last = (int)$this->GetBuffer('LastViewerSeen');
+        return $last > 0 && (time() - $last) <= 75;
+    }
+
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
+            if (!$this->HasLiveViewers()) { return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
@@ -201,6 +213,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function Refresh(): void
     {
+        if (!$this->HasLiveViewers()) { return; }
         $state = $this->BaseState();
         $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
         if ($this->GetBuffer('LastState') !== $encoded) {
@@ -313,13 +326,17 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function RequestAction(string $Ident, mixed $Value): void
     {
-        if (!in_array($Ident, ['Refresh', 'PageRead'], true)) {
+        if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing'], true)) {
             $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value));
         }
         if (preg_match('/^RoomValue:([1-9][0-9]{0,9})$/D', $Ident, $match) === 1) {
             $Value = ['id' => (int)$match[1], 'value' => $Value]; $Ident = 'RoomValue';
         }
         if (!$this->ReadPropertyBoolean('ActiveView')) { throw new RuntimeException('Diese Ansicht ist pausiert. Bitte die gemeinsame Hausstatus-Kachel verwenden.'); }
+        if ($Ident === 'ViewerPing') {
+            $this->SetBuffer('LastViewerSeen', (string)time());
+            return;
+        }
         if (in_array($Ident, ['PageRead', 'PageValue'], true)) {
             $this->HandlePageRequest($Ident, $Value); return;
         }
