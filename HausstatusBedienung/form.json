@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.36 – Einstellungen"
+      "caption": "Hausstatus 0.37 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -363,7 +363,7 @@
         },
         {
           "type": "Label",
-          "caption": "Nur Anzeige: keine Schaltflächen, keine Änderung von Variablenaktionen oder Archivierung. Profilbilder als JPEG, PNG, WebP oder GIF bis 1 MB in Symcon hochladen und hier auswählen. Der Verlauf nutzt die vorhandenen 24-Stunden-Archivdaten."
+          "caption": "Nur Anzeige: keine Schaltflächen, keine Änderung von Variablenaktionen oder Archivierung. Ohne eigene Bilder werden für Sven und Susi unterschiedliche gezeichnete Avatare angezeigt. Eigene Profilbilder als JPEG, PNG, WebP oder GIF bis 1 MB in Symcon hochladen und hier auswählen. Der Verlauf nutzt die vorhandenen 24-Stunden-Archivdaten."
         }
       ]
     },
