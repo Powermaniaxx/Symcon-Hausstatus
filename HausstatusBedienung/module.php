@@ -67,6 +67,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('RainArchive', 0);
         $this->RegisterPropertyInteger('PresenceArchive', 0);
         $this->RegisterPropertyString('AdditionalAlarmVariables', '[]');
+        $this->RegisterPropertyString('ExtraTileVariables', '[]');
         $this->RegisterPropertyInteger('SvenPresenceImage', 0);
         $this->RegisterPropertyInteger('SusiPresenceImage', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
@@ -146,6 +147,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
+        foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
         if ($this->ReadPropertyInteger('View') === 18) {
             foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
         }
@@ -294,6 +296,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
         $fields['DisplaySettings'] = ['visible' => $own];
         $fields['RoomFilter'] = ['visible' => $view === 12];
+        $fields['ExtraTileSettings'] = ['visible' => true, 'expanded' => $view === 19];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
             if ($source === $this->InstanceID || !IPS_InstanceExists($source)
@@ -469,10 +472,42 @@ class HausstatusBedienung extends IPSModuleStrict
         return $view === 9 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
     }
 
+    // These rows belong to the individual tile, never to the shared master settings.
+    // This allows two instances with the same preset to show different custom variables.
+    private function ExtraTileVariables(): array
+    {
+        $raw = json_decode($this->ReadPropertyString('ExtraTileVariables'), true);
+        if (!is_array($raw)) { return []; }
+        $rows = [];
+        $seen = [];
+        foreach ($raw as $row) {
+            if (!is_array($row)) { continue; }
+            $id = (int)($row['Variable'] ?? 0);
+            if ($id <= 0 || isset($seen[$id])) { continue; }
+            $seen[$id] = true;
+            $name = trim((string)($row['Name'] ?? ''));
+            if ($name === '' && IPS_VariableExists($id)) { $name = IPS_GetName($id); }
+            if ($name === '') { $name = 'Variable ' . $id; }
+            $rows[] = [
+                'id' => $id,
+                'name' => mb_substr($name, 0, 80),
+                'value' => $this->Read($id),
+                'type' => IPS_VariableExists($id) ? (int)IPS_GetVariable($id)['VariableType'] : -1
+            ];
+            if (count($rows) >= 32) { break; }
+        }
+        return $rows;
+    }
+
+    private function ExtraTileVariableIDs(): array
+    {
+        return array_column($this->ExtraTileVariables(), 'id');
+    }
+
     private function SourceNames(): array
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
-            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'],
+            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
@@ -852,6 +887,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
         $state['PresenceHistory'] = $this->CurrentView() === 18 ? $this->PresenceHistoryState() : null;
+        $state['ExtraTileVariables'] = $this->ExtraTileVariables();
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
