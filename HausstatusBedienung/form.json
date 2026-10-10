@@ -2,12 +2,12 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.37 – Einstellungen"
+      "caption": "Hausstatus 0.38 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
       "name": "TileSettings",
-      "caption": "Kachel und Konfiguration",
+      "caption": "1 · Kacheltyp auswählen und einrichten",
       "expanded": true,
       "items": [
         {
@@ -18,7 +18,7 @@
         {
           "type": "Select",
           "name": "View",
-          "caption": "Inhalt dieser Kachel",
+          "caption": "Welche Kachel möchtest du anzeigen?",
           "options": [
             {
               "value": 0,
@@ -90,7 +90,11 @@
             },
             {
               "value": 18,
-              "caption": "Detail: Sven & Susi – Anwesenheit mit 24h-Verlauf"
+              "caption": "Detail: Hausstatus, Sven, Susi und Alarme mit 24h-Verlauf"
+            },
+            {
+              "value": 19,
+              "caption": "Eigene Kachel: frei ausgewählte Variablen"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -103,12 +107,12 @@
         },
         {
           "type": "Label",
-          "caption": "Die Auswahl bestimmt nur den Inhalt dieser Instanz. Sie legt keine weiteren Kacheln an."
+          "caption": "1. Kacheltyp wählen. 2. Optional gemeinsame Quellen der Master-Instanz übernehmen. 3. Bei Bedarf unten unter „Zusätzliche Variablen“ beliebige vorhandene Variablen hinzufügen. 4. Änderungen übernehmen und diese Instanz als Kachel in der Visualisierung platzieren."
         },
         {
           "type": "SelectInstance",
           "name": "ConfigSource",
-          "caption": "Gemeinsame Einstellungen aus einer anderen Hausstatus-Instanz",
+          "caption": "Optional: vorhandene Quellen aus Master-Instanz übernehmen",
           "validModules": [
             "{9E33E109-4881-4E78-9906-38CAC2F1E210}"
           ],
@@ -116,7 +120,7 @@
         },
         {
           "type": "Label",
-          "caption": "Für die Übersicht leer lassen. In Unterseiten die eigene zentrale Hausstatus-Instanz auswählen."
+          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „2“ gelten immer nur für diese Kachel."
         }
       ]
     },
@@ -125,6 +129,43 @@
       "caption": "Die Quellen und Bedienoptionen werden in dieser Instanz eingestellt.",
       "name": "SettingsOrigin"
     },
+    {
+      "type": "ExpansionPanel",
+      "name": "ExtraTileSettings",
+      "caption": "2 · Zusätzliche Variablen für diese Kachel",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
+        },
+        {
+          "type": "List",
+          "name": "ExtraTileVariables",
+          "caption": "Eigene Variablen anzeigen",
+          "rowCount": 4,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Anzeigename (optional)",
+              "name": "Name",
+              "width": "200px",
+              "add": "",
+              "edit": {"type": "ValidationTextBox"}
+            },
+            {
+              "caption": "Bestehende Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {"type": "SelectVariable"}
+            }
+          ]
+        }
+      ]
+    },
+
     {
       "type": "ExpansionPanel",
       "name": "DisplaySettings",
@@ -350,6 +391,22 @@
           "type": "SelectInstance",
           "name": "PresenceArchive",
           "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
+        },
+        {
+          "type": "Label",
+          "caption": "Hausstatus und Alarm innen verwenden die bereits im Bereich „01 · Anwesenheit und Alarm“ eingestellten Variablen. Weitere Alarmvariablen mit Verlauf können hier ergänzt werden."
+        },
+        {
+          "type": "List",
+          "name": "AdditionalAlarmVariables",
+          "caption": "Weitere Alarmzustände mit 24-Stunden-Verlauf",
+          "rowCount": 3,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {"caption": "Name", "name": "Name", "width": "180px", "add": "Weiterer Alarm", "edit": {"type": "ValidationTextBox"}},
+            {"caption": "Boolean-Variable", "name": "Variable", "width": "auto", "add": 0, "edit": {"type": "SelectVariable"}}
+          ]
         },
         {
           "type": "SelectMedia",
