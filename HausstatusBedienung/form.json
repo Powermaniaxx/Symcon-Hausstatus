@@ -29,12 +29,24 @@
               "caption": "Einzeln: Anwesenheit und Alarm"
             },
             {
+              "value": 18,
+              "caption": "Detail: Hausstatus, Sven, Susi und Alarme mit 24h-Verlauf"
+            },
+            {
               "value": 2,
               "caption": "Einzeln: Haustür"
             },
             {
               "value": 5,
               "caption": "Einzeln: Wohnzimmerlicht"
+            },
+            {
+              "value": 17,
+              "caption": "Einzeln: zusätzliche Lampe / Esstisch"
+            },
+            {
+              "value": 14,
+              "caption": "Einzeln: Zusatzheizung"
             },
             {
               "value": 6,
@@ -47,6 +59,10 @@
             {
               "value": 7,
               "caption": "Einzeln: PV-Anlage"
+            },
+            {
+              "value": 15,
+              "caption": "Einzeln: PV kompakt"
             },
             {
               "value": 11,
@@ -63,6 +79,10 @@
             {
               "value": 10,
               "caption": "Detail: Wetter"
+            },
+            {
+              "value": 16,
+              "caption": "Einzeln: Wetter kompakt"
             },
             {
               "caption": "Raum: Geräte und Bedienung",
@@ -93,32 +113,12 @@
               "value": 24
             },
             {
-              "value": 14,
-              "caption": "Einzeln: Zusatzheizung"
-            },
-            {
-              "value": 15,
-              "caption": "Einzeln: PV kompakt"
-            },
-            {
-              "value": 16,
-              "caption": "Einzeln: Wetter kompakt"
-            },
-            {
-              "value": 17,
-              "caption": "Einzeln: zusätzliche Lampe / Esstisch"
-            },
-            {
-              "value": 18,
-              "caption": "Detail: Hausstatus, Sven, Susi und Alarme mit 24h-Verlauf"
+              "value": 25,
+              "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
             },
             {
               "value": 19,
               "caption": "Eigene Kachel: frei ausgewählte Variablen"
-            },
-            {
-              "value": 25,
-              "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
