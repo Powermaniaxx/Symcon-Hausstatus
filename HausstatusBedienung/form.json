@@ -2,12 +2,12 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.42 – Einstellungen"
+      "caption": "Hausstatus 0.43 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
       "name": "TileSettings",
-      "caption": "1 · Kacheltyp auswählen und einrichten",
+      "caption": "01 · Kacheltyp und Datenquelle",
       "expanded": true,
       "items": [
         {
@@ -131,7 +131,7 @@
         },
         {
           "type": "Label",
-          "caption": "1. Kacheltyp wählen. 2. Optional gemeinsame Quellen der Master-Instanz übernehmen. 3. Bei Bedarf unten unter „Zusätzliche Variablen“ beliebige vorhandene Variablen hinzufügen. 4. Änderungen übernehmen und diese Instanz als Kachel in der Visualisierung platzieren."
+          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „18 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
         },
         {
           "type": "SelectInstance",
@@ -155,197 +155,8 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "ExtraTileSettings",
-      "caption": "2 · Zusätzliche Variablen für diese Kachel",
-      "expanded": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
-        },
-        {
-          "type": "List",
-          "name": "ExtraTileVariables",
-          "caption": "Eigene Variablen anzeigen",
-          "rowCount": 4,
-          "add": true,
-          "delete": true,
-          "columns": [
-            {
-              "caption": "Anzeigename (optional)",
-              "name": "Name",
-              "width": "200px",
-              "add": "",
-              "edit": {"type": "ValidationTextBox"}
-            },
-            {
-              "caption": "Bestehende Variable",
-              "name": "Variable",
-              "width": "auto",
-              "add": 0,
-              "edit": {"type": "SelectVariable"}
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "type": "ExpansionPanel",
-      "name": "DisplaySettings",
-      "caption": "Texte und Beschreibungen",
-      "expanded": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Bezeichnungen und Hinweise frei anpassen. Texte für An/Aus werden bei Boolean-Statusanzeigen verwendet. Leer lassen, um die bisherigen Zustandstexte zu behalten. Die Zeilen gehören zu den jeweiligen Quellen in den Einstellungen."
-        },
-        {
-          "type": "List",
-          "name": "DisplayTexts",
-          "caption": "Kacheltexte",
-          "rowCount": 8,
-          "add": false,
-          "delete": false,
-          "columns": [
-            {
-              "name": "Key",
-              "caption": "Bereich / Quelle",
-              "width": "0px",
-              "edit": {
-                "type": "Select",
-                "options": [
-                  {
-                    "caption": "Überschrift Anwesenheit / Alarm",
-                    "value": "StatusTitle"
-                  },
-                  {
-                    "caption": "Überschrift Haustür",
-                    "value": "DoorTitle"
-                  },
-                  {
-                    "caption": "Anwesenheit",
-                    "value": "Presence"
-                  },
-                  {
-                    "caption": "Türschloss",
-                    "value": "Lock"
-                  },
-                  {
-                    "caption": "Türkontakt",
-                    "value": "DoorContact"
-                  },
-                  {
-                    "caption": "Türfreigabe",
-                    "value": "DoorPermission"
-                  },
-                  {
-                    "caption": "Alarm",
-                    "value": "Alarm"
-                  },
-                  {
-                    "caption": "Gerätewarnungen",
-                    "value": "BatteryWarnings"
-                  },
-                  {
-                    "caption": "Hauptlicht",
-                    "value": "LightState"
-                  },
-                  {
-                    "caption": "Zusätzliche Lampe",
-                    "value": "Dining"
-                  },
-                  {
-                    "caption": "Mediengerät",
-                    "value": "CinemaState"
-                  },
-                  {
-                    "caption": "PV-Anlage",
-                    "value": "PVPower"
-                  },
-                  {
-                    "caption": "Überschrift Außenbereich",
-                    "value": "OutdoorTitle"
-                  },
-                  {
-                    "caption": "Markise / Beschattung",
-                    "value": "Awning"
-                  },
-                  {
-                    "caption": "Dachfenster",
-                    "value": "Roof"
-                  },
-                  {
-                    "caption": "Bewegungsverlauf",
-                    "value": "MotionTitle"
-                  },
-                  {
-                    "caption": "Temperaturen",
-                    "value": "TemperatureTitle"
-                  },
-                  {
-                    "caption": "Heizungsprofil",
-                    "value": "HeatingProfile"
-                  },
-                  {
-                    "caption": "Wetter",
-                    "value": "WeatherTitle"
-                  },
-                  {
-                    "caption": "Netzwerk / Router",
-                    "value": "NetworkTitle"
-                  }
-                ]
-              },
-              "visible": false,
-              "save": true
-            },
-            {
-              "name": "Section",
-              "caption": "Bereich",
-              "width": "210px",
-              "save": false
-            },
-            {
-              "name": "Text",
-              "caption": "Bezeichnung",
-              "width": "200px",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "name": "Description",
-              "caption": "Beschreibung (optional)",
-              "width": "auto",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "name": "OnText",
-              "caption": "Text bei An",
-              "width": "140px",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "name": "OffText",
-              "caption": "Text bei Aus",
-              "width": "140px",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "ExpansionPanel",
       "name": "OverviewSettings",
-      "caption": "Übersicht und Detailkacheln",
+      "caption": "02 · Startseite und Detailkacheln",
       "expanded": true,
       "items": [
         {
@@ -380,7 +191,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceSettings",
-      "caption": "01 · Anwesenheit und Alarm",
+      "caption": "03 · Anwesenheit und Alarm",
       "expanded": false,
       "items": [
         {
@@ -398,7 +209,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceHistorySettings",
-      "caption": "Anwesenheitsverlauf Sven & Susi",
+      "caption": "04 · Bewohner und Statusverlauf",
       "expanded": false,
       "items": [
         {
@@ -428,8 +239,24 @@
           "add": true,
           "delete": true,
           "columns": [
-            {"caption": "Name", "name": "Name", "width": "180px", "add": "Weiterer Alarm", "edit": {"type": "ValidationTextBox"}},
-            {"caption": "Boolean-Variable", "name": "Variable", "width": "auto", "add": 0, "edit": {"type": "SelectVariable"}}
+            {
+              "caption": "Name",
+              "name": "Name",
+              "width": "180px",
+              "add": "Weiterer Alarm",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Boolean-Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
           ]
         },
         {
@@ -451,7 +278,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DoorSettings",
-      "caption": "02 · Haustür",
+      "caption": "05 · Haustür",
       "expanded": false,
       "items": [
         {
@@ -498,7 +325,7 @@
     {
       "type": "ExpansionPanel",
       "name": "LightSettings",
-      "caption": "03 · Licht und zusätzliche Lampe",
+      "caption": "06 · Licht und Esstisch",
       "expanded": false,
       "items": [
         {
@@ -563,7 +390,7 @@
     {
       "type": "ExpansionPanel",
       "name": "HeaterSettings",
-      "caption": "Zusatzheizung auf der Startseite",
+      "caption": "07 · Zusatzheizung",
       "items": [
         {
           "type": "ValidationTextBox",
@@ -614,7 +441,7 @@
     {
       "type": "ExpansionPanel",
       "name": "CinemaSettings",
-      "caption": "04 · Mediengerät",
+      "caption": "08 · Mediengeräte und HEOS",
       "expanded": false,
       "items": [
         {
@@ -671,7 +498,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DeviceSettings",
-      "caption": "05 · Gerätewarnungen",
+      "caption": "09 · Gerätewarnungen",
       "expanded": false,
       "items": [
         {
@@ -688,7 +515,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PVSettings",
-      "caption": "06 · PV-Anlage",
+      "caption": "10 · PV-Anlage",
       "expanded": false,
       "items": [
         {
@@ -711,7 +538,7 @@
     {
       "type": "ExpansionPanel",
       "name": "OutdoorSettings",
-      "caption": "07 · Markise und Dachfenster",
+      "caption": "11 · Markise und Dachfenster",
       "expanded": false,
       "items": [
         {
@@ -771,7 +598,7 @@
     {
       "type": "ExpansionPanel",
       "name": "MotionSettings",
-      "caption": "08 · Bewegung und Verlauf",
+      "caption": "12 · Bewegung und Verlauf",
       "expanded": false,
       "items": [
         {
@@ -821,7 +648,7 @@
     {
       "type": "ExpansionPanel",
       "name": "TemperatureSettings",
-      "caption": "09 · Temperaturen",
+      "caption": "13 · Temperaturen",
       "expanded": false,
       "items": [
         {
@@ -875,7 +702,7 @@
     {
       "type": "ExpansionPanel",
       "name": "WeatherSettings",
-      "caption": "10 · Wetter",
+      "caption": "14 · Wetter",
       "expanded": false,
       "items": [
         {
@@ -933,7 +760,7 @@
     {
       "type": "ExpansionPanel",
       "name": "RoomDeviceSettings",
-      "caption": "11 · Räume und weitere Geräte",
+      "caption": "15 · Räume und weitere Geräte",
       "expanded": false,
       "items": [
         {
@@ -1008,48 +835,8 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "DockerSettings",
-      "caption": "13 · NAS-Docker-Container",
-      "expanded": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Die Kachel liest die vorhandenen Portainer-Containerinstanzen automatisch. Es werden keine Shell-Kommandos oder Passwörter verwendet. Bei leerem Filter werden alle Portainer-Containerinstanzen angezeigt."
-        },
-        {
-          "type": "SelectCategory",
-          "name": "DockerCategory",
-          "caption": "Container-Gruppe im Objektbaum – optional, z. B. local (17773)"
-        },
-        {
-          "type": "CheckBox",
-          "name": "DockerAllowSymconRestart",
-          "caption": "Neustart von MyIPSymcon ausdrücklich erlauben (riskant; Start und Stop bleiben gesperrt)"
-        },
-        {
-          "type": "Label",
-          "caption": "Start, Stop und Neustart erfolgen ausschließlich über das installierte Portainer-Modul. Stoppen und Neustarten müssen in der Kachel bestätigt werden."
-        },
-        {
-          "type": "SelectCategory",
-          "name": "DockerTileCategory",
-          "caption": "Wo soll die neue NAS-Kachel erscheinen? Kategorie „Variablen“ wählen"
-        },
-        {
-          "type": "Button",
-          "caption": "NAS-Container-Kachel in dieser Kategorie erstellen",
-          "onClick": "echo SVHS_CreateDockerTile($id);"
-        },
-        {
-          "type": "Label",
-          "caption": "Der Button erstellt genau eine neue Hausstatus-Instanz mit dem Kacheltyp NAS-Container und übernimmt die Einstellungen der zentralen Hausstatus-Instanz. Bereits vorhandene NAS-Kacheln in der gewählten Kategorie werden wiederverwendet."
-        }
-      ]
-    },
-    {
-      "type": "ExpansionPanel",
       "name": "NetworkSettings",
-      "caption": "12 · FritzBox – Variablen für alle Kachelvarianten",
+      "caption": "16 · FritzBox und Netzwerk",
       "expanded": false,
       "items": [
         {
@@ -1238,6 +1025,238 @@
         {
           "type": "Label",
           "caption": "QR-Codes werden aus vorhandenen PNG- oder JPEG-Medienobjekten gelesen und erst beim Aufklappen angezeigt. Keine Übertragung an einen QR-Code-Dienst. Nur Personen mit Zugriff auf diese Visualisierung können die Codes sehen."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "DockerSettings",
+      "caption": "17 · NAS-Docker-Container",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Die NAS-Kachel liest die vorhandenen Portainer-Containerinstanzen automatisch. Es werden keine Shell-Kommandos oder Passwörter verwendet. Bei leerem Filter werden alle Portainer-Containerinstanzen angezeigt."
+        },
+        {
+          "type": "SelectCategory",
+          "name": "DockerCategory",
+          "caption": "Container-Gruppe im Objektbaum – optional, z. B. local (17773)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "DockerAllowSymconRestart",
+          "caption": "Neustart von MyIPSymcon ausdrücklich erlauben (riskant; Start und Stop bleiben gesperrt)"
+        },
+        {
+          "type": "Label",
+          "caption": "Start, Stop und Neustart erfolgen ausschließlich über das installierte Portainer-Modul. Stoppen und Neustarten müssen in der Kachel bestätigt werden."
+        },
+        {
+          "type": "SelectCategory",
+          "name": "DockerTileCategory",
+          "caption": "Wo soll die neue NAS-Kachel erscheinen? Kategorie „Variablen“ wählen"
+        },
+        {
+          "type": "Button",
+          "caption": "NAS-Container-Kachel in dieser Kategorie erstellen",
+          "onClick": "echo SVHS_CreateDockerTile($id);"
+        },
+        {
+          "type": "Label",
+          "caption": "Der Button erstellt genau eine neue Hausstatus-Instanz mit dem Kacheltyp NAS-Container und übernimmt die Einstellungen der zentralen Hausstatus-Instanz. Bereits vorhandene NAS-Kacheln in der gewählten Kategorie werden wiederverwendet."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "ExtraTileSettings",
+      "caption": "18 · Zusätzliche Variablen für diese Kachel",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
+        },
+        {
+          "type": "List",
+          "name": "ExtraTileVariables",
+          "caption": "Eigene Variablen anzeigen",
+          "rowCount": 4,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Anzeigename (optional)",
+              "name": "Name",
+              "width": "200px",
+              "add": "",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Bestehende Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "DisplaySettings",
+      "caption": "19 · Texte und Beschreibungen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Bezeichnungen und Hinweise frei anpassen. Texte für An/Aus werden bei Boolean-Statusanzeigen verwendet. Leer lassen, um die bisherigen Zustandstexte zu behalten. Die Zeilen gehören zu den jeweiligen Quellen in den Einstellungen."
+        },
+        {
+          "type": "List",
+          "name": "DisplayTexts",
+          "caption": "Kacheltexte",
+          "rowCount": 8,
+          "add": false,
+          "delete": false,
+          "columns": [
+            {
+              "name": "Key",
+              "caption": "Bereich / Quelle",
+              "width": "0px",
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Überschrift Anwesenheit / Alarm",
+                    "value": "StatusTitle"
+                  },
+                  {
+                    "caption": "Überschrift Haustür",
+                    "value": "DoorTitle"
+                  },
+                  {
+                    "caption": "Anwesenheit",
+                    "value": "Presence"
+                  },
+                  {
+                    "caption": "Türschloss",
+                    "value": "Lock"
+                  },
+                  {
+                    "caption": "Türkontakt",
+                    "value": "DoorContact"
+                  },
+                  {
+                    "caption": "Türfreigabe",
+                    "value": "DoorPermission"
+                  },
+                  {
+                    "caption": "Alarm",
+                    "value": "Alarm"
+                  },
+                  {
+                    "caption": "Gerätewarnungen",
+                    "value": "BatteryWarnings"
+                  },
+                  {
+                    "caption": "Hauptlicht",
+                    "value": "LightState"
+                  },
+                  {
+                    "caption": "Zusätzliche Lampe",
+                    "value": "Dining"
+                  },
+                  {
+                    "caption": "Mediengerät",
+                    "value": "CinemaState"
+                  },
+                  {
+                    "caption": "PV-Anlage",
+                    "value": "PVPower"
+                  },
+                  {
+                    "caption": "Überschrift Außenbereich",
+                    "value": "OutdoorTitle"
+                  },
+                  {
+                    "caption": "Markise / Beschattung",
+                    "value": "Awning"
+                  },
+                  {
+                    "caption": "Dachfenster",
+                    "value": "Roof"
+                  },
+                  {
+                    "caption": "Bewegungsverlauf",
+                    "value": "MotionTitle"
+                  },
+                  {
+                    "caption": "Temperaturen",
+                    "value": "TemperatureTitle"
+                  },
+                  {
+                    "caption": "Heizungsprofil",
+                    "value": "HeatingProfile"
+                  },
+                  {
+                    "caption": "Wetter",
+                    "value": "WeatherTitle"
+                  },
+                  {
+                    "caption": "Netzwerk / Router",
+                    "value": "NetworkTitle"
+                  }
+                ]
+              },
+              "visible": false,
+              "save": true
+            },
+            {
+              "name": "Section",
+              "caption": "Bereich",
+              "width": "210px",
+              "save": false
+            },
+            {
+              "name": "Text",
+              "caption": "Bezeichnung",
+              "width": "200px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Description",
+              "caption": "Beschreibung (optional)",
+              "width": "auto",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "OnText",
+              "caption": "Text bei An",
+              "width": "140px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "OffText",
+              "caption": "Text bei Aus",
+              "width": "140px",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            }
+          ]
         }
       ]
     }
