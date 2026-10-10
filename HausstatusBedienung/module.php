@@ -66,6 +66,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('Raining', 0);
         $this->RegisterPropertyInteger('RainArchive', 0);
         $this->RegisterPropertyInteger('PresenceArchive', 0);
+        $this->RegisterPropertyString('AdditionalAlarmVariables', '[]');
         $this->RegisterPropertyInteger('SvenPresenceImage', 0);
         $this->RegisterPropertyInteger('SusiPresenceImage', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
@@ -145,6 +146,9 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
+        if ($this->ReadPropertyInteger('View') === 18) {
+            foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
+        }
         if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
         }
@@ -218,8 +222,11 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
             if (!$this->HasLiveViewers()) { return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
-            if ($SenderID === $this->ConfigInteger('SvenPresence') || $SenderID === $this->ConfigInteger('SusiPresence')) {
-                $this->SetBuffer('PresenceHistoryCache', '');
+            if ($this->ReadPropertyInteger('View') === 18) {
+                $historySourceIDs = array_column($this->PresenceHistorySources(), 'id');
+                if (in_array($SenderID, $historySourceIDs, true)) {
+                    $this->SetBuffer('PresenceHistoryCache', '');
+                }
             }
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
@@ -465,7 +472,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function SourceNames(): array
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
-            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['SvenPresence', 'SusiPresence'],
+            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
