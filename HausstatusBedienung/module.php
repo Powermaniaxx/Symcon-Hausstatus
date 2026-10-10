@@ -24,6 +24,9 @@ class HausstatusBedienung extends IPSModuleStrict
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
+        'NetworkManufacturer' => 0, 'NetworkWanType' => 0, 'NetworkUPnP' => 0,
+        'NetworkDNS1' => 0, 'NetworkDNS2' => 0, 'NetworkDownstreamMax' => 0, 'NetworkUpstreamMax' => 0,
+        'NetworkWirelessState' => 0, 'NetworkLastRestart' => 0,
         'HeatingProfile' => 0, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
@@ -162,7 +165,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $source = $this->ReadPropertyInteger('ConfigSource');
         if ($source > 0 && IPS_InstanceExists($source)) { $this->RegisterReference($source); }
-        if ($this->ReadPropertyInteger('View') === 13) {
+        if (in_array($this->ReadPropertyInteger('View'), [13, 24], true)) {
             foreach ($this->WirelessNetworks() as $wifi) {
                 foreach (['State', 'SSID', 'Devices'] as $name) { $ids[] = $wifi[$name]; }
                 if ($wifi['QRCode'] > 0 && IPS_MediaExists($wifi['QRCode'])) { $this->RegisterReference($wifi['QRCode']); }
@@ -296,6 +299,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
         $fields['DisplaySettings'] = ['visible' => $own];
         $fields['RoomFilter'] = ['visible' => $view === 12];
+        $fields['NetworkSettings'] = ['visible' => $own,
+            'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
         $fields['ExtraTileSettings'] = ['visible' => true, 'expanded' => $view === 19];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
@@ -512,6 +517,9 @@ class HausstatusBedienung extends IPSModuleStrict
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->CurrentView();
+        if (in_array($view, [13, 20, 21, 22, 23, 24], true)) {
+            return $this->NetworkViewFields($view);
+        }
         if ($view === 0 && $this->ConfigBoolean('SeparateDetails')) {
             return array_keys(self::SOURCES);
         }
