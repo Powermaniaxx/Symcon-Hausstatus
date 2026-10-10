@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.39 – Einstellungen"
+      "caption": "Hausstatus 0.40 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -71,6 +71,26 @@
             {
               "caption": "Detail: Netzwerk / FritzBox",
               "value": 13
+            },
+            {
+              "caption": "FritzBox: kompakte Übersicht",
+              "value": 20
+            },
+            {
+              "caption": "FritzBox: Internet und Datenraten",
+              "value": 21
+            },
+            {
+              "caption": "FritzBox: Routerinformationen",
+              "value": 22
+            },
+            {
+              "caption": "FritzBox: Netzwerkgeräte",
+              "value": 23
+            },
+            {
+              "caption": "FritzBox: gesamte Übersicht",
+              "value": 24
             },
             {
               "value": 14,
@@ -985,62 +1005,107 @@
     {
       "type": "ExpansionPanel",
       "name": "NetworkSettings",
-      "caption": "12 · Netzwerk / FritzBox",
+      "caption": "12 · FritzBox – Variablen für alle Kachelvarianten",
       "expanded": false,
       "items": [
         {
           "type": "Label",
-          "caption": "Vorhandene Variablen der FritzBox-Module auswählen. Einheiten und Texte stammen aus den Symcon-Variablendarstellungen. Die Netzwerk-Unterseite zeigt keine internen Portfreigaben oder Gerätelisten."
+          "caption": "Vorhandene Symcon-Variablen auswählen. Die fünf neuen FritzBox-Kacheln verwenden diese Einstellungen; die bisherige Netzwerk-Unterseite bleibt erhalten. Die Variablen-IDs in Klammern stammen aus deiner FritzBox-Objektübersicht. Alles wird ausschließlich gelesen; die rohe Netzwerkgeräteliste (24070) wird nicht eingebettet."
         },
         {
           "type": "SelectVariable",
           "name": "NetworkConnection",
-          "caption": "Verbindungsstatus"
+          "caption": "Verbindungsstatus – Status der physischen Verbindung (25185)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkDownload",
-          "caption": "Aktuelle Downloadrate"
+          "caption": "Empfangsrate / Download (10835)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkUpload",
-          "caption": "Aktuelle Uploadrate"
+          "caption": "Senderate / Upload (19406)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkDownloadUsage",
-          "caption": "Download-Auslastung"
+          "caption": "Auslastung Download (23405)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkUploadUsage",
-          "caption": "Upload-Auslastung"
+          "caption": "Auslastung Upload (33426)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkActiveDevices",
-          "caption": "Aktive Netzwerkgeräte"
+          "caption": "Anzahl aktive Netzwerkgeräte (30908)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkDevices",
-          "caption": "Netzwerkgeräte insgesamt"
+          "caption": "Anzahl aller Netzwerkgeräte (15438)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkUptime",
-          "caption": "Laufzeit"
+          "caption": "Router-Laufzeit als Text (29894)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkModel",
-          "caption": "Routermodell"
+          "caption": "Routermodell (55331)"
         },
         {
           "type": "SelectVariable",
           "name": "NetworkFirmware",
-          "caption": "Software-Version"
+          "caption": "Software-Version (53729)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkManufacturer",
+          "caption": "Hersteller (24045)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkWanType",
+          "caption": "WAN-Zugangsart (16657)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkUPnP",
+          "caption": "Automatische Portweiterleitung UPnP – nur Status (44023)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDownstreamMax",
+          "caption": "Maximale Downloadrate (26792)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkUpstreamMax",
+          "caption": "Maximale Uploadrate (12922)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDNS1",
+          "caption": "DNS-Server 1 (13318)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkDNS2",
+          "caption": "DNS-Server 2 (26834)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkWirelessState",
+          "caption": "WLAN 2,4 GHz – aktiv (40818)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkLastRestart",
+          "caption": "Letzter Neustart (30468)"
         },
         {
           "type": "List",
