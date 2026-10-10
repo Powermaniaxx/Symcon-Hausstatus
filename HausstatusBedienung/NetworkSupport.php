@@ -68,7 +68,11 @@ trait HausstatusNetworkSupport
             'NetworkDownstreamMax'  => [26792, 58215, 'Downstream Max kBitrate', 1],
             'NetworkUpstreamMax'    => [12922, 58215, 'Upstream Max kBitrate', 1],
             'NetworkWirelessState'  => [40818, 27744, 'WLAN state', 0],
-            'NetworkLastRestart'    => [30468, 35157, 'Letzter Neustart', 3]
+            'NetworkLastRestart'    => [30468, 35157, 'Letzter Neustart', 3],
+            'NetworkTotalReceived'   => [51481, 58215, 'Empfangen seit verbunden', 2],
+            'NetworkTotalSent'       => [11621, 58215, 'Gesendet seit verbunden', 2],
+            'NetworkVoipDNS1'        => [50614, 58215, 'VoIP DNS-Server 1', 3],
+            'NetworkVoipDNS2'        => [14914, 58215, 'VoIP DNS-Server 2', 3]
         ];
 
         $assigned = 0;
@@ -102,7 +106,8 @@ trait HausstatusNetworkSupport
         $internet = ['NetworkConnection', 'NetworkDownload', 'NetworkUpload',
             'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkWanType',
             'NetworkDownstreamMax', 'NetworkUpstreamMax', 'NetworkUPnP',
-            'NetworkDNS1', 'NetworkDNS2'];
+            'NetworkDNS1', 'NetworkDNS2', 'NetworkTotalReceived', 'NetworkTotalSent',
+            'NetworkVoipDNS1', 'NetworkVoipDNS2'];
         $router = ['NetworkManufacturer', 'NetworkModel', 'NetworkFirmware',
             'NetworkUptime', 'NetworkLastRestart', 'NetworkWanType'];
         $devices = ['NetworkActiveDevices', 'NetworkDevices', 'NetworkWirelessState'];
