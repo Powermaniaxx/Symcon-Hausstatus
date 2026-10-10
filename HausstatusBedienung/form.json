@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.33 – Einstellungen"
+      "caption": "Hausstatus 0.34 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -513,7 +513,17 @@
         {
           "type": "SelectVariable",
           "name": "HeosSelection",
-          "caption": "HEOS Radio / Playlist – Auswahlvariable (optional; sonst aus Raumeinträgen)"
+          "caption": "HEOS gemeinsame Auswahl – Rueckfall (0 = Aus, 1-3 = Radio, ab 4 = NAS)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeosRadio",
+          "caption": "Radio – eigene schaltbare Auswahlvariable (Sender beliebig erweiterbar)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "HeosNAS",
+          "caption": "NAS-Playlisten – eigene schaltbare Auswahlvariable (beliebig erweiterbar)"
         },
         {
           "type": "SelectVariable",
