@@ -124,7 +124,26 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 }
 
 /* 0.35: Compact, read-only status and 24-hour timeline. */
-.presenceHistoryGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:12px}
+.presenceHistoryLayout{display:grid;gap:16px}
+.presenceHistoryGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.presenceHistoryHeading{font-size:14px;font-weight:600;margin:0 0 8px}
+.presencePerson.isSystem{padding:11px 13px;border-radius:10px}
+.presencePerson.isSystem h3{text-align:left;margin:0 0 8px}
+.presencePerson.isSystem .presenceState{text-align:left}
+.presencePerson.isSystem .presenceTrack{height:15px;margin-top:10px}
+.presencePerson.isSystem .presenceLegend{margin-top:5px}
+.presencePerson.isAlarm .presenceState.isHome{background:#c58a3a22;border-color:#c58a3a}
+.presencePerson.isAlarm .presenceState.isAway{background:#8882;border-color:#8885}
+.presencePerson.isAlarm .presenceSegment.home{background:#c58a3a}
+.presencePerson.isAlarm .presenceSegment.away{background:#8888}
+.presencePerson.isAlarm .presenceLegend .home:before{background:#c58a3a}
+.presencePerson.isAlarm .presenceLegend .away:before{background:#8888}
+.extraTileGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.extraTileItem{padding:12px;border:1px solid #8883;border-radius:10px;background:#8881;min-width:0}
+.extraTileItem strong{display:block;font-size:13px;margin-bottom:8px;overflow-wrap:anywhere}
+.extraTileValue{font-size:17px;font-weight:600;overflow-wrap:anywhere}
+.extraTileValue.isActive{color:#14875a}.extraTileValue.isInactive{color:#a63d3d}
+.extraTileEmpty{font-size:13px;opacity:.8}
 .presencePerson{border:1px solid #8883;border-radius:12px;padding:13px;min-width:0;background:#8881}
 .presencePerson h3{font-size:15px;margin:7px 0 12px;text-align:center}
 .presenceAvatar{width:100px;height:100px;max-width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto 8px;border-radius:50%;border:4px solid #8888;background:#8882;box-shadow:0 2px 10px #0001;font-size:37px;line-height:1}
@@ -146,7 +165,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .presenceLegend .home:before{background:#19a67c}.presenceLegend .away:before{background:#c84646}
 .presenceChanges{margin-top:10px;font-size:12px}
 .presenceChanges summary{cursor:pointer}.presenceChanges .row{font-size:11px}
-@media(max-width:600px){.presenceHistoryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.presencePerson{padding:10px}.presenceAvatar{width:82px;height:82px}.presenceLegend{flex-wrap:wrap;gap:6px}.presencePerson h3{font-size:14px}}
+@media(max-width:600px){.presenceHistoryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.presencePerson{padding:10px}.presenceAvatar{width:82px;height:82px}.presenceLegend{flex-wrap:wrap;gap:6px}.presencePerson h3{font-size:14px}.presencePerson.isSystem{padding:8px}.presenceHistoryLayout{gap:10px}}
 @media(max-width:340px){.presenceHistoryGrid{grid-template-columns:1fr}.presenceAvatar{width:100px;height:100px}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
@@ -155,13 +174,14 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 
 <div class="grid" id="cards"></div>
 <div id="message" role="status" aria-live="polite"></div>
-<section class="section" id="presenceHistorySection" hidden><h2>Anwesenheit · letzte 24 Stunden</h2><div id="presenceHistory" class="presenceHistoryGrid"></div></section>
+<section class="section" id="presenceHistorySection" hidden><h2>Anwesenheit · letzte 24 Stunden</h2><div id="presenceHistory" class="presenceHistoryLayout"></div></section>
+<section class="section" id="extraTileSection" hidden><h2>Zusätzliche Variablen</h2><div id="extraTileVariables" class="extraTileGrid"></div></section>
 <section class="section" id="weatherSection"><h2 id="weatherTitle">Wetter</h2><div id="weather"></div></section>
 <section class="section" id="motionSection"><h2 id="motionTitle">Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section" id="roomsSection"><h2 id="temperatureTitle">R&auml;ume</h2><div id="heatingProfile"></div><div id="rooms"></div></section>
 <div id="roomDeviceSections"></div>
 <section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span class="small">0.37</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.37">&#8635; Aktualisieren</button></div>
+<div class="head"><span class="small">0.38</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.38">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -333,6 +353,7 @@ function render(){
  rows('weather',(s.View===16||s.View===0&&s.SeparateDetails===true)?[['Wetter',s.Weather.text],['Wind',s.Wind.text]]:[['Wetter',s.Weather.text],['Wind',s.Wind.text],['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderPresenceHistory(s.PresenceHistory);
+ renderExtraTileVariables(s.ExtraTileVariables??[]);
  renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
  applyView(s.View??0);
  renderPageNavigation();
@@ -372,36 +393,66 @@ function defaultPresenceAvatar(name){
  add('path',{d:'M41 70 Q50 77 59 70',fill:'none',stroke:'#fff','stroke-width':2,'stroke-linecap':'round'});
  return svg;
 }
+function renderExtraTileVariables(list){
+ const root=el('extraTileVariables');root.replaceChildren();
+ if(!Array.isArray(list)||!list.length){
+  if(state?.View===19){const note=document.createElement('p');note.className='extraTileEmpty';text(note,'Noch keine Variablen ausgewählt. In den Instanzeinstellungen unter „2 · Zusätzliche Variablen“ hinzufügen.');root.append(note);}
+  return;
+ }
+ for(const item of list){
+  const card=document.createElement('article');card.className='extraTileItem';
+  const name=document.createElement('strong');text(name,item.name);card.append(name);
+  const value=document.createElement('div');value.className='extraTileValue';
+  const raw=item.value?.raw;const isBool=typeof raw==='boolean';
+  text(value,item.value?.text??'Unbekannt');
+  if(isBool)value.className+=' '+(raw?'isActive':'isInactive');
+  card.append(value);root.append(card);
+ }
+}
 function renderPresenceHistory(data){
  const root=el('presenceHistory');root.replaceChildren();
  if(!data||!Array.isArray(data.people))return;
+ const groups=[
+  {name:'Haus und Alarm',kind:'system',element:document.createElement('div')},
+  {name:'Bewohner',kind:'person',element:document.createElement('div')}
+ ];
+ for(const group of groups){
+  const section=document.createElement('section');
+  const heading=document.createElement('h3');heading.className='presenceHistoryHeading';text(heading,group.name);section.append(heading);
+  group.element.className='presenceHistoryGrid';section.append(group.element);group.section=section;
+ }
  for(const person of data.people){
-  const card=document.createElement('article');card.className='presencePerson';
+  const isPerson=person.kind==='person',isAlarm=person.kind==='alarm';
+  const onLabel=isAlarm?'Scharf':'Anwesend',offLabel=isAlarm?'Unscharf':'Abwesend';
+  const card=document.createElement('article');
+  card.className='presencePerson '+(isPerson?'isResident':'isSystem')+(isAlarm?' isAlarm':'');
   const raw=person.current?.raw,known=typeof raw==='boolean';
-  const avatar=document.createElement('div');
-  avatar.className='presenceAvatar'+(known?(raw?' isHome':' isAway'):'');
-  const avatarFallback=document.createElement('span');avatarFallback.className='presenceAvatarFallback';
-  avatarFallback.append(defaultPresenceAvatar(person.name));avatar.append(avatarFallback);
-  const src=person.avatar?.src;
-  if(typeof src==='string'&&/^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(src)){
-   const image=document.createElement('img');image.alt='Profilbild '+person.name;image.loading='lazy';image.decoding='async';
-   image.addEventListener('error',()=>{image.remove();avatarFallback.hidden=false;});
-   avatarFallback.hidden=true;image.src=src;avatar.append(image);
+  if(isPerson){
+   const avatar=document.createElement('div');
+   avatar.className='presenceAvatar'+(known?(raw?' isHome':' isAway'):'');
+   const avatarFallback=document.createElement('span');avatarFallback.className='presenceAvatarFallback';
+   avatarFallback.append(defaultPresenceAvatar(person.name));avatar.append(avatarFallback);
+   const src=person.avatar?.src;
+   if(typeof src==='string'&&/^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(src)){
+    const image=document.createElement('img');image.alt='Profilbild '+person.name;image.loading='lazy';image.decoding='async';
+    image.addEventListener('error',()=>{image.remove();avatarFallback.hidden=false;});
+    avatarFallback.hidden=true;image.src=src;avatar.append(image);
+   }
+   card.append(avatar);
   }
-  card.append(avatar);
   const head=document.createElement('h3');text(head,person.name);card.append(head);
   const status=document.createElement('div');status.className='presenceState'+(known?(raw?' isHome':' isAway'):'');
-  text(status,!known?'Status unbekannt':raw?'Anwesend':'Abwesend');status.setAttribute('role','status');card.append(status);
+  text(status,!known?'Status unbekannt':raw?onLabel:offLabel);status.setAttribute('role','status');card.append(status);
   const h=person.history??{entries:[],previous:null,note:'Noch keine Archivdaten.'};
   const events=(h.entries??[]).filter(e=>Number.isFinite(e.time)&&e.time>=data.start&&e.time<=data.end).slice().sort((a,b)=>a.time-b.time);
-  const track=document.createElement('div');track.className='presenceTrack';track.setAttribute('role','img');track.setAttribute('aria-label',person.name+': Anwesenheitsverlauf der letzten 24 Stunden, grün anwesend, rot abwesend');
+  const track=document.createElement('div');track.className='presenceTrack';track.setAttribute('role','img');track.setAttribute('aria-label',person.name+': Statusverlauf der letzten 24 Stunden');
   const span=data.end-data.start||86400;
   function segment(from,to,active){
    if(typeof active!=='boolean'||to<=from)return;
    const bar=document.createElement('div');bar.className='presenceSegment '+(active?'home':'away');
    bar.style.left=(((from-data.start)/span)*100)+'%';
    bar.style.width=(((to-from)/span)*100)+'%';
-   bar.title=(active?'Anwesend: ':'Abwesend: ')+motionTime(from)+' – '+motionTime(to);
+   bar.title=(active?onLabel+': ':offLabel+': ')+motionTime(from)+' – '+motionTime(to);
    track.append(bar);
   }
   let active=typeof h.previous==='boolean'?h.previous:null,from=data.start;
@@ -413,7 +464,7 @@ function renderPresenceHistory(data){
   }
   card.append(scale);
   const legend=document.createElement('div');legend.className='presenceLegend';
-  for(const [style,label] of [['home','Anwesend'],['away','Abwesend'],['unknown','Keine Daten']]){
+  for(const [style,label] of [['home',onLabel],['away',offLabel],['unknown','Keine Daten']]){
    const item=document.createElement('span');item.className=style;text(item,label);legend.append(item);
   }
   card.append(legend);
@@ -424,12 +475,13 @@ function renderPresenceHistory(data){
    const summary=document.createElement('summary');text(summary,'Statuswechsel anzeigen ('+events.length+')');detail.append(summary);
    for(const event of events.slice().reverse().slice(0,100)){
     const row=document.createElement('div');row.className='row',time=document.createElement('span'),value=document.createElement('span');
-    text(time,motionTime(event.time));text(value,event.active?'Anwesend':'Abwesend');row.append(time,value);detail.append(row);
+    text(time,motionTime(event.time));text(value,event.active?onLabel:offLabel);row.append(time,value);detail.append(row);
    }
    card.append(detail);
   }
-  root.append(card);
+  (isPerson?groups[1]:groups[0]).element.append(card);
  }
+ for(const group of groups){if(group.element.children.length)root.append(group.section);}
 }
 function renderNetwork(data){
  const root=el('networkMetrics'),wireless=el('wirelessNetworks');root.replaceChildren();wireless.replaceChildren();
@@ -453,7 +505,8 @@ function applyView(view){
  const keys={1:['presence','alarm'],2:['lock','contact','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[],11:['outdoor'],14:['heater'],15:['pv'],16:[],17:['dining']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
  if(view===0)groupOverview();
- el('cards').hidden=[8,9,10,12,13,16,18].includes(view);
+ el('cards').hidden=[8,9,10,12,13,16,18,19].includes(view);
+ el('extraTileSection').hidden=!Array.isArray(state?.ExtraTileVariables)||(state.ExtraTileVariables.length===0&&view!==19);
  el('presenceHistorySection').hidden=view!==18;
  el('networkSection').hidden=view!==13;el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v&&!(id==='weatherSection'&&view===16);
@@ -587,7 +640,7 @@ function renderPageNavigation(){
  el('pageBack').disabled=busy;text(el('pageBack'),inlinePage?.view===12?'← Räume':'← Startseite');
  text(el('pageTitle'),showingRooms?'Räume':inlinePage?.view===7?'PV-Details':inlinePage?.room??'');
  if(showingRooms){
-  for(const id of ['cards','motionSection','roomsSection','weatherSection','presenceHistorySection','roomDeviceSections','networkSection'])el(id).hidden=true;
+  for(const id of ['cards','motionSection','roomsSection','weatherSection','presenceHistorySection','extraTileSection','roomDeviceSections','networkSection'])el(id).hidden=true;
   const chooser=el('roomChooser');chooser.replaceChildren();
   for(const name of homeState?.NavigationRooms??[]){const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy;b.addEventListener('click',()=>readInlinePage({view:12,room:name},'navigate'));chooser.append(b);}
   if(!chooser.children.length)text(chooser,'Keine Räume eingerichtet.');
