@@ -9,6 +9,7 @@ require_once __DIR__ . '/NetworkSupport.php';
 require_once __DIR__ . '/PageSupport.php';
 require_once __DIR__ . '/HomepageSupport.php';
 require_once __DIR__ . '/PresenceHistorySupport.php';
+require_once __DIR__ . '/DockerSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -21,6 +22,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusPageSupport;
     use HausstatusHomepageSupport;
     use HausstatusPresenceHistorySupport;
+    use HausstatusDockerSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -47,6 +49,8 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('View', 0);
+        $this->RegisterPropertyInteger('DockerCategory', 0);
+        $this->RegisterPropertyBoolean('DockerAllowSymconRestart', false);
         $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
         $this->RegisterAttributeString('HomepageLayout', '');
@@ -153,6 +157,14 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
+        if ($this->ReadPropertyInteger('View') === 25) {
+            foreach ($this->DockerContainerIDs() as $dockerInstanceID) {
+                $this->RegisterReference($dockerInstanceID);
+                foreach (IPS_GetChildrenIDs($dockerInstanceID) as $dockerChild) {
+                    if (IPS_VariableExists($dockerChild)) { $ids[] = $dockerChild; }
+                }
+            }
+        }
         if ($this->ReadPropertyInteger('View') === 18) {
             foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
         }
@@ -304,6 +316,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields['NetworkSettings'] = ['visible' => $own,
             'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
         $fields['ExtraTileSettings'] = ['visible' => true, 'expanded' => $view === 19];
+        $fields['DockerSettings'] = ['visible' => $own, 'expanded' => $own && $view === 25];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
             if ($source === $this->InstanceID || !IPS_InstanceExists($source)
@@ -394,7 +407,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -406,11 +419,13 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->SetBuffer('LastCommandError', '');
             // Structured HTML commands cross the SDK bridge as scalar JSON text.
             // Keep arrays accepted for existing PHP callers and validate types afterwards.
-            if (in_array($Ident, ['RoomValue', 'DoorConfirm', 'DoorOpen'], true) && is_string($Value)) {
+            if (in_array($Ident, ['RoomValue', 'DoorConfirm', 'DoorOpen', 'DockerControl'], true) && is_string($Value)) {
                 if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
                 $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
             }
-            if (in_array($Ident, ['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
+            if ($Ident === 'DockerControl') {
+                $this->SetDockerControl($Value);
+            } elseif (in_array($Ident, ['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
                 $this->SetHeater($Ident, $Value);
             } elseif (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
                 $this->SetDining($Ident, $Value);
@@ -892,6 +907,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['PageRoom'] = $this->CurrentRoom();
         $state['DisplaySettings'] = $this->DisplaySettings();
         $state['Network'] = $this->NetworkState();
+        $state['Docker'] = $this->DockerState();
         $state['HeatingProfileItem'] = $this->HeatingProfileItem();
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
