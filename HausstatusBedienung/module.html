@@ -168,6 +168,30 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .presenceChanges summary{cursor:pointer;opacity:.7;font-size:11px;padding:2px 0;width:max-content}.presenceChanges[open]{padding-top:5px;border-top:1px solid #8883}.presenceChanges .row{font-size:11px}.presenceChanges .presenceLegend{margin-top:5px}
 @media(max-width:600px){.presenceHistoryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.presencePerson{padding:7px}.presenceAvatar{width:60px;height:60px}.presenceLegend{flex-wrap:wrap;gap:6px}.presencePerson h3{font-size:12px}.presencePerson.isSystem{padding:7px;grid-template-columns:1fr;gap:4px}.presencePerson.isSystem .presenceState{text-align:left}.presenceHistoryLayout{gap:7px}}
 @media(max-width:340px){.presenceHistoryGrid{grid-template-columns:1fr}.presenceAvatar{width:70px;height:70px}}
+
+/* 0.40 - FritzBox cards, matching the neutral compact Hausstatus style. */
+.fritzGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:10px;align-items:start}
+.fritzPanel{min-width:0;padding:12px;border-radius:11px;border:1px solid #8883;background:#8881}
+.fritzHead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fritzIcon{font-size:18px;line-height:1}.fritzTitle{font-size:14px;font-weight:600}
+.fritzState{font-size:12px;font-weight:600;border:1px solid #8884;background:#8882;border-radius:7px;padding:5px 9px;margin-left:auto;white-space:nowrap}
+.fritzState.online{background:#19875a20;border-color:#19875a}
+.fritzState.offline{background:#c8464620;border-color:#c84646}
+.fritzHero{font-size:24px;font-weight:700;line-height:1.25;margin:5px 0 9px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.fritzMeta{font-size:11px;opacity:.7;margin:4px 0 8px}
+.fritzRows{display:grid;gap:0}
+.fritzRow{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #8882}
+.fritzRow:last-child{border-bottom:0}
+.fritzRowLabel{font-size:12px;opacity:.75}
+.fritzRowValue{font-weight:600;font-size:12px;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;min-width:0}
+.fritzDetails{margin-top:5px;border-top:1px solid #8882;font-size:12px}
+.fritzDetails summary{cursor:pointer;padding:8px 0 4px;font-size:12px;opacity:.8}
+.fritzDetails[open] summary{margin-bottom:3px}
+.fritzEmpty{font-size:12px;opacity:.7;padding:6px 0}
+.fritzProgress{height:7px;border-radius:6px;overflow:hidden;background:#8883;margin:8px 0}
+.fritzProgress span{display:block;height:100%;background:#19a67c}
+.fritzNetworkCount{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.fritzGrid{grid-template-columns:1fr;gap:7px}.fritzPanel{padding:10px}.fritzHero{font-size:21px}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -181,8 +205,8 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 <section class="section" id="motionSection"><h2 id="motionTitle">Bewegung &ndash; letzte 24 Stunden</h2><div id="motion"></div></section>
 <section class="section" id="roomsSection"><h2 id="temperatureTitle">R&auml;ume</h2><div id="heatingProfile"></div><div id="rooms"></div></section>
 <div id="roomDeviceSections"></div>
-<section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
-<div class="head"><span class="small">0.39</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.39">&#8635; Aktualisieren</button></div>
+<section class="section" id="networkSection" hidden><h2 id="networkTitle">FritzBox</h2><div id="networkModern" class="fritzGrid" hidden></div><div id="networkMetrics"></div><div class="wifiGrid" id="wirelessNetworks"></div></section>
+<div class="head"><span class="small">0.40</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.40">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
 <script>
@@ -484,12 +508,117 @@ function renderPresenceHistory(data){
  }
  for(const group of groups){if(group.element.children.length)root.append(group.section);}
 }
+function renderFritzBox(data,view){
+ const root=el('networkModern');root.replaceChildren();
+ const values=data.values??{},get=key=>values[key]??{raw:null,text:'Nicht eingerichtet'};
+ const configured=key=>get(key).raw!==null&&get(key).raw!==undefined;
+ const readable=key=>get(key).text||String(get(key).raw??'Unbekannt');
+ const createPanel=(title,emoji)=>{
+  const panel=document.createElement('article');panel.className='fritzPanel';
+  const head=document.createElement('div');head.className='fritzHead';
+  const icon=document.createElement('span');icon.className='fritzIcon';icon.setAttribute('aria-hidden','true');text(icon,emoji);
+  const label=document.createElement('strong');label.className='fritzTitle';text(label,title);
+  head.append(icon,label);panel.append(head);root.append(panel);
+  return {panel,head};
+ };
+ const row=(parent,label,key,transform=null)=>{
+  if(!configured(key))return false;
+  const line=document.createElement('div');line.className='fritzRow';
+  const left=document.createElement('span');left.className='fritzRowLabel';text(left,label);
+  const right=document.createElement('span');right.className='fritzRowValue';
+  text(right,transform?transform(get(key)):readable(key));line.append(left,right);parent.append(line);return true;
+ };
+ const details=(panel,title,entries)=>{
+  if(!entries.some(e=>configured(e[1])))return;
+  const detail=document.createElement('details');detail.className='fritzDetails';
+  const summary=document.createElement('summary');text(summary,title);detail.append(summary);
+  for(const [label,key,transform] of entries)row(detail,label,key,transform);
+  panel.append(detail);
+ };
+ const showInternet=()=>{
+  const {panel,head}=createPanel('Internet','🌐');
+  if(configured('NetworkConnection')){
+   const raw=get('NetworkConnection').raw;
+   const normalized=String(raw).trim().toLowerCase();
+   const online=['up','online','connected','verbunden'].includes(normalized);
+   const offline=['down','offline','disconnected','getrennt'].includes(normalized);
+   const badge=document.createElement('span');badge.className='fritzState'+(online?' online':offline?' offline':'');
+   text(badge,online?'Online':offline?'Offline':readable('NetworkConnection'));head.append(badge);
+  }
+  if(view===20&&configured('NetworkModel')){
+   const subtitle=document.createElement('div');subtitle.className='fritzMeta';text(subtitle,readable('NetworkModel'));panel.append(subtitle);
+  }
+  const list=document.createElement('div');list.className='fritzRows';panel.append(list);
+  const primary=[['Download','NetworkDownload'],['Upload','NetworkUpload']];
+  const extended=[['Download-Auslastung','NetworkDownloadUsage'],['Upload-Auslastung','NetworkUploadUsage']];
+  let count=0;for(const [label,key] of primary)count+=Number(row(list,label,key));
+  if(view!==20)for(const [label,key] of extended)count+=Number(row(list,label,key));
+  if(view===20)count+=Number(row(list,'Aktive Geräte','NetworkActiveDevices'));
+  if(view!==20){
+   details(panel,'Verbindungsdetails',[
+    ['Zugangsart','NetworkWanType'],['Max. Download','NetworkDownstreamMax'],
+    ['Max. Upload','NetworkUpstreamMax'],
+    ['UPnP erlaubt','NetworkUPnP',v=>v.raw===true?'Ja':v.raw===false?'Nein':v.text],
+    ['DNS 1','NetworkDNS1'],['DNS 2','NetworkDNS2']
+   ]);
+  }
+  if(!count&&!configured('NetworkConnection')){
+   const note=document.createElement('div');note.className='fritzEmpty';text(note,'Internet-Variablen in den Hausstatus-Einstellungen auswählen.');panel.append(note);
+  }
+ };
+ const showRouter=()=>{
+  const {panel}=createPanel('Router','📡');
+  if(configured('NetworkModel')){
+   const hero=document.createElement('div');hero.className='fritzHero';text(hero,readable('NetworkModel'));panel.append(hero);
+  }
+  const list=document.createElement('div');list.className='fritzRows';panel.append(list);
+  const fields=[['Laufzeit','NetworkUptime'],['Software','NetworkFirmware']];
+  let count=0;for(const [label,key] of fields)count+=Number(row(list,label,key));
+  details(panel,'Routerdetails',[
+   ['Hersteller','NetworkManufacturer'],
+   ['Letzter Neustart','NetworkLastRestart'],['Zugangsart','NetworkWanType']
+  ]);
+  if(!configured('NetworkModel')&&!count){
+   const note=document.createElement('div');note.className='fritzEmpty';text(note,'Router-Variablen in den Hausstatus-Einstellungen auswählen.');panel.append(note);
+  }
+ };
+ const showDevices=()=>{
+  const {panel}=createPanel('Netzwerkgeräte','📶');
+  const active=get('NetworkActiveDevices'),total=get('NetworkDevices');
+  if(configured('NetworkActiveDevices')){
+   const hero=document.createElement('div');hero.className='fritzNetworkCount';text(hero,readable('NetworkActiveDevices'));panel.append(hero);
+   const meta=document.createElement('div');meta.className='fritzMeta';text(meta,'Geräte aktiv');panel.append(meta);
+  }
+  if(Number.isFinite(Number(active.raw))&&Number.isFinite(Number(total.raw))&&Number(total.raw)>0){
+   const fraction=Math.max(0,Math.min(100,Number(active.raw)/Number(total.raw)*100));
+   const track=document.createElement('div');track.className='fritzProgress';
+   track.setAttribute('role','img');track.setAttribute('aria-label',fraction.toFixed(0)+' Prozent der bekannten Geräte aktiv');
+   const bar=document.createElement('span');bar.style.width=fraction+'%';track.append(bar);panel.append(track);
+  }
+  const list=document.createElement('div');list.className='fritzRows';panel.append(list);
+  let count=0;count+=Number(row(list,'Insgesamt','NetworkDevices'));
+  count+=Number(row(list,'WLAN 2,4 GHz','NetworkWirelessState',v=>v.raw===true?'Ein':v.raw===false?'Aus':v.text));
+  if(!configured('NetworkActiveDevices')&&!count){
+   const note=document.createElement('div');note.className='fritzEmpty';text(note,'Geräteanzahl in den Hausstatus-Einstellungen auswählen.');panel.append(note);
+  }
+ };
+ if(view===20||view===21||view===24)showInternet();
+ if(view===22||view===24)showRouter();
+ if(view===23||view===24)showDevices();
+}
 function renderNetwork(data){
- const root=el('networkMetrics'),wireless=el('wirelessNetworks');root.replaceChildren();wireless.replaceChildren();
+ const root=el('networkMetrics'),wireless=el('wirelessNetworks'),modern=el('networkModern');
+ root.replaceChildren();wireless.replaceChildren();modern.replaceChildren();
+ const view=state?.View??0,isModern=[20,21,22,23,24].includes(view);
+ modern.hidden=!isModern;root.hidden=isModern;
+ el('networkTitle').hidden=isModern;
  if(!data)return;
- root.className='networkMetrics';rows(root,(data.metrics??[]).map(r=>[r.name,r.value]));
- if(!data.metrics?.length)text(root,'Netzwerkquellen in der zentralen Konfiguration auswählen.');
- displayDescription(root,'NetworkTitle');
+ if(isModern)renderFritzBox(data,view);
+ else{
+  root.className='networkMetrics';rows(root,(data.metrics??[]).map(r=>[r.name,r.value]));
+  if(!data.metrics?.length)text(root,'Netzwerkquellen in der zentralen Konfiguration auswählen.');
+  displayDescription(root,'NetworkTitle');
+ }
  for(const [index,wifi] of (data.wifi??[]).entries()){
   const card=document.createElement('article');card.className='wifiCard';const title=document.createElement('h3');text(title,wifi.name);card.append(title);
   const info=document.createElement('div');rows(info,[['WLAN',wifi.state.text],['SSID',wifi.ssid.text],['Aktive Geräte',wifi.devices.text]]);card.append(info);
@@ -506,10 +635,10 @@ function applyView(view){
  const keys={1:['presence','alarm'],2:['lock','contact','permission'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[],11:['outdoor'],14:['heater'],15:['pv'],16:[],17:['dining']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
  if(view===0)groupOverview();
- el('cards').hidden=[8,9,10,12,13,16,18,19].includes(view);
+ el('cards').hidden=[8,9,10,12,13,16,18,19,20,21,22,23,24].includes(view);
  el('extraTileSection').hidden=!Array.isArray(state?.ExtraTileVariables)||(state.ExtraTileVariables.length===0&&view!==19);
  el('presenceHistorySection').hidden=view!==18;
- el('networkSection').hidden=view!==13;el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
+ el('networkSection').hidden=![13,20,21,22,23,24].includes(view);el('cards').className=view===0?'dashboard':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v&&!(id==='weatherSection'&&view===16);
  if(view===0&&state.RainHistory)el('weatherSection').hidden=false;
 }
@@ -802,7 +931,7 @@ function addClimateSteps(board,climate){
  }}
 }
 function renderRoomSections(sections,climate=[]){
- if(state?.View===19){const root=el('roomDeviceSections');root.replaceChildren();root.hidden=true;return;}
+ if([19,20,21,22,23,24].includes(state?.View)){const root=el('roomDeviceSections');root.replaceChildren();root.hidden=true;return;}
  if((state?.View??0)!==12){renderTechnicalSections(sections,climate);return;}
  const root=el('roomDeviceSections');root.replaceChildren();root.className='roomSurface';
  const names=[...new Set([...sections.map(r=>r.name),...climate.map(r=>r.name)])];root.hidden=!names.length;
