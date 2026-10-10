@@ -1,4 +1,4 @@
-# Hausstatus 0.32 für IP-Symcon
+# Hausstatus 0.34 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -21,7 +21,7 @@ Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, we
 | Haustür | Schlossstatus, eigener Türkontakt, letzte Öffnung und Schließung, Boolean-Freigabe und vorhandene Öffnen-Aktion. |
 | Hauptlicht | Boolean-Status und Integer-Helligkeit von 1 bis 100. Bedienung über vorhandene Variablenaktionen oder ein optionales Bedienskript. |
 | Zusätzliche Lampe | Eigene Status- und Helligkeitsvariable; optional eine Lichtinstanz zur Ermittlung ihrer Untervariablen. Raumname und Bezeichnung frei wählen. |
-| Medien | Status, Power-Aktion, Quellenwahl und Lautstärke. Optionen, Einheit, Grenzen und Schritte kommen von den tatsächlichen Variablendarstellungen. |
+| Medien | Status, Power-Aktion, Quellenwahl und Lautstärke. Die HEOS-Kachel zeigt getrennte Listen für Radio und NAS-Playlisten. Eigene schaltbare Auswahlvariablen unter **Mediengerät** auswählen. Sender und Playlisten stammen dynamisch aus deren Variablendarstellungen; neue Einträge erfordern keine Moduländerung. Die bisherige HEOS-Gesamtauswahl bleibt als Rückfall erhalten (0=Aus, 1–3=Radio, ab 4=NAS). Optionen, Einheit, Grenzen und Schritte kommen von den tatsächlichen Variablendarstellungen. |
 | Gerätewarnungen | Integer-Variable mit der Anzahl der Warnungen. Eine Zählvariable wählen, kein PHP-Skript. |
 | PV | Aktuelle Leistung auf der Startseite; Tagesenergie und zusätzliche Geräte auf der Detailseite. Der PV-Bereichsname muss mit den Einträgen in der Raumgeräteliste übereinstimmen. |
 | Markise und Dachfenster | Position, eigener Zustand und Automatik; für Dachfenster optional Nachtbetrieb. Regler übernehmen die vorhandenen Grenzen und Schritte. |
