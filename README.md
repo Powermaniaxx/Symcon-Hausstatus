@@ -1,4 +1,4 @@
-# Hausstatus 0.39 für IP-Symcon
+# Hausstatus 0.40 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -30,7 +30,7 @@ Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, we
 | Bewegung | Liste aus eigener Bezeichnung und Boolean-Bewegungsvariable; optional Archive Control für den Verlauf. |
 | Temperaturen | Liste aus Raumname, Isttemperatur und optionaler Sollvariable. Zusätzlich eine frei wählbare Heizungsprofilvariable. |
 | Wetter | Zustand, Wind, Regenmenge, Warnstufe, Sonnenzeiten und Boolean-Regenstatus. |
-| Netzwerk / FritzBox | Verbindung, aktuelle Datenraten und Auslastung, Geräteanzahl, Laufzeit, Modell und Software-Version; zusätzliche WLAN-Liste. |
+| Netzwerk / FritzBox | Verbindung, aktuelle Datenraten und Auslastung, Geräteanzahl, Laufzeit, Modell und Software-Version; zusätzliche WLAN-Liste. Ab 0.40 gibt es die Kacheltypen 20–24: **FritzBox kompakt, Internet, Routerinformationen, Netzwerkgeräte oder gesamte Übersicht**, im Hausstatus-Stil ohne native Symcon-Schalter. Im Abschnitt „12 · FritzBox“ können vorhandene Variablen einzeln gewählt oder per Button vorsichtig anhand der bekannten Objekt-IDs zugeordnet werden; bestehende Zuordnungen werden nicht überschrieben. Die unveränderte Netzwerk-Detailseite (Typ 13) bleibt nutzbar. |
 
 **Texte und Beschreibungen** legt die angezeigten Namen fest; die Variablen werden im jeweils zugehörigen Bereich ausgewählt. Die Texte ändern keine Gerätewerte. Eigene Beschreibungen erscheinen unmittelbar in der zugehörigen Kachel. Raum- und Gerätenamen werden direkt in den Listen gepflegt. Umlaute werden als UTF-8 gespeichert.
 
