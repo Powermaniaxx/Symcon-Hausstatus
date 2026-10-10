@@ -66,6 +66,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('Raining', 0);
         $this->RegisterPropertyInteger('RainArchive', 0);
         $this->RegisterPropertyInteger('PresenceArchive', 0);
+        $this->RegisterPropertyInteger('SvenPresenceImage', 0);
+        $this->RegisterPropertyInteger('SusiPresenceImage', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
@@ -106,6 +108,10 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($this->ReadPropertyInteger('View') === 18) {
             $presenceArchive = $this->PresenceHistoryArchive();
             if ($presenceArchive > 0) { $this->RegisterReference($presenceArchive); }
+            foreach (['SvenPresenceImage', 'SusiPresenceImage'] as $property) {
+                $mediaID = $this->ConfigInteger($property);
+                if ($mediaID > 0 && IPS_MediaExists($mediaID)) { $this->RegisterReference($mediaID); }
+            }
         }
         $archive = $this->MotionArchive();
         if ($archive > 0) { $this->RegisterReference($archive); }
