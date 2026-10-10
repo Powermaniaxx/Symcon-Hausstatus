@@ -36,6 +36,65 @@ trait HausstatusNetworkSupport
         } catch (Throwable $e) { return ['image' => '', 'note' => $e->getMessage()]; }
     }
 
+    // Optional, one-time mapping of the user's known FritzBox object tree.
+    // Safeguards: no existing selection is replaced; every candidate must have
+    // the expected name, variable type and parent instance.
+    public function AssignKnownFritzBoxSources(): string
+    {
+        $owner = (int)$this->ReadPropertyInteger('ConfigSource');
+        if ($owner === 0) { $owner = $this->InstanceID; }
+        if (!IPS_InstanceExists($owner)
+            || IPS_GetInstance($owner)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+            || (int)IPS_GetProperty($owner, 'ConfigSource') !== 0) {
+            return 'Bitte die zentrale Hausstatus-Instanz als gemeinsame Konfiguration auswählen.';
+        }
+        // Field => [variable id, expected parent, Symcon name, type]
+        $mapping = [
+            'NetworkConnection'     => [25185, 58215, 'Status der physischen Verbindung', 3],
+            'NetworkDownload'       => [10835, 58215, 'Empfangsrate', 2],
+            'NetworkUpload'         => [19406, 58215, 'Senderate', 2],
+            'NetworkDownloadUsage'  => [23405, 58215, 'Auslastung Download', 2],
+            'NetworkUploadUsage'    => [33426, 58215, 'Auslastung Upload', 2],
+            'NetworkActiveDevices'  => [30908, 16705, 'Anzahl der aktiven Netzwerkgeräte', 1],
+            'NetworkDevices'        => [15438, 16705, 'Anzahl der Netzwerkgeräte', 1],
+            'NetworkUptime'         => [29894, 35157, 'Laufzeit', 3],
+            'NetworkModel'          => [55331, 35157, 'Modell', 3],
+            'NetworkFirmware'       => [53729, 35157, 'Software-Version', 3],
+            'NetworkManufacturer'   => [24045, 35157, 'Hersteller', 3],
+            'NetworkWanType'        => [16657, 58215, 'WAN Zugangsart', 3],
+            'NetworkUPnP'           => [44023, 58215, 'Automatische Portweiterleitung per UPnP erlauben', 0],
+            'NetworkDNS1'           => [13318, 58215, 'DNS-Server 1', 3],
+            'NetworkDNS2'           => [26834, 58215, 'DNS-Server 2', 3],
+            'NetworkDownstreamMax'  => [26792, 58215, 'Downstream Max kBitrate', 1],
+            'NetworkUpstreamMax'    => [12922, 58215, 'Upstream Max kBitrate', 1],
+            'NetworkWirelessState'  => [40818, 27744, 'WLAN state', 0],
+            'NetworkLastRestart'    => [30468, 35157, 'Letzter Neustart', 3]
+        ];
+
+        $assigned = 0;
+        $skipped = 0;
+        foreach ($mapping as $property => [$id, $parent, $name, $type]) {
+            if ((int)IPS_GetProperty($owner, $property) > 0) {
+                $skipped++;
+                continue;
+            }
+            if (!IPS_VariableExists($id) || IPS_GetParent($id) !== $parent
+                || IPS_GetName($id) !== $name
+                || (int)IPS_GetVariable($id)['VariableType'] !== $type) {
+                $skipped++;
+                continue;
+            }
+            IPS_SetProperty($owner, $property, $id);
+            $assigned++;
+        }
+        if ($assigned > 0) {
+            IPS_ApplyChanges($owner);
+        }
+        return $assigned . ' FritzBox-Variablen zugeordnet; ' . $skipped
+            . ' bereits vergeben oder nicht eindeutig erkannt. '
+            . 'Die vorhandenen Zuordnungen wurden nicht verändert.';
+    }
+
     // Show only relevant sources for each FritzBox tile variant.
     private function NetworkViewFields(int $view): array
     {
