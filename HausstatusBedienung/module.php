@@ -25,7 +25,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'HeatingProfile' => 0, 'Presence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
-        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
+        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 0, 'HeosNAS' => 0, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
         'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
         'Sunrise' => 0, 'Sunset' => 0,
         'DoorOpened' => 0, 'DoorClosed' => 0,
@@ -358,7 +358,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -380,6 +380,8 @@ class HausstatusBedienung extends IPSModuleStrict
                 $this->SetDining($Ident, $Value);
             } elseif ($Ident === 'HeosSelection') {
                 $this->SetHeosSelection($Value);
+            } elseif ($Ident === 'HeosRadio' || $Ident === 'HeosNAS') {
+                $this->SetHeosSplitSelection($Ident, $Value);
             } elseif ($Ident === 'RoomValue') {
                 $this->SetRoomValue($Value);
             } elseif (in_array($Ident, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)) {
@@ -445,7 +447,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
-            6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
+            6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->CurrentView();
@@ -826,6 +828,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
+        $state['HeosRadioItem'] = $this->HeosSplitItem('HeosRadio');
+        $state['HeosNASItem'] = $this->HeosSplitItem('HeosNAS');
         $state['CinemaOptions'] = $this->CinemaSourceOptions();
         $state['VolumeControl'] = null;
         $state['VolumeReason'] = '';
