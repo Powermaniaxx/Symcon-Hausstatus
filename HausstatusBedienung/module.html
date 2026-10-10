@@ -741,7 +741,7 @@ function applyView(view){
  if(view===26){const alarm=el('card-alarm'),permission=el('card-permission');if(alarm&&permission)el('cards').insertBefore(alarm,permission);}
  if(view===0)groupOverview();
  el('cards').hidden=[8,9,10,12,13,16,18,19,20,21,22,23,24,25].includes(view);
- el('extraTileSection').hidden=!Array.isArray(state?.ExtraTileVariables)||(state.ExtraTileVariables.length===0&&view!==19);
+ el('extraTileSection').hidden=view===26||!Array.isArray(state?.ExtraTileVariables)||(state.ExtraTileVariables.length===0&&view!==19);
  el('presenceHistorySection').hidden=view!==18;
  el('networkSection').hidden=![13,20,21,22,23,24].includes(view);
  el('dockerSection').hidden=view!==25;el('cards').className=view===0?'dashboard':view===26?'grid sophieView':view===1||view===2?'grid':'grid single';
@@ -1037,7 +1037,7 @@ function addClimateSteps(board,climate){
  }}
 }
 function renderRoomSections(sections,climate=[]){
- if([19,20,21,22,23,24,25].includes(state?.View)){const root=el('roomDeviceSections');root.replaceChildren();root.hidden=true;return;}
+ if([19,20,21,22,23,24,25,26].includes(state?.View)){const root=el('roomDeviceSections');root.replaceChildren();root.hidden=true;return;}
  if((state?.View??0)!==12){renderTechnicalSections(sections,climate);return;}
  const root=el('roomDeviceSections');root.replaceChildren();root.className='roomSurface';
  const names=[...new Set([...sections.map(r=>r.name),...climate.map(r=>r.name)])];root.hidden=!names.length;
