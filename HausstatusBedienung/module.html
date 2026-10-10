@@ -801,6 +801,7 @@ function addClimateSteps(board,climate){
  }}
 }
 function renderRoomSections(sections,climate=[]){
+ if(state?.View===19){const root=el('roomDeviceSections');root.replaceChildren();root.hidden=true;return;}
  if((state?.View??0)!==12){renderTechnicalSections(sections,climate);return;}
  const root=el('roomDeviceSections');root.replaceChildren();root.className='roomSurface';
  const names=[...new Set([...sections.map(r=>r.name),...climate.map(r=>r.name)])];root.hidden=!names.length;
