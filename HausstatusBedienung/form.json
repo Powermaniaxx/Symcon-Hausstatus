@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.34 – Einstellungen"
+      "caption": "Hausstatus 0.35 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -87,6 +87,10 @@
             {
               "value": 17,
               "caption": "Einzeln: zusätzliche Lampe / Esstisch"
+            },
+            {
+              "value": 18,
+              "caption": "Detail: Sven & Susi – Anwesenheit mit 24h-Verlauf"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -323,6 +327,33 @@
           "type": "SelectVariable",
           "name": "Alarm",
           "caption": "Alarm innen – Statusvariable"
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "PresenceHistorySettings",
+      "caption": "Anwesenheitsverlauf Sven & Susi",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "SvenPresence",
+          "caption": "Sven – Originalvariable 49185 auswählen"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "SusiPresence",
+          "caption": "Susi – Originalvariable 48195 auswählen"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "PresenceArchive",
+          "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
+        },
+        {
+          "type": "Label",
+          "caption": "Nur Anzeige: keine Schaltflächen, keine Änderung der Variablenaktionen oder Archivierung. Der Verlauf nutzt die vorhandenen 24-Stunden-Archivdaten."
         }
       ]
     },
