@@ -291,7 +291,7 @@ class HausstatusBedienung extends IPSModuleStrict
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
             'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13,
             'PresenceHistorySettings' => 18] as $name => $sectionView) {
-            $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
+            $fields[$name] = ['visible' => $own, 'expanded' => $own && ($view === $sectionView || ($name === 'PresenceSettings' && $view === 18))];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
         $fields['DisplaySettings'] = ['visible' => $own];
@@ -305,7 +305,7 @@ class HausstatusBedienung extends IPSModuleStrict
                 $caption = 'Die gewählte Konfigurationsquelle ist ungültig. Eine Hausstatus-Instanz mit eigenen Einstellungen wählen oder die Auswahl leeren.';
             } else {
                 $caption = 'Gemeinsame Einstellungen aus ' . IPS_GetName($source) . ' (ID ' . $source
-                    . '). Quellen und Bedienoptionen dort ändern. Hier werden nur Inhalt und Aktivierung dieser Kachel festgelegt.';
+                    . '). Quellen und Bedienoptionen dort ändern. Die Standardquellen hier kommen aus der Master-Instanz. Zusätzliche Variablen unter Punkt 2 werden nur in dieser Kachel gespeichert.';
             }
         }
         $fields['SettingsOrigin'] = ['caption' => $caption];
