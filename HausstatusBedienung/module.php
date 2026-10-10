@@ -50,6 +50,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $this->RegisterPropertyInteger('View', 0);
         $this->RegisterPropertyInteger('DockerCategory', 0);
+        $this->RegisterPropertyInteger('DockerTileCategory', 0);
         $this->RegisterPropertyBoolean('DockerAllowSymconRestart', false);
         $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
