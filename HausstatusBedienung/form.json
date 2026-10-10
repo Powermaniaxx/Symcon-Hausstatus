@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.43 – Einstellungen"
+      "caption": "Hausstatus 0.44 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -35,6 +35,10 @@
             {
               "value": 2,
               "caption": "Einzeln: Haustür"
+            },
+            {
+              "value": 26,
+              "caption": "Einzeln: Sophie – Haustür und Alarm mit Türöffnung"
             },
             {
               "value": 5,
