@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.35 – Einstellungen"
+      "caption": "Hausstatus 0.36 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -352,8 +352,18 @@
           "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
         },
         {
+          "type": "SelectMedia",
+          "name": "SvenPresenceImage",
+          "caption": "Profilbild Sven – Bild aus der Symcon-Mediathek (optional)"
+        },
+        {
+          "type": "SelectMedia",
+          "name": "SusiPresenceImage",
+          "caption": "Profilbild Susi – Bild aus der Symcon-Mediathek (optional)"
+        },
+        {
           "type": "Label",
-          "caption": "Nur Anzeige: keine Schaltflächen, keine Änderung der Variablenaktionen oder Archivierung. Der Verlauf nutzt die vorhandenen 24-Stunden-Archivdaten."
+          "caption": "Nur Anzeige: keine Schaltflächen, keine Änderung von Variablenaktionen oder Archivierung. Profilbilder als JPEG, PNG, WebP oder GIF bis 1 MB in Symcon hochladen und hier auswählen. Der Verlauf nutzt die vorhandenen 24-Stunden-Archivdaten."
         }
       ]
     },
