@@ -435,6 +435,97 @@ trait HausstatusRoomSupport
         } catch (Throwable $e) { return ['name' => 'HEOS Radio / Playlist', 'label' => 'HEOS Radio / Playlist', 'value' => ['raw' => null, 'text' => 'Nicht verfügbar'], 'control' => null, 'note' => $e->getMessage()]; }
     }
 
+    // 0.34: Radio und NAS besitzen je eine eigene, dynamische Auswahlliste.
+    // Optionennamen und Werte werden aus der Variablen-Praesentation gelesen.
+    // Ohne eigene Quelle bleibt die bisherige HEOS-Auswahl als Rueckfall erhalten.
+    private function HeosSplitItem(string $source): ?array
+    {
+        if (!in_array($source, ['HeosRadio', 'HeosNAS'], true)) { return null; }
+        $label = $source === 'HeosRadio' ? 'Radio' : 'NAS-Playlisten';
+        $id = $this->ConfigInteger($source);
+
+        if ($id > 0) {
+            try {
+                if (!IPS_VariableExists($id)) {
+                    throw new RuntimeException('Die konfigurierte Auswahlvariable fehlt.');
+                }
+                $entry = ['id' => $id, 'type' => 2, 'operate' => true,
+                    'name' => $label, 'room' => '', 'group' => 'Medien'];
+                $item = $this->RoomItem($entry);
+                $item['name'] = $item['label'] = $label;
+                $item['command'] = $source;
+                if (!$this->ConfigBoolean('CinemaEnabled')) {
+                    $item['control'] = null;
+                    $item['note'] = 'Mediengeraet-Bedienung ist deaktiviert.';
+                } elseif (($item['control']['kind'] ?? '') !== 'enum') {
+                    $item['control'] = null;
+                    $item['note'] = 'Auswahlvariable benoetigt eine Bedienaktion und Auswahloptionen.';
+                }
+                return $item;
+            } catch (Throwable $e) {
+                return ['name' => $label, 'label' => $label,
+                    'value' => ['raw' => null, 'text' => 'Nicht verfuegbar'],
+                    'control' => null, 'note' => $e->getMessage(),
+                    'command' => $source];
+            }
+        }
+
+        $item = $this->HeosItem();
+        if ($item === null) { return null; }
+        $item['name'] = $item['label'] = $label;
+        $item['command'] = 'HeosSelection';
+        if (($item['control']['kind'] ?? '') !== 'enum') { return $item; }
+
+        // Kompatibilitaet mit der bisherigen Belegung:
+        // 0 = Aus, 1-3 = Radio, ab 4 = NAS.
+        // Neue Radiosender ohne feste Begrenzung: separate
+        // Radio-Auswahlvariable in den Einstellungen hinterlegen.
+        $item['control']['options'] = array_values(array_filter(
+            $item['control']['options'],
+            static function (array $option) use ($source): bool {
+                $v = $option['value'] ?? null;
+                if (!is_int($v)) { return false; }
+                if ($v === 0) { return true; }
+                return $source === 'HeosRadio' ? $v >= 1 && $v <= 3 : $v >= 4;
+            }
+        ));
+        if ($item['control']['options'] === []) {
+            $item['control'] = null;
+            $item['note'] = 'Keine Eintraege in der bisherigen HEOS-Auswahl vorhanden.';
+        }
+        return $item;
+    }
+
+    private function SetHeosSplitSelection(string $source, mixed $value): void
+    {
+        if (!in_array($source, ['HeosRadio', 'HeosNAS'], true)) {
+            throw new InvalidArgumentException('Unbekannte HEOS-Liste.');
+        }
+        if (!$this->ConfigBoolean('CinemaEnabled')) {
+            throw new RuntimeException('Mediengeraet-Bedienung ist deaktiviert.');
+        }
+        $id = $this->ConfigInteger($source);
+        if ($id <= 0 || !IPS_VariableExists($id)) {
+            throw new RuntimeException('Auswahlvariable fuer ' . $source . ' fehlt.');
+        }
+        $entry = ['id' => $id, 'type' => 2, 'operate' => true,
+            'name' => $source, 'room' => '', 'group' => 'Medien'];
+        $control = $this->RoomControl($entry);
+        if (($control['kind'] ?? '') !== 'enum') {
+            throw new RuntimeException('HEOS benoetigt eine schaltbare Auswahlliste.');
+        }
+        $type = IPS_GetVariable($id)['VariableType'];
+        if ($type === 2 && (is_int($value) || is_float($value))) {
+            $value = (float)$value;
+        }
+        if (!in_array($value, array_column($control['options'], 'value'), true)) {
+            throw new InvalidArgumentException('HEOS-Auswahlwert oder Datentyp ist ungueltig.');
+        }
+        if (!RequestAction($id, $value)) {
+            throw new RuntimeException('Die HEOS-Variablenaktion ist fehlgeschlagen.');
+        }
+    }
+
     private function SetHeosSelection(mixed $value): void
     {
         if (!$this->ConfigBoolean('CinemaEnabled')) { throw new RuntimeException('Mediengerät-Bedienung ist deaktiviert.'); }
