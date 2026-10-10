@@ -81,28 +81,72 @@ trait HausstatusPresenceHistorySupport
         }
     }
 
+    // Optional extra Boolean alarm variables, selected in the central Hausstatus instance.
+    private function ExtraAlarmSources(): array
+    {
+        $list = json_decode($this->ConfigString('AdditionalAlarmVariables'), true);
+        if (!is_array($list)) { return []; }
+        $result = [];
+        $seen = [
+            $this->ConfigInteger('Presence') => true,
+            $this->ConfigInteger('Alarm') => true,
+            $this->ConfigInteger('SvenPresence') => true,
+            $this->ConfigInteger('SusiPresence') => true
+        ];
+        foreach ($list as $item) {
+            if (!is_array($item)) { continue; }
+            $id = (int)($item['Variable'] ?? 0);
+            $name = trim((string)($item['Name'] ?? ''));
+            if ($id <= 0 || $name === '' || isset($seen[$id])) { continue; }
+            $seen[$id] = true;
+            $result[] = ['source' => 'ExtraAlarm:' . $id, 'id' => $id,
+                'name' => mb_substr($name, 0, 60), 'kind' => 'alarm'];
+            if (count($result) >= 8) { break; }
+        }
+        return $result;
+    }
+
+    private function PresenceHistorySources(): array
+    {
+        // House and alarm reuse the existing sources from the standard dashboard.
+        $rows = [
+            ['source' => 'Presence', 'id' => $this->ConfigInteger('Presence'),
+                'name' => 'Hausstatus', 'kind' => 'house'],
+            ['source' => 'SvenPresence', 'id' => $this->ConfigInteger('SvenPresence'),
+                'name' => 'Sven', 'kind' => 'person'],
+            ['source' => 'SusiPresence', 'id' => $this->ConfigInteger('SusiPresence'),
+                'name' => 'Susi', 'kind' => 'person'],
+            ['source' => 'Alarm', 'id' => $this->ConfigInteger('Alarm'),
+                'name' => 'Alarm innen', 'kind' => 'alarm']
+        ];
+        foreach ($this->ExtraAlarmSources() as $source) { $rows[] = $source; }
+        return $rows;
+    }
+
     private function PresenceHistoryState(): array
     {
         $now = time();
         $start = $now - 86400;
         $cache = json_decode($this->GetBuffer('PresenceHistoryCache'), true);
+        $sources = $this->PresenceHistorySources();
         if (!is_array($cache) || (int)($cache['time'] ?? 0) < $now - 45) {
             $history = [];
             $archive = $this->PresenceHistoryArchive();
 
-            foreach (['SvenPresence', 'SusiPresence'] as $source) {
-                $id = $this->ConfigInteger($source);
+            foreach ($sources as $source) {
+                $id = (int)$source['id'];
+                $key = $source['source'];
                 $item = ['entries' => [], 'previous' => null, 'note' => ''];
                 try {
                     if ($id <= 0 || !IPS_VariableExists($id)
                         || (int)IPS_GetVariable($id)['VariableType'] !== 0) {
-                        throw new RuntimeException('Eine vorhandene Boolean-Anwesenheitsvariable auswählen.');
+                        throw new RuntimeException('Vorhandene Boolean-Statusvariable auswählen.');
                     }
                     if ($archive <= 0) {
-                        throw new RuntimeException('Kein eindeutiges Archiv gefunden. Archivinstanz in den Einstellungen auswählen.');
+                        throw new RuntimeException('Kein eindeutiges Archiv gefunden. Archivinstanz auswählen.');
                     }
                     if (!AC_GetLoggingStatus($archive, $id)) {
-                        throw new RuntimeException('Die Archivierung dieser Variable ist nicht aktiviert.');
+                        throw new RuntimeException('Archivierung dieser Variable ist nicht aktiviert.');
                     }
 
                     $values = AC_GetLoggedValues($archive, $id, $start, $now, 10000);
@@ -112,7 +156,6 @@ trait HausstatusPresenceHistorySupport
                         $item['entries'][] = ['time' => $stamp, 'active' => (bool)$value['Value']];
                     }
                     usort($item['entries'], static fn(array $a, array $b): int => $a['time'] <=> $b['time']);
-
                     $previous = $start > 0 ? AC_GetLoggedValues($archive, $id, 0, $start - 1, 1) : [];
                     if ($previous !== []) { $item['previous'] = (bool)$previous[0]['Value']; }
 
@@ -122,24 +165,29 @@ trait HausstatusPresenceHistorySupport
                         $item['note'] = 'Noch keine Archivdaten. Der Verlauf beginnt mit der ersten Aufzeichnung.';
                     } elseif ($item['previous'] === null && $item['entries'] !== []
                         && $item['entries'][0]['time'] > $start) {
-                        $item['note'] = 'Vor dem ersten Archivwert ist die Anwesenheit unbekannt.';
+                        $item['note'] = 'Vor dem ersten Archivwert ist der Zustand unbekannt.';
                     }
                 } catch (Throwable $e) {
                     $item['note'] = $e->getMessage();
                 }
-                $history[$source] = $item;
+                $history[$key] = $item;
             }
             $cache = ['time' => $now, 'history' => $history];
             $this->SetBuffer('PresenceHistoryCache', json_encode($cache, JSON_THROW_ON_ERROR));
         }
 
         $people = [];
-        foreach (['SvenPresence' => 'Sven', 'SusiPresence' => 'Susi'] as $source => $name) {
+        foreach ($sources as $source) {
+            $key = $source['source'];
+            $isPerson = $source['kind'] === 'person';
             $people[] = [
-                'name' => $name,
-                'avatar' => $this->PresenceAvatar($source),
-                'current' => $this->Read($this->ConfigInteger($source)),
-                'history' => $cache['history'][$source] ?? ['entries' => [], 'previous' => null, 'note' => 'Noch keine Archivdaten.']
+                'name' => $source['name'],
+                'kind' => $source['kind'],
+                'avatar' => $isPerson ? $this->PresenceAvatar($key) : ['src' => null, 'note' => ''],
+                'current' => $this->Read((int)$source['id']),
+                'history' => $cache['history'][$key] ?? [
+                    'entries' => [], 'previous' => null, 'note' => 'Noch keine Archivdaten.'
+                ]
             ];
         }
         return ['start' => $start, 'end' => $now, 'people' => $people];
