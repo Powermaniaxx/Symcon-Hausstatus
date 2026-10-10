@@ -1013,6 +1013,15 @@
           "caption": "Vorhandene Symcon-Variablen auswählen. Die fünf neuen FritzBox-Kacheln verwenden diese Einstellungen; die bisherige Netzwerk-Unterseite bleibt erhalten. Die Variablen-IDs in Klammern stammen aus deiner FritzBox-Objektübersicht. Alles wird ausschließlich gelesen; die rohe Netzwerkgeräteliste (24070) wird nicht eingebettet."
         },
         {
+          "type": "Button",
+          "caption": "FritzBox-Variablen aus der vorhandenen Objektübersicht erkennen",
+          "onClick": "echo SVHS_AssignKnownFritzBoxSources($id);"
+        },
+        {
+          "type": "Label",
+          "caption": "Erkennung aus deiner FritzBox-Struktur: vorhandene IDs, Namen, Typen und übergeordnete Instanzen werden geprüft. Bereits ausgewählte Variablen bleiben unverändert. Wenn gemeinsame Einstellungen verwendet werden, erst diese speichern und den Button in der zentralen Instanz verwenden."
+        },
+        {
           "type": "SelectVariable",
           "name": "NetworkConnection",
           "caption": "Verbindungsstatus – Status der physischen Verbindung (25185)"
