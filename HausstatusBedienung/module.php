@@ -27,6 +27,8 @@ class HausstatusBedienung extends IPSModuleStrict
         'NetworkManufacturer' => 0, 'NetworkWanType' => 0, 'NetworkUPnP' => 0,
         'NetworkDNS1' => 0, 'NetworkDNS2' => 0, 'NetworkDownstreamMax' => 0, 'NetworkUpstreamMax' => 0,
         'NetworkWirelessState' => 0, 'NetworkLastRestart' => 0,
+        'NetworkTotalReceived' => 0, 'NetworkTotalSent' => 0,
+        'NetworkVoipDNS1' => 0, 'NetworkVoipDNS2' => 0,
         'HeatingProfile' => 0, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
