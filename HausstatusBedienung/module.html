@@ -589,7 +589,7 @@ function renderFritzBox(data,view){
    const hero=document.createElement('div');hero.className='fritzNetworkCount';text(hero,readable('NetworkActiveDevices'));panel.append(hero);
    const meta=document.createElement('div');meta.className='fritzMeta';text(meta,'Geräte aktiv');panel.append(meta);
   }
-  if(Number.isFinite(Number(active.raw))&&Number.isFinite(Number(total.raw))&&Number(total.raw)>0){
+  if(configured('NetworkActiveDevices')&&configured('NetworkDevices')&&Number.isFinite(Number(active.raw))&&Number.isFinite(Number(total.raw))&&Number(total.raw)>0){
    const fraction=Math.max(0,Math.min(100,Number(active.raw)/Number(total.raw)*100));
    const track=document.createElement('div');track.className='fritzProgress';
    track.setAttribute('role','img');track.setAttribute('aria-label',fraction.toFixed(0)+' Prozent der bekannten Geräte aktiv');
