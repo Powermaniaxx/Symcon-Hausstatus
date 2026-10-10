@@ -131,7 +131,7 @@
         },
         {
           "type": "Label",
-          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „18 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
+          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „02 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
         },
         {
           "type": "SelectInstance",
@@ -144,7 +144,7 @@
         },
         {
           "type": "Label",
-          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „2“ gelten immer nur für diese Kachel."
+          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „02“ gelten immer nur für diese Kachel."
         }
       ]
     },
@@ -155,8 +155,48 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "ExtraTileSettings",
+      "caption": "02 · Zusätzliche Variablen für diese Kachel",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
+        },
+        {
+          "type": "List",
+          "name": "ExtraTileVariables",
+          "caption": "Eigene Variablen anzeigen",
+          "rowCount": 4,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Anzeigename (optional)",
+              "name": "Name",
+              "width": "200px",
+              "add": "",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Bestehende Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "OverviewSettings",
-      "caption": "02 · Startseite und Detailkacheln",
+      "caption": "03 · Startseite und Detailkacheln",
       "expanded": true,
       "items": [
         {
@@ -191,7 +231,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceSettings",
-      "caption": "03 · Anwesenheit und Alarm",
+      "caption": "04 · Anwesenheit und Alarm",
       "expanded": false,
       "items": [
         {
@@ -209,7 +249,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceHistorySettings",
-      "caption": "04 · Bewohner und Statusverlauf",
+      "caption": "05 · Bewohner und Statusverlauf",
       "expanded": false,
       "items": [
         {
@@ -229,7 +269,7 @@
         },
         {
           "type": "Label",
-          "caption": "Hausstatus und Alarm innen verwenden die bereits im Bereich „01 · Anwesenheit und Alarm“ eingestellten Variablen. Weitere Alarmvariablen mit Verlauf können hier ergänzt werden."
+          "caption": "Hausstatus und Alarm innen verwenden die bereits im Bereich „04 · Anwesenheit und Alarm“ eingestellten Variablen. Weitere Alarmvariablen mit Verlauf können hier ergänzt werden."
         },
         {
           "type": "List",
@@ -278,7 +318,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DoorSettings",
-      "caption": "05 · Haustür",
+      "caption": "06 · Haustür",
       "expanded": false,
       "items": [
         {
@@ -325,7 +365,7 @@
     {
       "type": "ExpansionPanel",
       "name": "LightSettings",
-      "caption": "06 · Licht und Esstisch",
+      "caption": "07 · Licht und Esstisch",
       "expanded": false,
       "items": [
         {
@@ -390,7 +430,7 @@
     {
       "type": "ExpansionPanel",
       "name": "HeaterSettings",
-      "caption": "07 · Zusatzheizung",
+      "caption": "08 · Zusatzheizung",
       "items": [
         {
           "type": "ValidationTextBox",
@@ -441,7 +481,7 @@
     {
       "type": "ExpansionPanel",
       "name": "CinemaSettings",
-      "caption": "08 · Mediengeräte und HEOS",
+      "caption": "09 · Mediengeräte und HEOS",
       "expanded": false,
       "items": [
         {
@@ -498,7 +538,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DeviceSettings",
-      "caption": "09 · Gerätewarnungen",
+      "caption": "10 · Gerätewarnungen",
       "expanded": false,
       "items": [
         {
@@ -515,7 +555,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PVSettings",
-      "caption": "10 · PV-Anlage",
+      "caption": "11 · PV-Anlage",
       "expanded": false,
       "items": [
         {
@@ -538,7 +578,7 @@
     {
       "type": "ExpansionPanel",
       "name": "OutdoorSettings",
-      "caption": "11 · Markise und Dachfenster",
+      "caption": "12 · Markise und Dachfenster",
       "expanded": false,
       "items": [
         {
@@ -598,7 +638,7 @@
     {
       "type": "ExpansionPanel",
       "name": "MotionSettings",
-      "caption": "12 · Bewegung und Verlauf",
+      "caption": "13 · Bewegung und Verlauf",
       "expanded": false,
       "items": [
         {
@@ -648,7 +688,7 @@
     {
       "type": "ExpansionPanel",
       "name": "TemperatureSettings",
-      "caption": "13 · Temperaturen",
+      "caption": "14 · Temperaturen",
       "expanded": false,
       "items": [
         {
@@ -702,7 +742,7 @@
     {
       "type": "ExpansionPanel",
       "name": "WeatherSettings",
-      "caption": "14 · Wetter",
+      "caption": "15 · Wetter",
       "expanded": false,
       "items": [
         {
@@ -760,7 +800,7 @@
     {
       "type": "ExpansionPanel",
       "name": "RoomDeviceSettings",
-      "caption": "15 · Räume und weitere Geräte",
+      "caption": "16 · Räume und weitere Geräte",
       "expanded": false,
       "items": [
         {
@@ -836,7 +876,7 @@
     {
       "type": "ExpansionPanel",
       "name": "NetworkSettings",
-      "caption": "16 · FritzBox und Netzwerk",
+      "caption": "17 · FritzBox und Netzwerk",
       "expanded": false,
       "items": [
         {
@@ -1031,7 +1071,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DockerSettings",
-      "caption": "17 · NAS-Docker-Container",
+      "caption": "18 · NAS-Docker-Container",
       "expanded": false,
       "items": [
         {
@@ -1065,46 +1105,6 @@
         {
           "type": "Label",
           "caption": "Der Button erstellt genau eine neue Hausstatus-Instanz mit dem Kacheltyp NAS-Container und übernimmt die Einstellungen der zentralen Hausstatus-Instanz. Bereits vorhandene NAS-Kacheln in der gewählten Kategorie werden wiederverwendet."
-        }
-      ]
-    },
-    {
-      "type": "ExpansionPanel",
-      "name": "ExtraTileSettings",
-      "caption": "18 · Zusätzliche Variablen für diese Kachel",
-      "expanded": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
-        },
-        {
-          "type": "List",
-          "name": "ExtraTileVariables",
-          "caption": "Eigene Variablen anzeigen",
-          "rowCount": 4,
-          "add": true,
-          "delete": true,
-          "columns": [
-            {
-              "caption": "Anzeigename (optional)",
-              "name": "Name",
-              "width": "200px",
-              "add": "",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "caption": "Bestehende Variable",
-              "name": "Variable",
-              "width": "auto",
-              "add": 0,
-              "edit": {
-                "type": "SelectVariable"
-              }
-            }
-          ]
         }
       ]
     },
