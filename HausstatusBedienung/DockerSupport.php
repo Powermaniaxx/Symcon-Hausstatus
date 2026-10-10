@@ -109,6 +109,37 @@ trait HausstatusDockerSupport
         return ['containers' => $containers, 'configuredCategory' => $this->ConfigInteger('DockerCategory')];
     }
 
+    // Explicit user action from the master settings: create one tile in the chosen
+    // visualisation category, never alter or remove an existing tile.
+    public function CreateDockerTile(): string
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0) {
+            return 'Bitte diesen Button in der zentralen Hausstatus-Instanz verwenden.';
+        }
+        $category = $this->ReadPropertyInteger('DockerTileCategory');
+        if ($category <= 0 || !IPS_CategoryExists($category)) {
+            return 'Bitte zuerst die Zielkategorie „Variablen“ auswählen und Änderungen übernehmen.';
+        }
+        $moduleID = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        foreach (IPS_GetChildrenIDs($category) as $child) {
+            if (!IPS_InstanceExists($child)
+                || IPS_GetInstance($child)['ModuleInfo']['ModuleID'] !== $moduleID) {
+                continue;
+            }
+            if ((int)IPS_GetProperty($child, 'View') === 25) {
+                return 'Die NAS-Container-Kachel ist in dieser Kategorie bereits vorhanden (ID ' . $child . ').';
+            }
+        }
+        $id = IPS_CreateInstance($moduleID);
+        IPS_SetParent($id, $category);
+        IPS_SetName($id, 'NAS-Container');
+        IPS_SetProperty($id, 'View', 25);
+        IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
+        IPS_ApplyChanges($id);
+        return 'NAS-Container-Kachel erstellt (ID ' . $id
+            . '). Die Kategorie jetzt in der Visualisierung öffnen.';
+    }
+
     private function SetDockerControl(mixed $value): void
     {
         if ($this->CurrentView() !== 25) {
