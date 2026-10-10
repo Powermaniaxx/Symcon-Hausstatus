@@ -1,4 +1,4 @@
-# Hausstatus 0.34 für IP-Symcon
+# Hausstatus 0.35 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -17,7 +17,7 @@ Voraussetzung ist Symcon ab **9.0**. Unterseiten verwenden HTML-Vollbild nur, we
 
 | Bereich | Quellen und Bedienung |
 | --- | --- |
-| Anwesenheit und Alarm | Boolean-Statusvariablen. Eigene An-/Aus-Texte sind möglich. |
+| Anwesenheit und Alarm | Boolean-Statusvariablen. Eigene An-/Aus-Texte sind möglich. |\n| Anwesenheitsverlauf (neue Detailkachel) | Zwei bestehende Boolean-Variablen, beispielsweise Sven 49185 und Susi 48195, als reine Statusanzeige mit 24-Stunden-Archivverlauf. Keine Schaltaktion, keine neuen Variablen, keine automatische Änderung der Archivierung. Neue Hausstatus-Instanz mit Inhalt „Detail: Sven & Susi“ erstellen, als gemeinsame Konfiguration die zentrale Instanz wählen und in dieser die beiden Originalvariablen sowie bei Bedarf das Archiv festlegen. Anschließend die Kachel in „Variablen“ einfügen und die bisherigen schaltbaren Variablen-Kacheln dort ausblenden. |
 | Haustür | Schlossstatus, eigener Türkontakt, letzte Öffnung und Schließung, Boolean-Freigabe und vorhandene Öffnen-Aktion. |
 | Hauptlicht | Boolean-Status und Integer-Helligkeit von 1 bis 100. Bedienung über vorhandene Variablenaktionen oder ein optionales Bedienskript. |
 | Zusätzliche Lampe | Eigene Status- und Helligkeitsvariable; optional eine Lichtinstanz zur Ermittlung ihrer Untervariablen. Raumname und Bezeichnung frei wählen. |
