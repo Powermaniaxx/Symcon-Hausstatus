@@ -8,6 +8,7 @@ require_once __DIR__ . '/DisplaySupport.php';
 require_once __DIR__ . '/NetworkSupport.php';
 require_once __DIR__ . '/PageSupport.php';
 require_once __DIR__ . '/HomepageSupport.php';
+require_once __DIR__ . '/PresenceHistorySupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -19,10 +20,11 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusNetworkSupport;
     use HausstatusPageSupport;
     use HausstatusHomepageSupport;
+    use HausstatusPresenceHistorySupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
-        'HeatingProfile' => 0, 'Presence' => 0, 'Lock' => 0, 'DoorContact' => 0,
+        'HeatingProfile' => 0, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 0, 'HeosNAS' => 0, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
@@ -63,6 +65,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('HeaterEnabled', true);
         $this->RegisterPropertyInteger('Raining', 0);
         $this->RegisterPropertyInteger('RainArchive', 0);
+        $this->RegisterPropertyInteger('PresenceArchive', 0);
         $this->RegisterPropertyBoolean('RainLogging', true);
         $this->RegisterPropertyInteger('MotionArchive', 0);
         $this->RegisterPropertyBoolean('MotionLogging', true);
@@ -99,6 +102,11 @@ class HausstatusBedienung extends IPSModuleStrict
         
         $this->SetBuffer('MotionCache', '');
         $this->SetBuffer('RainCache', '');
+        $this->SetBuffer('PresenceHistoryCache', '');
+        if ($this->ReadPropertyInteger('View') === 18) {
+            $presenceArchive = $this->PresenceHistoryArchive();
+            if ($presenceArchive > 0) { $this->RegisterReference($presenceArchive); }
+        }
         $archive = $this->MotionArchive();
         if ($archive > 0) { $this->RegisterReference($archive); }
         if ($this->HasMotionView() && $archive > 0 && $this->ConfigBoolean('MotionLogging')) {
@@ -204,6 +212,9 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
             if (!$this->HasLiveViewers()) { return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
+            if ($SenderID === $this->ConfigInteger('SvenPresence') || $SenderID === $this->ConfigInteger('SusiPresence')) {
+                $this->SetBuffer('PresenceHistoryCache', '');
+            }
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
             }
@@ -263,7 +274,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields = [];
         foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 14,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
-            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13] as $name => $sectionView) {
+            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13,
+            'PresenceHistorySettings' => 18] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && $view === $sectionView];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
@@ -288,6 +300,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $this->SetBuffer('MotionCache', '');
         $this->SetBuffer('RainCache', '');
+        $this->SetBuffer('PresenceHistoryCache', '');
         $state = $this->BaseState();
         $this->SetBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         return $state;
@@ -446,7 +459,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function SourceNames(): array
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
-            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'],
+            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['SvenPresence', 'SusiPresence'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
@@ -825,6 +838,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
+        $state['PresenceHistory'] = $this->CurrentView() === 18 ? $this->PresenceHistoryState() : null;
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
