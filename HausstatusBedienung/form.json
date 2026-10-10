@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.41 – Einstellungen"
+      "caption": "Hausstatus 0.42 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -115,6 +115,10 @@
             {
               "value": 19,
               "caption": "Eigene Kachel: frei ausgewählte Variablen"
+            },
+            {
+              "value": 25,
+              "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -999,6 +1003,46 @@
         {
           "type": "Label",
           "caption": "Schalter, Auswahl, Regler und RGB-Farbe verwenden die vorhandene Variablendarstellung. Andere Darstellungen lassen sich über „Bedienung öffnen“ in Symcon bedienen. Türbefehle bleiben im Haustürbereich."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "DockerSettings",
+      "caption": "13 · NAS-Docker-Container",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Die Kachel liest die vorhandenen Portainer-Containerinstanzen automatisch. Es werden keine Shell-Kommandos oder Passwörter verwendet. Bei leerem Filter werden alle Portainer-Containerinstanzen angezeigt."
+        },
+        {
+          "type": "SelectCategory",
+          "name": "DockerCategory",
+          "caption": "Container-Gruppe im Objektbaum – optional, z. B. local (17773)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "DockerAllowSymconRestart",
+          "caption": "Neustart von MyIPSymcon ausdrücklich erlauben (riskant; Start und Stop bleiben gesperrt)"
+        },
+        {
+          "type": "Label",
+          "caption": "Start, Stop und Neustart erfolgen ausschließlich über das installierte Portainer-Modul. Stoppen und Neustarten müssen in der Kachel bestätigt werden."
+        },
+        {
+          "type": "SelectCategory",
+          "name": "DockerTileCategory",
+          "caption": "Wo soll die neue NAS-Kachel erscheinen? Kategorie „Variablen“ wählen"
+        },
+        {
+          "type": "Button",
+          "caption": "NAS-Container-Kachel in dieser Kategorie erstellen",
+          "onClick": "echo SVHS_CreateDockerTile($id);"
+        },
+        {
+          "type": "Label",
+          "caption": "Der Button erstellt genau eine neue Hausstatus-Instanz mit dem Kacheltyp NAS-Container und übernimmt die Einstellungen der zentralen Hausstatus-Instanz. Bereits vorhandene NAS-Kacheln in der gewählten Kategorie werden wiederverwendet."
         }
       ]
     },
