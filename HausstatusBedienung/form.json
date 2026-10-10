@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.40 – Einstellungen"
+      "caption": "Hausstatus 0.41 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -1105,6 +1105,26 @@
           "type": "SelectVariable",
           "name": "NetworkDNS2",
           "caption": "DNS-Server 2 (26834)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkTotalReceived",
+          "caption": "Empfangen seit verbunden (51481)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkTotalSent",
+          "caption": "Gesendet seit verbunden (11621)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkVoipDNS1",
+          "caption": "VoIP DNS-Server 1 (50614)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "NetworkVoipDNS2",
+          "caption": "VoIP DNS-Server 2 (14914)"
         },
         {
           "type": "SelectVariable",
