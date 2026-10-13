@@ -1,4 +1,12 @@
-# Hausstatus 0.45 für IP-Symcon
+# Hausstatus 0.46 für IP-Symcon
+
+## 0.46: HEOS-Radio und NAS getrennt und alphabetisch
+
+Die Cinema-Kachel verwendet die Radioquelle 14121 und die NAS-Playlistquelle 45081 auch dann, wenn in einer bisherigen Konfiguration die getrennten Quellen noch auf 0 stehen. Ausdrücklich konfigurierte andere Quellen bleiben erhalten. Diese Zuordnung gilt auch für Kacheln, die ihre Einstellungen von der zentralen Instanz beziehen.
+
+Die Aufteilung der alten gemeinsamen Liste nach „1–3 Radio, ab 4 NAS“ entfällt in der Cinema-Kachel: Sie hatte MDR JUMP auf Wert 72 fälschlich bei NAS eingeordnet. Fehlende getrennte Quellen werden als fehlend angezeigt. Die gemeinsame Quelle bleibt für bestehende Raumbedienung erhalten; die Statusquelle wird nicht verändert.
+
+Beide Auswahllisten werden bei jeder Zustandserzeugung nach Namen sortiert, Aus bleibt zuerst. Neue Optionen aus der jeweiligen Variable werden übernommen, ohne deren Aktionswerte zu ändern. Nach Installation Änderungen in der zentralen Instanz übernehmen und die Visualisierung neu laden.
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
