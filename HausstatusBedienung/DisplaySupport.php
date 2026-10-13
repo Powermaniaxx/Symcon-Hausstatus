@@ -69,14 +69,19 @@ trait HausstatusDisplaySupport
         $id = $this->ConfigInteger('HeatingProfile');
         if ($id <= 0) { return null; }
         return ['room' => '', 'group' => 'Heizung', 'name' => $this->DisplayText('HeatingProfile'),
-            'id' => $id, 'type' => IPS_VariableExists($id) ? 2 : -1, 'operate' => true];
+            'id' => $id, 'type' => IPS_VariableExists($id) ? 2 : -1, 'operate' => true, 'heatingProfile' => true];
     }
 
     private function HeatingProfileItem(): ?array
     {
-        if (!$this->HasTemperatureView()) { return null; }
+        if (!$this->HasTemperatureView() && $this->CurrentView() !== 12) { return null; }
         $entry = $this->HeatingProfileEntry();
-        return $entry !== null ? $this->RoomItem($entry) : null;
+        if ($entry === null) { return null; }
+        $item = $this->RoomItem($entry);
+        if ($item['control'] === null && $entry['type'] === 2 && $item['note'] === '') {
+            $item['note'] = 'Nur Statusanzeige: keine aktive Auswahlaktion oder Raumbedienung deaktiviert.';
+        }
+        return $item;
     }
 
     private function IsCinemaVariable(int $id): bool

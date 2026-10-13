@@ -69,6 +69,11 @@ trait HausstatusRoomSupport
             foreach ($extra as $entry) {
                 if (!array_filter($result, static fn(array $row): bool => $row['room'] === $entry['room'] && $row['id'] === $entry['id'])) { $result[] = $entry; }
             }
+            $profile = $this->HeatingProfileEntry();
+            if ($profile !== null) {
+                $result = array_values(array_filter($result, static fn(array $entry): bool => $entry['id'] !== $profile['id']));
+                $result[] = $profile;
+            }
         }
         return $result;
     }
@@ -223,6 +228,13 @@ trait HausstatusRoomSupport
         $id = $entry['id'];
         if (!$entry['operate'] || !$this->ConfigBoolean('RoomControlsEnabled')) { return null; }
         if ($this->ProtectedDoorTarget($id)) { throw new RuntimeException('Türbedienung erfolgt im Haustürbereich mit Freigabe und Sicherheitsfrage.'); }
+        if ($entry['heatingProfile'] ?? false) {
+            if ($entry['type'] !== 2 || !IPS_VariableExists($id)) { return null; }
+            $type = (int)IPS_GetVariable($id)['VariableType'];
+            if (!$this->HasAction($id, $type)) { return null; }
+            $options = $this->RoomOptions($id, $type);
+            return $options ? ['kind' => 'enum', 'options' => $options, 'route' => ''] : null;
+        }
         if ($entry['type'] !== 2) {
             return IPS_ObjectExists($id) ? ['kind' => 'native', 'id' => $id] : null;
         }
@@ -296,6 +308,7 @@ trait HausstatusRoomSupport
             }
         }
         foreach ($entries as $entry) {
+            if ($entry['heatingProfile'] ?? false) { continue; }
             if (($this->IsHeosSelection($entry['id']) || ($statusID > 0 && $entry['id'] === $statusID)) && isset($receivers[$entry['room']])) {
                 $receiver = $receivers[$entry['room']];
                 $entry['deviceKey'] = $receiver['deviceKey']; $entry['deviceName'] = $this->DisplayText('CinemaState');

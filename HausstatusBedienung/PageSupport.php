@@ -126,7 +126,10 @@ trait HausstatusPageSupport
             }
             $this->pageContext = ['view' => $view, 'room' => $room];
             if ($action === 'PageValue') {
-                if ($view === 12 && $room === '') { throw new RuntimeException('Bitte zuerst einen Raum auswählen.'); }
+                if ($view === 12 && $room === ''
+                    && ($payload['value']['id'] ?? null) !== $this->ConfigInteger('HeatingProfile')) {
+                    throw new RuntimeException('Bitte zuerst einen Raum auswählen.');
+                }
                 if (!IPS_SemaphoreEnter($key, 1000)) { throw new RuntimeException('Bitte kurz warten und erneut bedienen.'); }
                 $locked = true;
                 // The existing room validator checks membership, type, bounds and action route.

@@ -698,7 +698,7 @@
         {
           "type": "SelectVariable",
           "name": "HeatingProfile",
-          "caption": "Heizungsprofil – vorhandene Auswahl- oder Statusvariable (optional)"
+          "caption": "Heizungsprofil gesamte Wohnung – Auswahl oder Status (leer: Variable 31603)"
         },
         {
           "type": "List",

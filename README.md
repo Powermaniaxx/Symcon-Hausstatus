@@ -1,4 +1,4 @@
-# Hausstatus 0.43 für IP-Symcon
+# Hausstatus 0.45 für IP-Symcon
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -7,7 +7,7 @@ Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit
 1. Dieses Repository über **Module Control** in Symcon hinzufügen: `https://github.com/Powermaniaxx/Symcon-Hausstatus`.
 2. Eine eigene Kategorie für das Dashboard und darin eine Instanz **Hausstatus mit Bedienung** anlegen.
 3. In **01 · Kacheltyp und Datenquelle** als Inhalt **Übersicht** wählen. **Gemeinsame Einstellungen** leer lassen: Diese Instanz verwaltet die Quellen für das Dashboard.
-4. Die benötigten Variablen in den einzelnen Einstellungsbereichen auswählen. Neue Instanzen haben keine vorausgewählten Geräte- oder Variablen-IDs. Bewegung, Temperaturen, WLAN und Raumgeräte beginnen mit leeren Listen.
+4. Die benötigten Variablen in den einzelnen Einstellungsbereichen auswählen. Das Wohnungs-Heizungsprofil verwendet standardmäßig die gewünschte vorhandene Variable **31603**; alle weiteren Gerätequellen werden ausgewählt. Bewegung, Temperaturen, WLAN und Raumgeräte beginnen mit leeren Listen.
 5. Unter **Texte und Beschreibungen** Bezeichnungen und optionale Hinweise anpassen. Die anfänglichen Namen sind Beispiele und lassen sich ändern, etwa „Wohnzimmerlicht“, „Esstisch“ oder „Cinema 40“. Bei Boolean-Anzeigen können zusätzlich eigene Texte für An und Aus hinterlegt werden. Leere Zustandstexte behalten die bisherige Darstellung.
 6. **Änderungen übernehmen** und die Kategorie in der Kachelvisualisierung öffnen. Im Darstellungseditor **Instanzspezifische Darstellung** wählen, falls dort eine Liste ausgewählt ist.
 
@@ -50,7 +50,19 @@ Die Netzwerkseite ist ein eigener Inhalt. Sie ergänzt die Startseite nicht um w
 
 ## Heizungsprofil
 
-Unter **Temperaturen** die vorhandene **Heizungsprofilvariable** auswählen. Die Temperaturansicht zeigt den aktuellen Wert. Eine vorhandene Auswahlaktion wird mit ihren tatsächlichen Optionen bedienbar; ohne Aktion bleibt die Anzeige lesbar. Andere Darstellungen sind über die native Symcon-Bedienung erreichbar. Die Variable wird nicht angelegt und nicht durch eine Modulvariable ersetzt.
+Unter **Temperaturen** die vorhandene **Heizungsprofilvariable für die gesamte Wohnung** auswählen. Ab **0.45 / Build 46** gilt **31603** als Standardquelle, auch wenn eine bestehende Konfiguration dort noch 0 gespeichert hat. Eine ausdrücklich ausgewählte andere Quelle bleibt erhalten. Diese Zuordnung wird aus der zentralen Instanz übernommen.
+
+Der Block **Klima allgemein** steht dauerhaft oberhalb der Temperaturen sowie in **Räume** oberhalb der Raumübersicht und der Geräte eines ausgewählten Raums. Er bleibt beim Wechsel von Raum oder Bereich (Licht, Klima, Medien usw.) sichtbar. Die Kennzeichnung **Heizungsprofil für die gesamte Wohnung** unterscheidet ihn von individuellen Raumprofilen und Solltemperaturen.
+
+Der aktuelle formatierte Symcon-Wert wird angezeigt. Nur bei aktivierter **Raumbedienung**, einer vorhandenen Variablenaktion und tatsächlichen Auswahloptionen aus Profil beziehungsweise Darstellung erscheint eine Auswahl. Zulässige Werte werden beim Senden erneut geprüft und über die vorhandene `RequestAction`-Aktion ausgeführt; das Modul schreibt den Status nicht selbst. Ohne Auswahlaktion gibt es eine ausdrücklich gekennzeichnete Statusanzeige, ohne Ersatzregler oder erfundene Profilnamen. Fehlt die Variable, steht dort **Quelle fehlt** mit ID. Änderungen der Quelle werden für die Temperatur- und Rauminstanzen abonniert. Die Variable wird nicht angelegt und nicht durch eine Modulvariable ersetzt.
+
+Die Aktion verwendet den offiziellen [Symcon-RequestAction-Weg](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenzugriff/requestaction/).
+
+### Prüfung und Rückkehrweg für 0.45
+
+Ausgangsstand: main / version-0.44 bei `6a2e9c1`. **version-0.44** bleibt als vorheriger abgeschlossener Stand erhalten, **rollback-0.26** bleibt unverändert. Der abgeschlossene neue Stand liegt auf **main** und **version-0.45**. In Module Control kann über das Zahnrad auf den gewünschten Versionsbranch gewechselt werden; danach Änderungen in der zentralen Instanz übernehmen und die Visualisierung neu laden.
+
+Lokale Prüfung: PHP-Syntax aller Moduldateien, JSON-Dateien, JavaScript-Syntax und isolierte Tests (`php tests/heating_profile.php`) mit simulierten Symcon-Variablen für Auswahl, Status, fehlende Quelle, gemeinsame Konfiguration, Aktionen in der Raumübersicht und abgewiesene Befehle. Zusätzlich wurde das HTML mit simulierten Daten in einem lokalen Browser bei 390 px Breite geprüft: Raumübersicht, Raumdetail, direkte und eingebettete Auswahl, Zurück-Navigation, Statusmodus und weiterhin ausgeblendetes Profil in der Sophie-Ansicht. Die eingebettete Zurück-Navigation lädt die Raumübersicht mit dem Wohnungsprofil erneut. **Kein Live-Test im IP-Symcon/WebFront der Anlage**; das reale Profil und Aktionsskript von 31603 sind aus dem Repository nicht auslesbar.
 
 Solltemperaturen werden pro Raum zugeordnet. Ohne explizite Sollquelle sucht das Modul passende Solltemperaturen aus den gewählten Raumgeräten oder demselben Thermostat. Bedienelemente verwenden dessen Grenzen und Schrittweite.
 

@@ -31,7 +31,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'NetworkWirelessState' => 0, 'NetworkLastRestart' => 0,
         'NetworkTotalReceived' => 0, 'NetworkTotalSent' => 0,
         'NetworkVoipDNS1' => 0, 'NetworkVoipDNS2' => 0,
-        'HeatingProfile' => 0, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
+        'HeatingProfile' => 31603, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 0, 'HeosNAS' => 0, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
@@ -481,7 +481,12 @@ class HausstatusBedienung extends IPSModuleStrict
         return IPS_GetProperty($source, $name);
     }
 
-    private function ConfigInteger(string $name): int { return (int)$this->ConfigValue($name); }
+    private function ConfigInteger(string $name): int
+    {
+        $id = (int)$this->ConfigValue($name);
+        // Existing installations may still store 0; keep explicitly selected sources.
+        return $name === 'HeatingProfile' && $id === 0 ? 31603 : $id;
+    }
     private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
     private function HasMotionView(): bool
@@ -534,7 +539,7 @@ class HausstatusBedienung extends IPSModuleStrict
             26 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'Alarm'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
-            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus', 'HeatingProfile'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->CurrentView();
         if (in_array($view, [13, 20, 21, 22, 23, 24], true)) {
             return $this->NetworkViewFields($view);
