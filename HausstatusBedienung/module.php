@@ -10,6 +10,7 @@ require_once __DIR__ . '/PageSupport.php';
 require_once __DIR__ . '/HomepageSupport.php';
 require_once __DIR__ . '/PresenceHistorySupport.php';
 require_once __DIR__ . '/DockerSupport.php';
+require_once __DIR__ . '/LaundrySupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -23,6 +24,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusHomepageSupport;
     use HausstatusPresenceHistorySupport;
     use HausstatusDockerSupport;
+    use HausstatusLaundrySupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -31,6 +33,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'NetworkWirelessState' => 0, 'NetworkLastRestart' => 0,
         'NetworkTotalReceived' => 0, 'NetworkTotalSent' => 0,
         'NetworkVoipDNS1' => 0, 'NetworkVoipDNS2' => 0,
+        'WasherPower' => 15161, 'DryerPower' => 12920, 'WasherRunning' => 0, 'DryerRunning' => 0,
         'HeatingProfile' => 31603, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
@@ -158,6 +161,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
+        foreach ($this->LaundrySourceIDs() as $id) { $ids[] = $id; }
         if ($this->ReadPropertyInteger('View') === 25) {
             foreach ($this->DockerContainerIDs() as $dockerInstanceID) {
                 $this->RegisterReference($dockerInstanceID);
@@ -308,7 +312,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 14,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
             'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13,
-            'PresenceHistorySettings' => 18] as $name => $sectionView) {
+            'PresenceHistorySettings' => 18, 'LaundrySettings' => 27] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && ($view === $sectionView || ($name === 'PresenceSettings' && $view === 18))];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
@@ -537,6 +541,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
             26 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'Alarm'],
+            27 => ['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus', 'HeatingProfile'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
@@ -915,6 +920,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DisplaySettings'] = $this->DisplaySettings();
         $state['Network'] = $this->NetworkState();
         $state['Docker'] = $this->DockerState();
+        $state['Laundry'] = $this->LaundryState();
         $state['HeatingProfileItem'] = $this->HeatingProfileItem();
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;

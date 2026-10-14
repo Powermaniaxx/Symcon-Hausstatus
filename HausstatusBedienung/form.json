@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.44 – Einstellungen"
+      "caption": "Hausstatus 0.46 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -123,6 +123,10 @@
             {
               "value": 19,
               "caption": "Eigene Kachel: frei ausgewählte Variablen"
+            },
+            {
+              "value": 27,
+              "caption": "Einzeln: Waschmaschine und Trockner"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -1261,6 +1265,42 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "LaundrySettings",
+      "caption": "19 · Waschmaschine und Trockner",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Gemeinsame Kachel auf der Startseite. Leistungsquellen in Watt. Laufstatus kommt aus den vorhandenen Ansageskripten; Aktiv seit entspricht dem erkannten Laufbeginn."
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WasherPower",
+          "caption": "Waschmaschine: aktuelle Leistung (W)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WasherRunning",
+          "caption": "Waschmaschine: läuft (Boolean, leer = automatisch)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DryerPower",
+          "caption": "Trockner: aktuelle Leistung (W)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DryerRunning",
+          "caption": "Trockner: läuft (Boolean, leer = automatisch)"
+        },
+        {
+          "type": "Label",
+          "caption": "Automatische Zuordnung: WaschmaschineLaeuft / TrocknerLaeuft unter einem Skript mit aktivem Ereignis für die gewählte Leistung. Bei mehreren Treffern den Laufstatus ausdrücklich auswählen. Ansageskripte zuvor einmal manuell einrichten, danach hier Änderungen übernehmen."
         }
       ]
     }

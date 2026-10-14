@@ -11,7 +11,7 @@ trait HausstatusDisplaySupport
         'PVPower' => 'PV-Anlage', 'OutdoorTitle' => 'Markise und Dachfenster',
         'Awning' => 'Markise', 'Roof' => 'Dachfenster', 'MotionTitle' => 'Bewegung – letzte 24 Stunden',
         'TemperatureTitle' => 'Räume', 'HeatingProfile' => 'Heizungsprofil', 'WeatherTitle' => 'Wetter',
-        'NetworkTitle' => 'FritzBox'
+        'LaundryTitle' => 'Waschmaschine & Trockner', 'NetworkTitle' => 'FritzBox'
     ];
     private const DISPLAY_LABELS = [
         'StatusTitle' => 'Überschrift Anwesenheit / Alarm', 'DoorTitle' => 'Überschrift Haustür',
@@ -20,7 +20,7 @@ trait HausstatusDisplaySupport
         'LightState' => 'Hauptlicht', 'Dining' => 'Zusätzliche Lampe', 'CinemaState' => 'Mediengerät',
         'PVPower' => 'PV-Anlage', 'OutdoorTitle' => 'Überschrift Außenbereich', 'Awning' => 'Beschattung',
         'Roof' => 'Dachfenster', 'MotionTitle' => 'Bewegungsverlauf', 'TemperatureTitle' => 'Temperaturen',
-        'HeatingProfile' => 'Heizungsprofil', 'WeatherTitle' => 'Wetter', 'NetworkTitle' => 'Netzwerk / Router'
+        'HeatingProfile' => 'Heizungsprofil', 'WeatherTitle' => 'Wetter', 'LaundryTitle' => 'Überschrift Waschmaschine / Trockner', 'NetworkTitle' => 'Netzwerk / Router'
     ];
 
     private function DefaultDisplayTexts(): string

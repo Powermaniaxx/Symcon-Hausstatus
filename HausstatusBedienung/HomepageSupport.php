@@ -122,6 +122,7 @@ trait HausstatusHomepageSupport
         $tiles = [
             1 => [$this->DisplayText('StatusTitle'), $has(['Presence', 'Alarm'])],
             2 => [$this->DisplayText('DoorTitle'), $has(['Lock', 'DoorContact', 'DoorControl', 'DoorPermission'])],
+            27 => [$this->DisplayText('LaundryTitle'), $has(['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'])],
             5 => [$this->DisplayText('LightState'), $has(['LightState', 'Brightness'])],
             17 => [$this->DisplayText('Dining'), $has(['DiningInstance', 'DiningState'])],
             6 => [$this->DisplayText('CinemaState'), $has(['CinemaState', 'CinemaControl'])],
