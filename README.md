@@ -1,4 +1,8 @@
-# Hausstatus 0.48 für IP-Symcon
+# Hausstatus 0.49 für IP-Symcon
+
+## 0.49 / Build 50: PV-Anlage neben Hausstatus
+
+Die PV-Kachel steht direkt nach dem gemeinsamen Hausstatus-/Türblock und damit auf breiten Bildschirmen oben rechts daneben. Dieselbe Reihenfolge gilt für separat angelegte Startseitenkacheln. Auf schmalen Bildschirmen folgt die PV-Kachel entsprechend dem vorhandenen responsiven Raster.
 
 ## 0.48 / Build 49: Anwesenheit, Alarm und Haustür gemeinsam
 
