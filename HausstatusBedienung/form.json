@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.49 – Einstellungen"
+      "caption": "Hausstatus 0.50 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -131,6 +131,10 @@
             {
               "value": 28,
               "caption": "Gemeinsam: Anwesenheit, Alarm und Haustür"
+            },
+            {
+              "value": 29,
+              "caption": "Gemeinsam: PV-Anlage und Batteriewarnung"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"

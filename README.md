@@ -1,4 +1,10 @@
-# Hausstatus 0.49 für IP-Symcon
+# Hausstatus 0.50 für IP-Symcon
+
+## 0.50 / Build 51: Einheitliche Homeansicht
+
+Eine gemeinsame Hintergrundfläche, gleiche Kachelbreiten und -höhen im Desktop-Raster sowie einheitliche Überschriften, Innenabstände und Bedienelemente verbinden die Übersicht. Statusfarben markieren die Werte statt ganze Kachelflächen. Auf dem Handy werden die Kacheln einspaltig und mit natürlicher Höhe dargestellt; lange Inhalte bleiben vollständig zugänglich.
+
+Rechts neben Hausstatus/Haustür steht die PV-Anlage mit der Batteriewarnung darunter in derselben Kachel. Die vorhandene Warnungsquelle und eigene Beschriftungen werden weiterverwendet. Details zur PV-Anlage bleiben erreichbar. Bei separaten Startseitenkacheln ersetzt Ansicht 29 die automatisch angelegten Ansichten 15 und 4; deren Objekte werden nur ausgeblendet. Eigenständig eingerichtete PV- und Warnungskacheln bleiben verfügbar.
 
 ## 0.49 / Build 50: PV-Anlage neben Hausstatus
 

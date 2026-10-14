@@ -23,7 +23,7 @@ trait HausstatusRoomSupport
 
     private function PVInverters(): array
     {
-        if (!in_array($this->CurrentView(), [0, 7, 15], true)) { return []; }
+        if (!in_array($this->CurrentView(), [0, 7, 15, 29], true)) { return []; }
         $result = [];
         foreach ($this->PVInverterSources() as $device) {
             $production = $this->Read($device['producing']);

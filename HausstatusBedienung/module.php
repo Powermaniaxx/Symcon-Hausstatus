@@ -173,7 +173,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($this->ReadPropertyInteger('View') === 18) {
             foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
         }
-        if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15], true)) {
+        if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15, 29], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
         }
         if ($this->HasTemperatureView()) {
@@ -541,6 +541,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
             26 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'Alarm'],
+            29 => ['PVPower', 'PVEnergy', 'BatteryWarnings'],
             27 => ['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'],
             28 => ['Presence', 'Alarm', 'Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
@@ -951,7 +952,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Dining'] = in_array($this->CurrentView(), [0, 5, 17], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVInverters'] = $this->PVInverters();
-        $state['PVDetailsTarget'] = in_array($this->CurrentView(), [0, 15], true) ? $this->PVDetailsTarget() : 0;
+        $state['PVDetailsTarget'] = in_array($this->CurrentView(), [0, 15, 29], true) ? $this->PVDetailsTarget() : 0;
         $state['RoomNavigationTarget'] = $this->CurrentView() === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {
             foreach ($this->Rooms() as $room) {

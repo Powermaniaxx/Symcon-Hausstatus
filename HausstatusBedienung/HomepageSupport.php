@@ -121,13 +121,12 @@ trait HausstatusHomepageSupport
         $has = function (array $names): bool { foreach ($names as $name) { if ($this->ConfigInteger($name) > 0) { return true; } } return false; };
         $tiles = [
             28 => [$this->DisplayText('StatusTitle') . ' · ' . $this->DisplayText('DoorTitle'), $has(['Presence', 'Alarm', 'Lock', 'DoorContact', 'DoorControl', 'DoorPermission'])],
-            15 => [$this->DisplayText('PVPower'), $has(['PVPower', 'PVEnergy']) || count($this->PVInverterSources()) > 0],
+            29 => [$this->DisplayText('PVPower') . ' · Batteriewarnung', $has(['PVPower', 'PVEnergy', 'BatteryWarnings']) || count($this->PVInverterSources()) > 0],
             27 => [$this->DisplayText('LaundryTitle'), $has(['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'])],
             5 => [$this->DisplayText('LightState'), $has(['LightState', 'Brightness'])],
             17 => [$this->DisplayText('Dining'), $has(['DiningInstance', 'DiningState'])],
             6 => [$this->DisplayText('CinemaState'), $has(['CinemaState', 'CinemaControl'])],
             14 => [$this->ConfigString('HeaterTitle'), $has(['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'])],
-            4 => [$this->DisplayText('BatteryWarnings'), $has(['BatteryWarnings'])],
             11 => [$this->DisplayText('OutdoorTitle'), $has(['AwningPosition', 'AwningStatus', 'RoofPosition', 'RoofStatus'])],
             16 => [$this->DisplayText('WeatherTitle'), $has(['Weather', 'Wind', 'Rain', 'Raining'])],
             8 => [$this->DisplayText('MotionTitle'), !$this->ConfigBoolean('SeparateDetails') && count($this->MotionSensors()) > 0],
