@@ -1,4 +1,4 @@
-# Hausstatus 0.50 für IP-Symcon
+# Hausstatus 0.51 für IP-Symcon
 
 ## 0.50 / Build 51: Einheitliche Homeansicht
 
@@ -16,7 +16,7 @@ Die Startseite fasst Anwesenheit/Alarm und Haustür in einer einzigen optischen 
 
 Auch bei separaten Startseitenkacheln wird die gemeinsame Ansicht 28 angelegt; bisherige automatisch verwaltete Einzelkacheln 1 und 2 werden ausgeblendet. Manuell angelegte Einzelansichten bleiben verfügbar. Nach dem Modulupdate Änderungen in der zentralen Instanz übernehmen und die Visualisierung neu laden.
 
-Bei der Waschmaschine wird die Leistungsanzeige bis einschließlich 2 W ausgeblendet. Der gemessene Wert und die Laufstatus-Erkennung werden nicht verändert; der Trockner zeigt weiterhin seine Leistung.
+Bei der Waschmaschine wird die Leistungsanzeige bis einschließlich 2 W ausgeblendet. Der gemessene Wert und die Laufstatus-Erkennung werden nicht verändert; beim Trockner wird die Leistungsanzeige ab Version 0.51 / Build 52 unter 2 W ebenfalls ausgeblendet (genau 2 W bleiben sichtbar).
 
 ## 0.46: HEOS-Radio und NAS getrennt und alphabetisch
 
