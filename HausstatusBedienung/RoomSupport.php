@@ -450,7 +450,7 @@ trait HausstatusRoomSupport
 
     // 0.34: Radio und NAS besitzen je eine eigene, dynamische Auswahlliste.
     // Optionennamen und Werte werden aus der Variablen-Praesentation gelesen.
-    // Ohne eigene Quelle bleibt die bisherige HEOS-Auswahl als Rueckfall erhalten.
+    // Radio und NAS werden nicht mehr anhand gemeinsamer Zahlenbereiche getrennt.
     private function HeosSplitItem(string $source): ?array
     {
         if (!in_array($source, ['HeosRadio', 'HeosNAS'], true)) { return null; }
@@ -474,6 +474,9 @@ trait HausstatusRoomSupport
                     $item['control'] = null;
                     $item['note'] = 'Auswahlvariable benoetigt eine Bedienaktion und Auswahloptionen.';
                 }
+                if (($item['control']['kind'] ?? '') === 'enum') {
+                    $item['control']['options'] = $this->SortHeosOptions($item['control']['options']);
+                }
                 return $item;
             } catch (Throwable $e) {
                 return ['name' => $label, 'label' => $label,
@@ -483,30 +486,27 @@ trait HausstatusRoomSupport
             }
         }
 
-        $item = $this->HeosItem();
-        if ($item === null) { return null; }
-        $item['name'] = $item['label'] = $label;
-        $item['command'] = 'HeosSelection';
-        if (($item['control']['kind'] ?? '') !== 'enum') { return $item; }
+        return ['name' => $label, 'label' => $label,
+            'value' => ['raw' => null, 'text' => 'Nicht eingerichtet'],
+            'control' => null, 'note' => 'Eigene Auswahlvariable unter Mediengerät zuweisen.',
+            'command' => $source];
+    }
 
-        // Kompatibilitaet mit der bisherigen Belegung:
-        // 0 = Aus, 1-3 = Radio, ab 4 = NAS.
-        // Neue Radiosender ohne feste Begrenzung: separate
-        // Radio-Auswahlvariable in den Einstellungen hinterlegen.
-        $item['control']['options'] = array_values(array_filter(
-            $item['control']['options'],
-            static function (array $option) use ($source): bool {
-                $v = $option['value'] ?? null;
-                if (!is_int($v)) { return false; }
-                if ($v === 0) { return true; }
-                return $source === 'HeosRadio' ? $v >= 1 && $v <= 3 : $v >= 4;
-            }
-        ));
-        if ($item['control']['options'] === []) {
-            $item['control'] = null;
-            $item['note'] = 'Keine Eintraege in der bisherigen HEOS-Auswahl vorhanden.';
-        }
-        return $item;
+    private function SortHeosOptions(array $options): array
+    {
+        $key = static fn(string $name): string => strtolower(strtr($name, [
+            'Ä' => 'a', 'ä' => 'a', 'Ö' => 'o', 'ö' => 'o',
+            'Ü' => 'u', 'ü' => 'u', 'ß' => 'ss'
+        ]));
+        usort($options, static function (array $a, array $b) use ($key): int {
+            // Aus bleibt oben; die Aktionswerte werden nicht umnummeriert.
+            $aOff = in_array($a['value'], [0, 0.0, '0'], true);
+            $bOff = in_array($b['value'], [0, 0.0, '0'], true);
+            if ($aOff !== $bOff) { return $aOff ? -1 : 1; }
+            return strnatcmp($key($a['name']), $key($b['name']))
+                ?: strcmp($a['name'], $b['name']);
+        });
+        return $options;
     }
 
     private function SetHeosSplitSelection(string $source, mixed $value): void

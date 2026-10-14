@@ -37,7 +37,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'HeatingProfile' => 31603, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
-        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 0, 'HeosNAS' => 0, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
+        'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 14121, 'HeosNAS' => 45081, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
         'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
         'Sunrise' => 0, 'Sunset' => 0,
         'DoorOpened' => 0, 'DoorClosed' => 0,
@@ -489,7 +489,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $id = (int)$this->ConfigValue($name);
         // Existing installations may still store 0; keep explicitly selected sources.
-        return $name === 'HeatingProfile' && $id === 0 ? 31603 : $id;
+        return $id === 0 ? (['HeatingProfile' => 31603, 'HeosRadio' => 14121, 'HeosNAS' => 45081][$name] ?? 0) : $id;
     }
     private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }

@@ -1,4 +1,12 @@
-# Hausstatus 0.46 für IP-Symcon
+# Hausstatus 0.47 für IP-Symcon
+
+## 0.46: HEOS-Radio und NAS getrennt und alphabetisch
+
+Die Cinema-Kachel verwendet die Radioquelle 14121 und die NAS-Playlistquelle 45081 auch dann, wenn in einer bisherigen Konfiguration die getrennten Quellen noch auf 0 stehen. Ausdrücklich konfigurierte andere Quellen bleiben erhalten. Diese Zuordnung gilt auch für Kacheln, die ihre Einstellungen von der zentralen Instanz beziehen.
+
+Die Aufteilung der alten gemeinsamen Liste nach „1–3 Radio, ab 4 NAS“ entfällt in der Cinema-Kachel: Sie hatte MDR JUMP auf Wert 72 fälschlich bei NAS eingeordnet. Fehlende getrennte Quellen werden als fehlend angezeigt. Die gemeinsame Quelle bleibt für bestehende Raumbedienung erhalten; die Statusquelle wird nicht verändert.
+
+Beide Auswahllisten werden bei jeder Zustandserzeugung nach Namen sortiert, Aus bleibt zuerst. Neue Optionen aus der jeweiligen Variable werden übernommen, ohne deren Aktionswerte zu ändern. Nach Installation Änderungen in der zentralen Instanz übernehmen und die Visualisierung neu laden.
 
 Ein konfigurierbares Dashboard für die Symcon-Kachelvisualisierung: Anwesenheit und Alarm, Haustür, Licht, Medien, PV, Beschattung, Bewegung, Temperaturen, Wetter und Netzwerk. Das Modul verwendet vorhandene Symcon-Variablen, deren Darstellungen und Bedienaktionen. Jede Installation wählt ihre eigenen Quellen und Beschriftungen.
 
@@ -48,7 +56,7 @@ Unter Symcon 9.0 benötigt die eingebettete PV-Detailansicht keine zusätzliche 
 
 Die Netzwerkseite ist ein eigener Inhalt. Sie ergänzt die Startseite nicht um weitere Karten. Die PV-Startkarte bleibt auf aktuelle Leistung und Detailzugang beschränkt. Der kompakte Wetterblock enthält Wetter und Wind sowie den Regenverlauf. Anwesenheit/Alarm und Haustür bleiben an erster und zweiter Stelle.
 
-## Waschmaschine und Trockner (0.46)
+## Waschmaschine und Trockner (0.47 / Build 48)
 
 Die Homeansicht enthält nach Anwesenheit und Haustür eine gemeinsame Kachel **Waschmaschine & Trockner**. Beide Geräte zeigen **Läuft / Inaktiv / Unbekannt**, die aktuelle **Leistung in Watt**, **Aktiv seit** und die vergangene Laufzeit. Auf schmalen Bildschirmen stehen die Geräte untereinander. Die Kachel ist auch einzeln als Ansicht **27** verfügbar und wird beim Aufteilen der Startseite gemeinsam angelegt.
 
@@ -58,7 +66,7 @@ Unter **19 · Waschmaschine und Trockner** sind die Leistungsquellen 15161 und 1
 
 Zur Einrichtung zuerst die beiden Ansageskripte einmal manuell ausführen, dann nach Laden des Modulstands in der zentralen Hausstatus-Instanz **Änderungen übernehmen** und die Visualisierung neu laden. Laufstatus und Leistung werden als Quellen für Live-Aktualisierungen registriert. Die Modulkonfiguration wird bei separaten Kacheln aus der zentralen Instanz übernommen. Diese Erweiterung liest die Skriptvariablen; sie verändert keine Ansage, Erkennung, Lautstärke oder Geräteaktion.
 
-Geprüft: PHP-8.2-Syntax aller Moduldateien, bestehende Heizungsprofiltests und neue isolierte Tests in `tests/laundry.php` (Heizpause, inaktiv, eindeutige/mehrdeutige Erkennung, deaktivierte Ereignisse, falscher Variablentyp, fehlende Leistung, unbekannte/zukünftige Zeitstempel und gemeinsame Konfiguration). Browserprüfung mit Beispieldaten: Desktop, 390 und 320 Pixel, Einzelkachel, unbekannte Quellen und Abgrenzung zur Sophie-Ansicht; ohne JavaScript-Fehler oder horizontalen Überlauf. Kein Live-Test in der Symcon-Anlage. Der lokale Stand 0.46 ist damit vorbereitet; seine Veröffentlichung und Installation werden dadurch nicht bestätigt.
+Geprüft: PHP-8.2-Syntax aller Moduldateien, bestehende Heizungsprofiltests und neue isolierte Tests in `tests/laundry.php` (Heizpause, inaktiv, eindeutige/mehrdeutige Erkennung, deaktivierte Ereignisse, falscher Variablentyp, fehlende Leistung, unbekannte/zukünftige Zeitstempel und gemeinsame Konfiguration). Browserprüfung mit Beispieldaten: Desktop, 390 und 320 Pixel, Einzelkachel, unbekannte Quellen und Abgrenzung zur Sophie-Ansicht; ohne JavaScript-Fehler oder horizontalen Überlauf. Kein Live-Test in der Symcon-Anlage. Version 0.47 / Build 48 führt die Wäschekachel und die HEOS-Verbesserungen aus 0.46 zusammen. Für diesen Stand main oder version-0.47 verwenden; version-0.46 bleibt als vorheriger Stand erhalten.
 
 ## Heizungsprofil
 
