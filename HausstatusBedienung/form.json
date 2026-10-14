@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Hausstatus 0.47 – Einstellungen"
+      "caption": "Hausstatus 0.48 – Einstellungen"
     },
     {
       "type": "ExpansionPanel",
@@ -127,6 +127,10 @@
             {
               "value": 27,
               "caption": "Einzeln: Waschmaschine und Trockner"
+            },
+            {
+              "value": 28,
+              "caption": "Gemeinsam: Anwesenheit, Alarm und Haustür"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"

@@ -542,6 +542,7 @@ class HausstatusBedienung extends IPSModuleStrict
             4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
             26 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'Alarm'],
             27 => ['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'],
+            28 => ['Presence', 'Alarm', 'Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
             10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
             11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus', 'HeatingProfile'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];

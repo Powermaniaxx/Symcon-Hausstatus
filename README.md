@@ -1,4 +1,12 @@
-# Hausstatus 0.47 für IP-Symcon
+# Hausstatus 0.48 für IP-Symcon
+
+## 0.48 / Build 49: Anwesenheit, Alarm und Haustür gemeinsam
+
+Die Startseite fasst Anwesenheit/Alarm und Haustür in einer einzigen optischen Kachel zusammen. Der Status steht kompakt oberhalb des Türbereichs, getrennt durch eine feine Linie. Die bisherige leere Fläche neben der Tür entfällt. Türfreigabe, Öffnen-Bestätigung und Verlauf bleiben erhalten. Auf dem Handy stehen die Türaktionen untereinander.
+
+Auch bei separaten Startseitenkacheln wird die gemeinsame Ansicht 28 angelegt; bisherige automatisch verwaltete Einzelkacheln 1 und 2 werden ausgeblendet. Manuell angelegte Einzelansichten bleiben verfügbar. Nach dem Modulupdate Änderungen in der zentralen Instanz übernehmen und die Visualisierung neu laden.
+
+Bei der Waschmaschine wird die Leistungsanzeige bis einschließlich 2 W ausgeblendet. Der gemessene Wert und die Laufstatus-Erkennung werden nicht verändert; der Trockner zeigt weiterhin seine Leistung.
 
 ## 0.46: HEOS-Radio und NAS getrennt und alphabetisch
 
