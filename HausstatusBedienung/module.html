@@ -510,16 +510,26 @@ function render(){
  const profile=el('heatingProfile');profile.replaceChildren();if(s.HeatingProfileItem){profile.append(roomItemBox(s.HeatingProfileItem));displayDescription(profile,'HeatingProfile');}
  el('heatingProfileSection').hidden=!s.HeatingProfileItem;
  if(s.View===9&&s.TemperatureRows?.length){const board=climateBoard(s.TemperatureRows);addClimateSteps(board,s.TemperatureRows);el('rooms').replaceChildren(board);el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';if(!s.Rooms.length)text(el('rooms'),'Keine Temperaturen eingerichtet.');}
- const weatherExtra=[['Temperatur','OutdoorTemperature'],['Gefühlt','FeelsLikeTemperature'],['Heute min.','TodayLowTemperature'],['Heute max.','TodayHighTemperature'],['Regenwahrscheinlichkeit','RainProbability'],['Luftfeuchtigkeit','OutdoorHumidity']].filter(([,key])=>s.WeatherAvailable?.[key]).map(([label,key])=>[label,s[key]?.text??'–']);
-  const wetterCom=s.WetterComForecast;
-  const wetterComRows=wetterCom?.available?[
-    ['Heute',wetterCom.today.low+' / '+wetterCom.today.high+' °C (Tief / Hoch)'],
-    ...(wetterCom.today.description?[['Heute · Wetter',wetterCom.today.description]]:[]),
-    ...(Number.isInteger(wetterCom.today.rainProbability)?[['Heute · Regenwahrscheinlichkeit',wetterCom.today.rainProbability+' %']]:[]),
-    ['Morgen',wetterCom.tomorrow.low+' / '+wetterCom.tomorrow.high+' °C (Tief / Hoch)']
-  ]:[['Vorhersage','Derzeit nicht verfügbar']];
-  const weatherBase=[['Wetter',s.Weather.text],...weatherExtra,...wetterComRows,['Wind',s.Wind.text]];
-  rows('weather',(s.View===16||s.View===0&&s.SeparateDetails===true)?weatherBase:[...weatherBase,['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
+ const wetterCom=s.WetterComForecast;
+  const validWeather=(key)=>s.WeatherAvailable?.[key] && s[key]?.text && s[key].text!=='–';
+  const weatherRows=[];
+  if(validWeather('OutdoorTemperature'))weatherRows.push(['Aktuell',s.OutdoorTemperature.text]);
+  if(validWeather('FeelsLikeTemperature'))weatherRows.push(['Gefühlt',s.FeelsLikeTemperature.text]);
+  const todayText=wetterCom?.available && wetterCom.today?.description?wetterCom.today.description:s.Weather.text;
+  weatherRows.push(['Wetter heute',todayText]);
+  if(wetterCom?.available){
+    weatherRows.push(['Heute',wetterCom.today.low+'–'+wetterCom.today.high+' °C']);
+    if(Number.isInteger(wetterCom.today.rainProbability))weatherRows.push(['Regenwahrscheinlichkeit',wetterCom.today.rainProbability+' %']);
+    else if(validWeather('RainProbability'))weatherRows.push(['Regenwahrscheinlichkeit',s.RainProbability.text]);
+    weatherRows.push(['Morgen',wetterCom.tomorrow.low+'–'+wetterCom.tomorrow.high+' °C']);
+  }else{
+    if(validWeather('TodayLowTemperature')&&validWeather('TodayHighTemperature'))weatherRows.push(['Heute',s.TodayLowTemperature.text+' / '+s.TodayHighTemperature.text]);
+    if(validWeather('RainProbability'))weatherRows.push(['Regenwahrscheinlichkeit',s.RainProbability.text]);
+    weatherRows.push(['Vorhersage','Derzeit nicht verfügbar']);
+  }
+  weatherRows.push(['Wind',s.Wind.text]);
+  const compactWeather=s.View===16||(s.View===0&&s.SeparateDetails===true);
+  rows('weather',compactWeather?weatherRows:[...weatherRows,['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderPresenceHistory(s.PresenceHistory);
  renderExtraTileVariables(s.ExtraTileVariables??[]);
