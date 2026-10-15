@@ -802,6 +802,26 @@
         },
         {
           "type": "SelectVariable",
+          "name": "OutdoorTemperature",
+          "caption": "Aktuelle Außentemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "FeelsLikeTemperature",
+          "caption": "Gefühlte Temperatur (optional)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "TodayForecastMin",
+          "caption": "Heute erwartete Tiefsttemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "TodayForecastMax",
+          "caption": "Heute erwartete Höchsttemperatur"
+        },
+        {
+          "type": "SelectVariable",
           "name": "Wind",
           "caption": "Wind"
         },
