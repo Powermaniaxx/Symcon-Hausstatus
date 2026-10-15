@@ -914,6 +914,96 @@ class HausstatusBedienung extends IPSModuleStrict
         return $result;
     }
 
+
+    // Testversion: öffentliche wetter.com-Tagesprognose, ohne API.
+    // Nicht garantiert: wetter.com kann Seitenstruktur oder Zugriffsregeln ändern.
+    private function WetterComForecastState(): array
+    {
+        $now = time();
+        $stored = json_decode($this->GetBuffer('WetterComForecastCache'), true);
+        if (!is_array($stored)) { $stored = []; }
+        $lastTry = (int) ($stored['lastTry'] ?? 0);
+        if ($lastTry > 0 && $now - $lastTry < (empty($stored['days']) ? 600 : 3600)) {
+            return $this->WetterComVisibleCache($stored, $now);
+        }
+        $stored['lastTry'] = $now;
+        $url = 'https://www.wetter.com/wetter_aktuell/wettervorhersage/16_tagesvorhersage/deutschland/leipzig/moelkau/DE0006194064.html';
+        $html = false;
+        try {
+            if (function_exists('curl_init')) {
+                $curl = curl_init($url);
+                curl_setopt_array($curl, [
+                    CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 12,
+                    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SymconHausstatusPreview/1.0)',
+                    CURLOPT_HTTPHEADER => ['Accept: text/html', 'Accept-Language: de-DE,de;q=0.9']
+                ]);
+                $response = curl_exec($curl);
+                $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+                curl_close($curl);
+                if (is_string($response) && $status === 200 && strlen($response) > 1000) { $html = $response; }
+            } else {
+                $context = stream_context_create(['http' => ['timeout' => 12, 'header' => "User-Agent: Mozilla/5.0\r\nAccept-Language: de-DE\r\n"]]);
+                $response = @file_get_contents($url, false, $context);
+                if (is_string($response) && strlen($response) > 1000) { $html = $response; }
+            }
+        } catch (Throwable $e) { $this->SendDebug('WetterCom', $e->getMessage(), 0); }
+        if ($html === false) {
+            $stored['error'] = 'Abruf nicht möglich';
+        } else {
+            $plain = html_entity_decode(strip_tags(preg_replace('~<(script|style)\\b[^>]*>.*?</\\1>~is', ' ', $html)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $plain = preg_replace('/\\s+/u', ' ', $plain);
+            $days = [];
+            $pattern = '/\\b(?:MO|DI|MI|DO|FR|SA|SO)\\s+(\\d{1,2})\\.(\\d{1,2})\\.\\s+(-?\\d{1,2})\\s*°\\s*\\/\\s*(-?\\d{1,2})\\s*°/iu';
+            preg_match_all($pattern, $plain, $matches, PREG_SET_ORDER);
+            foreach ($matches as $match) {
+                $key = sprintf('%02d.%02d.', (int) $match[1], (int) $match[2]);
+                $high = (int) $match[3];
+                $low = (int) $match[4];
+                if ($low > $high || $high > 60 || $low < -60) { continue; }
+                if (!isset($days[$key])) { $days[$key] = ['high' => $high, 'low' => $low]; }
+            }
+            // Die kompakte Tagesübersicht enthält Beschreibung und Regenwahrscheinlichkeit.
+            // Nur Werte übernehmen, wenn sie direkt hinter dem passenden Tagesdatum stehen.
+            $detailPattern = '/\\b(?:MO|DI|MI|DO|FR|SA|SO)\\s+(\\d{1,2})\\.(\\d{1,2})\\.\\s+(-?\\d{1,2})\\s*°\\s*\\/\\s*(-?\\d{1,2})\\s*°\\s+([^%]{3,110}?)\\s+(\\d{1,3})\\s*%/iu';
+            preg_match_all($detailPattern, $plain, $details, PREG_SET_ORDER);
+            foreach ($details as $detail) {
+                $key = sprintf('%02d.%02d.', (int) $detail[1], (int) $detail[2]);
+                $high = (int) $detail[3]; $low = (int) $detail[4]; $rain = (int) $detail[6];
+                $description = trim((string) $detail[5]);
+                if (!isset($days[$key]) || $days[$key]['high'] !== $high || $days[$key]['low'] !== $low
+                    || $rain < 0 || $rain > 100 || mb_strlen($description) > 100) { continue; }
+                if (preg_match('/(?:gefühlt|km\\/h|Uhr|l\\/m)/iu', $description)) { continue; }
+                $days[$key]['rainProbability'] = $rain;
+                $days[$key]['description'] = $description;
+            }
+            $tz = new DateTimeZone('Europe/Berlin');
+            $today = (new DateTimeImmutable('now', $tz))->format('d.m.');
+            $tomorrow = (new DateTimeImmutable('tomorrow', $tz))->format('d.m.');
+            if (isset($days[$today]) && isset($days[$tomorrow])) {
+                $stored['days'] = ['today' => $days[$today], 'tomorrow' => $days[$tomorrow]];
+                $stored['date'] = $today;
+                $stored['updated'] = $now;
+                unset($stored['error']);
+            } else {
+                $stored['error'] = 'Tageswerte nicht erkannt';
+            }
+        }
+        $this->SetBuffer('WetterComForecastCache', json_encode($stored, JSON_THROW_ON_ERROR));
+        return $this->WetterComVisibleCache($stored, $now);
+    }
+
+    private function WetterComVisibleCache(array $stored, int $now): array
+    {
+        // Keine Tageswerte von gestern oder älter als drei Stunden anzeigen.
+        $today = (new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin')))->format('d.m.');
+        if (($stored['date'] ?? '') !== $today || $now - (int) ($stored['updated'] ?? 0) > 10800) {
+            return ['available' => false, 'error' => (string) ($stored['error'] ?? 'Keine aktuellen Vorhersagedaten')];
+        }
+        return ['available' => true, 'today' => $stored['days']['today'], 'tomorrow' => $stored['days']['tomorrow'],
+            'updated' => (int) $stored['updated'], 'source' => 'wetter.com · Leipzig-Mölkau (Testversion)'];
+    }
+
     private function State(): array
     {
         $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
@@ -929,6 +1019,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
+        $state['WetterComForecast'] = in_array($this->CurrentView(), [0, 10, 16], true) ? $this->WetterComForecastState() : null;
         $state['WeatherAvailable'] = [];
         foreach (['OutdoorTemperature', 'FeelsLikeTemperature', 'TodayLowTemperature', 'TodayHighTemperature', 'RainProbability', 'OutdoorHumidity'] as $weatherName) {
             $weatherID = $this->ConfigInteger($weatherName);
