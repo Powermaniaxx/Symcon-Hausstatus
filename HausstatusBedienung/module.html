@@ -32,6 +32,7 @@
 #outdoorDialog{max-width:390px}
 #outdoorExplanation{white-space:normal;overflow-wrap:break-word}
 #outdoorYes{background:#d8a33b25;border-color:#bf8629}
+.outdoorApply{display:block;width:100%;min-height:44px;margin:8px 0 10px;font-weight:600}
 .grid.sophieView{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
 .grid.sophieView #card-lock,.grid.sophieView #card-alarm{min-width:0}
 .grid.sophieView #card-permission{grid-column:1/-1}
@@ -483,9 +484,30 @@ function renderOutdoor(data){
   const d=data[name];const box=document.createElement('div');box.className='outdoorDevice';const h=document.createElement('h3');text(h,displayText(name,title));box.append(h);displayDescription(box,name);
   const position=document.createElement('div');position.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,'Position');text(value,d.position.text);position.append(label,value);box.append(position);
   if(d.control&&typeof d.position.raw==='number'){
-   const range=document.createElement('input');range.type='range';range.min=String(d.control.min);range.max=String(d.control.max);range.step=String(d.control.step);range.value=String(d.position.raw);range.disabled=busy;range.setAttribute('aria-label',title+' Position');
-   safeRange(range,valueNow=>text(value,sliderText(valueNow,d.control,d.position.text)),
-     valueNow=>confirmOutdoorAction(name+'Position',valueNow,title,'Position',d.position.raw,d.control));box.append(range);
+   // Der Schieber merkt sich nur den gewaehlten Wert. Der Fahrbefehl braucht
+   // danach erst einen Klick auf "Position uebernehmen" und eine Bestaetigung.
+   const initial=d.position.raw;
+   let draft=initial;
+   const range=document.createElement('input');range.type='range';range.min=String(d.control.min);range.max=String(d.control.max);range.step=String(d.control.step);range.value=String(initial);range.disabled=busy;range.setAttribute('aria-label',title+' Sollposition waehlen');
+   const chosen=document.createElement('div');chosen.className='small';
+   const apply=document.createElement('button');apply.type='button';apply.className='outdoorApply';text(apply,'Position übernehmen');
+   apply.disabled=true;
+   const updateDraft=valueNow=>{
+    const numeric=Number(valueNow);
+    if(!Number.isFinite(numeric))return;
+    draft=numeric;
+    text(chosen,'Gewählte Position: '+sliderText(numeric,d.control,d.position.text));
+    apply.disabled=busy||Math.abs(numeric-initial)<0.000001;
+   };
+   safeRange(range,valueNow=>{
+    text(chosen,'Gewählte Position: '+sliderText(valueNow,d.control,d.position.text));
+   },updateDraft);
+   apply.addEventListener('click',()=>{
+    if(busy||apply.disabled||Math.abs(draft-initial)<0.000001)return;
+    confirmOutdoorAction(name+'Position',draft,title,'Position',initial,d.control);
+   });
+   box.append(range,chosen,apply);
+   updateDraft(initial);
   }else if(d.reason){const n=document.createElement('div');n.className='small';text(n,d.reason);box.append(n);}
   const status=document.createElement('div');status.className='row outdoorStatus';const statusLabel=document.createElement('span'),statusValue=document.createElement('span');text(statusLabel,'Status');text(statusValue,d.status.text);status.append(statusLabel,statusValue);box.append(status);
   outdoorToggle(box,'Automatik',d.auto,name+'Auto',d.canAuto);
