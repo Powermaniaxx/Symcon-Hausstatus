@@ -39,6 +39,8 @@ class HausstatusBedienung extends IPSModuleStrict
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 14121, 'HeosNAS' => 45081, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
         'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
+        'OutdoorTemperature' => 0, 'FeelsLikeTemperature' => 0, 'TodayLowTemperature' => 0, 'TodayHighTemperature' => 0,
+        'RainProbability' => 0, 'OutdoorHumidity' => 0,
         'Sunrise' => 0, 'Sunset' => 0,
         'DoorOpened' => 0, 'DoorClosed' => 0,
         'AwningPosition' => 0, 'AwningAuto' => 0, 'AwningStatus' => 0,
@@ -545,8 +547,8 @@ class HausstatusBedienung extends IPSModuleStrict
             27 => ['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'],
             28 => ['Presence', 'Alarm', 'Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
             6 => ['CinemaState', 'CinemaControl', 'CinemaSource', 'CinemaVolume', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeosStatus'], 7 => ['PVPower', 'PVEnergy'], 8 => [], 9 => ['HeatingProfile'],
-            10 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
-            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus', 'HeatingProfile'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
+            10 => ['Weather', 'OutdoorTemperature', 'FeelsLikeTemperature', 'TodayLowTemperature', 'TodayHighTemperature', 'RainProbability', 'OutdoorHumidity', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'],
+            11 => ['AwningPosition', 'AwningAuto', 'AwningStatus', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoofStatus'], 14 => [], 15 => ['PVPower', 'PVEnergy'], 16 => ['Weather', 'OutdoorTemperature', 'FeelsLikeTemperature', 'TodayLowTemperature', 'TodayHighTemperature', 'RainProbability', 'OutdoorHumidity', 'Wind', 'Rain', 'Warning', 'Sunrise', 'Sunset'], 17 => [], 12 => ['HeosStatus', 'HeatingProfile'], 13 => ['NetworkConnection', 'NetworkDownload', 'NetworkUpload', 'NetworkDownloadUsage', 'NetworkUploadUsage', 'NetworkActiveDevices', 'NetworkDevices', 'NetworkUptime', 'NetworkModel', 'NetworkFirmware']];
         $view = $this->CurrentView();
         if (in_array($view, [13, 20, 21, 22, 23, 24], true)) {
             return $this->NetworkViewFields($view);
@@ -927,6 +929,11 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DoorReason'] = $this->DoorReason();
         $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
         $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
+        $state['WeatherAvailable'] = [];
+        foreach (['OutdoorTemperature', 'FeelsLikeTemperature', 'TodayLowTemperature', 'TodayHighTemperature', 'RainProbability', 'OutdoorHumidity'] as $weatherName) {
+            $weatherID = $this->ConfigInteger($weatherName);
+            $state['WeatherAvailable'][$weatherName] = $weatherID > 0 && IPS_VariableExists($weatherID);
+        }
         $state['PresenceHistory'] = $this->CurrentView() === 18 ? $this->PresenceHistoryState() : null;
         $state['ExtraTileVariables'] = $this->ExtraTileVariables();
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
