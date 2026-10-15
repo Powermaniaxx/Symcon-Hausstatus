@@ -192,6 +192,8 @@ class HausstatusBedienung extends IPSModuleStrict
                 if ($wifi['QRCode'] > 0 && IPS_MediaExists($wifi['QRCode'])) { $this->RegisterReference($wifi['QRCode']); }
             }
         }
+        $detailsID = $this->BatteryWarningDetailsID();
+        if ($detailsID > 0) { $ids[] = $detailsID; }
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
@@ -1004,10 +1006,22 @@ class HausstatusBedienung extends IPSModuleStrict
             'updated' => (int) $stored['updated'], 'source' => 'wetter.com · Leipzig-Mölkau (Testversion)'];
     }
 
+    private function BatteryWarningDetailsID(): int
+    {
+        $countID = $this->ConfigInteger('BatteryWarnings');
+        if ($countID <= 0 || !IPS_VariableExists($countID)) { return 0; }
+        $parentID = IPS_GetParent($countID);
+        $detailsID = @IPS_GetObjectIDByName('Gerätewarnungen', $parentID);
+        if ($detailsID === false || !IPS_VariableExists((int)$detailsID)) { return 0; }
+        return IPS_GetVariable((int)$detailsID)['VariableType'] === 3 ? (int)$detailsID : 0;
+    }
+
     private function State(): array
     {
         $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
+        $detailsID = $this->BatteryWarningDetailsID();
+        $state['BatteryWarningDetails'] = $detailsID > 0 ? (string)GetValueString($detailsID) : '';
         $state['InlinePages'] = $this->UsesInlinePages();
         $state['NavigationRooms'] = $state['InlinePages'] ? $this->NavigationRooms() : [];
         $state['PageRoom'] = $this->CurrentRoom();
