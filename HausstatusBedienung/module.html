@@ -131,6 +131,8 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 /* 0.39: Compact, read-only status and 24-hour timeline. */
 .presenceHistoryLayout{display:grid;gap:9px}
 .presenceHistoryGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+/* Two independent house sources side by side; an unpaired alarm uses the full row. */
+.presenceHistoryGrid>.presencePerson.isAlarm:last-child:nth-child(odd){grid-column:1/-1}
 .presenceHistoryHeading{font-size:12px;font-weight:600;margin:0 0 5px}
 .presencePerson.isSystem{padding:10px;border-radius:10px;display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:5px 10px;align-items:center}
 .presencePerson.isSystem .presenceTrack,.presencePerson.isSystem .presenceScale,.presencePerson.isSystem .presenceChanges{grid-column:1/-1}
