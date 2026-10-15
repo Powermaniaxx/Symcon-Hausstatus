@@ -39,7 +39,6 @@ class HausstatusBedienung extends IPSModuleStrict
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 14121, 'HeosNAS' => 45081, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
         'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
-        'OutdoorTemperature' => 0, 'FeelsLikeTemperature' => 0, 'TodayForecastMin' => 0, 'TodayForecastMax' => 0,
         'OutdoorTemperature' => 0, 'FeelsLikeTemperature' => 0, 'TodayLowTemperature' => 0, 'TodayHighTemperature' => 0,
         'RainProbability' => 0, 'OutdoorHumidity' => 0,
         'Sunrise' => 0, 'Sunset' => 0,
