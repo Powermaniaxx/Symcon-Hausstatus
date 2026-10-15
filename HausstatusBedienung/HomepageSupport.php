@@ -193,54 +193,6 @@ trait HausstatusHomepageSupport
         foreach ($hide as $id) { IPS_SetHidden($id, true); }
     }
 
-    // A dedicated, non-public System tile for updates from a phone.
-    // Deliberately never enables privileged updates automatically.
-    private function EnsureSystemUpdateTile(): void
-    {
-        if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) {
-            return;
-        }
-        $category = $this->ReadPropertyInteger('SystemUpdateCategory');
-        if ($category <= 0) { return; }
-        if (!IPS_ObjectExists($category) || (int)IPS_GetObject($category)['ObjectType'] !== 0) {
-            $this->SendDebug('System-Update-Kachel', 'System-Kategorie ' . $category . ' nicht vorhanden.', 0);
-            return;
-        }
-        for ($parent = $category; $parent > 0; $parent = IPS_GetParent($parent)) {
-            if ($parent === $this->InstanceID) {
-                throw new RuntimeException('System-Kategorie darf nicht unter der Hausstatus-Instanz liegen.');
-            }
-        }
-        $moduleID = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
-        $ident = 'SVHSSystemUpdateTile';
-        $existing = @IPS_GetObjectIDByIdent($ident, $category);
-        if ($existing !== false) {
-            if (!IPS_InstanceExists($existing) ||
-                (string)IPS_GetInstance($existing)['ModuleInfo']['ModuleID'] !== $moduleID ||
-                (int)IPS_GetProperty($existing, 'View') !== 30) {
-                throw new RuntimeException('Die System-Kategorie enthält eine fremde Kachel mit reservierter Kennung.');
-            }
-            return;
-        }
-        // Respect any existing manually configured update tile.
-        foreach (IPS_GetChildrenIDs($category) as $child) {
-            if (IPS_InstanceExists($child) &&
-                (string)IPS_GetInstance($child)['ModuleInfo']['ModuleID'] === $moduleID &&
-                (int)IPS_GetProperty($child, 'View') === 30) {
-                return;
-            }
-        }
-        $tile = IPS_CreateInstance($moduleID);
-        IPS_SetParent($tile, $category);
-        IPS_SetIdent($tile, $ident);
-        IPS_SetName($tile, 'Hausstatus-Modul aktualisieren');
-        IPS_SetProperty($tile, 'View', 30);
-        IPS_SetProperty($tile, 'ConfigSource', 0);
-        IPS_SetProperty($tile, 'ActiveView', true);
-        IPS_SetProperty($tile, 'ModuleUpdateEnabled', false);
-        IPS_ApplyChanges($tile);
-    }
-
     public function GetHomepageLayoutDiagnostics(): string
     {
         $rows = [];
