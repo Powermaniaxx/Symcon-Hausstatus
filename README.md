@@ -1,4 +1,13 @@
-# Hausstatus 0.62 für IP-Symcon
+# Hausstatus 0.63 für IP-Symcon
+
+## 0.63 / Build 64: Markise/Dachfenster mit zweistufigem Tipp-Schutz
+
+Der Positionsschieber von Markise und Dachfenster sendet jetzt niemals direkt einen Fahrbefehl. Die Bedienung erfolgt in drei Schritten: Sollposition am Schieber waehlen, die separate Schaltflaeche `Position übernehmen` antippen und die Sicherheitsabfrage mit `Jetzt ausführen` bestaetigen. Abbrechen oder ein unveraenderter Sollwert loest keine Bewegung aus. Auch Automatik und „Ueber Nacht“ erfordern weiterhin die bestaetigende Sicherheitsabfrage.
+
+In der Anwesenheits-Verlaufskachel wird zusaetzlicher Abstand zum Symcon-Kacheltitel reserviert, damit die Ueberschrift nicht ueber „Hausstatus“ und „Google Home“ liegt. Die irrefuehrende fest eingetragene Version „0.56“ wurde aus dem HTML-Fuss entfernt.
+
+Die PHP-Moduldateien wurden nicht geaendert. Diese Version ist eine gezielte Darstellungsaenderung auf Basis von 0.62.
+
 
 ## 0.62 / Build 63: Tipp-Schutz fuer Markise und Dachfenster
 
