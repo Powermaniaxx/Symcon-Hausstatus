@@ -1,4 +1,8 @@
-# Hausstatus 0.51 für IP-Symcon
+# Hausstatus 0.53 für IP-Symcon
+
+## 0.53 / Build 54: Bewegungsmelder alphabetisch
+
+Die Bewegungsanzeige sortiert ihre Melder alphabetisch nach Anzeigenamen, mit deutscher Sortierung und natürlicher Zahlenfolge. Damit stehen beispielsweise „Schlafzimmer“ und „Schlafzimmer · Zigbee“ direkt beieinander. Dies gilt für die Startseite und die Bewegungsdetailansicht. Nach dem Update die Visualisierung neu laden.
 
 ## 0.50 / Build 51: Einheitliche Homeansicht
 
