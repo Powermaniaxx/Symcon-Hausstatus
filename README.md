@@ -1,4 +1,13 @@
-# Hausstatus 0.61 für IP-Symcon
+# Hausstatus 0.62 für IP-Symcon
+
+## 0.62 / Build 63: Tipp-Schutz fuer Markise und Dachfenster
+
+In der Hausstatus-Visualisierung werden Fahrbefehle fuer die Markise und das Dachfenster erst nach einer ausdruecklichen zweiten Bestaetigung abgeschickt. Das gilt sowohl fuer die Positionsregler als auch fuer Automatik und beim Dachfenster „Ueber Nacht“. Bei Abbrechen, Escape oder unveraendertem Positionswert wird kein Befehl gesendet; die Anzeige springt auf den zuletzt gelesenen Istzustand zurueck. Die eigentliche Symcon-Steuerlogik und automatisierte Aktionen bleiben unveraendert.
+
+In der Anwesenheits-/Verlaufskachel sowie im kompakten Hausstatus werden die Statuswoerter „Anwesend“ und „Abwesend“ auch bei schmalen Smartphone-Kacheln in einer Zeile dargestellt. Die Schrift kann bei wenig Platz geringfuegig kleiner sein.
+
+Die Erweiterung betrifft nur HTML und JavaScript der Visualisierung. Die Modul-PHP-Dateien, die Konfigurationsmaske und insbesondere der Startvorgang bleiben unveraendert gegenueber 0.61.
+
 
 ## 0.61 / Build 62: Sichere Basis 0.55 plus drei Anzeigeanpassungen
 
