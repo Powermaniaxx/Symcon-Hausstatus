@@ -1,4 +1,8 @@
-# Hausstatus 0.54 für IP-Symcon
+# Hausstatus 0.55 für IP-Symcon
+
+## 0.55 / Build 56: Gleiche Kachelhöhe innerhalb einer Zeile
+
+Benachbarte Startseitenkacheln sind jeweils so hoch wie der größere Inhalt ihrer Zeile. Jede Zeile erhält ihre eigene natürliche Höhe. „Klima allgemein“ steht direkt oberhalb von Wetter und Raumtemperaturen. Dies gilt auch für Wetter und Raumtemperaturen; auf dem Handy bleibt die Höhe je Kachel am Inhalt orientiert.
 
 ## 0.54 / Build 55: Kacheln ohne erzwungene Höhe
 
