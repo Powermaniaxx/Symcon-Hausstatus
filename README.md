@@ -1,4 +1,11 @@
-# Hausstatus 0.56 für IP-Symcon
+# Hausstatus 0.58 für IP-Symcon
+
+## 0.58 / Build 59: Google Home getrennt vergleichen und System-Update-Kachel
+
+In der Anwesenheits-/Verlaufskachel (Ansicht 18) erscheint **Google Home** zusätzlich neben **Hausstatus**. Diese separate, nur lesende Anzeige nutzt unmittelbar Variable **12936**. Der Zustand und – bei aktivierter Archivierung – der Verlauf der letzten 24 Stunden werden unabhängig vom ausgewählten Hausstatus-Wert dargestellt. Die bestehende Anwesenheitserkennung, Variablen und Alarmsteuerung bleiben unverändert. Wenn die Google-Home-Variable nicht archiviert wird, zeigt die Kachel einen Hinweis statt eines erfundenen Verlaufs.
+
+Bei vorhandener Symcon-System-Kategorie **59176** wird beim Übernehmen der zentralen Hausstatus-Instanz automatisch eine separate **Hausstatus-Modul aktualisieren**-Kachel (Ansicht 30) dort angelegt, sofern nicht bereits eine existiert. Die Zielkategorie ist in den Startseiteneinstellungen änderbar. Die Kachel erlaubt zunächst **keine Installation**, bis ihre Freigabe in den Einstellungen bewusst aktiviert wurde. Auch danach ist eine separate Bestätigung nötig.
+
 
 ## 0.56 / Build 57: Hausstatus-Update in der System-Visualisierung
 
