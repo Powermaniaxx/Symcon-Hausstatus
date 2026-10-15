@@ -173,6 +173,14 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .presenceChanges summary{cursor:pointer;opacity:.7;font-size:11px;padding:2px 0;width:max-content}.presenceChanges[open]{padding-top:5px;border-top:1px solid #8883}.presenceChanges .row{font-size:11px}.presenceChanges .presenceLegend{margin-top:5px}
 @media(max-width:600px){.presenceHistoryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.presencePerson{padding:7px}.presenceAvatar{width:60px;height:60px}.presenceLegend{flex-wrap:wrap;gap:6px}.presencePerson h3{font-size:12px}.presencePerson.isSystem{padding:7px;grid-template-columns:1fr;gap:4px}.presencePerson.isSystem .presenceState{text-align:left}.presenceHistoryLayout{gap:7px}}
 @media(max-width:340px){.presenceHistoryGrid{grid-template-columns:1fr}.presenceAvatar{width:70px;height:70px}}
+/* Bei schmalen Anwesenheitskacheln Wörter nicht mitten im Status trennen. */
+.presencePerson .presenceState{overflow-wrap:normal;word-break:normal;hyphens:none}
+@media(max-width:600px){
+ .presencePerson .presenceState{white-space:nowrap;padding-left:4px;padding-right:4px}
+ .presenceChanges .row{display:grid;grid-template-columns:minmax(0,1fr);gap:1px}
+ .presenceChanges .row span:first-child,.presenceChanges .row span:last-child{max-width:100%;overflow-wrap:normal;word-break:normal;hyphens:none;white-space:nowrap;text-align:left}
+}
+
 
 /* 0.40 - FritzBox cards, matching the neutral compact Hausstatus style. */
 .fritzGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:10px;align-items:start}
