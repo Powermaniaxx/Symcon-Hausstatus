@@ -520,7 +520,9 @@ function render(){
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);
- const pv=card('pv','\u2600','PV-Anlage',s.PVPower.text,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
+ const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
+ const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
+ const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
  if([0,15,29].includes(s.View))renderPVInverters(pv,s.PVInverters??[]);
  if([0,15,29].includes(s.View)&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('button');b.type='button';b.className='detailLink';text(b,'Details öffnen');b.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.addEventListener('click',()=>s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details'));pv.append(b);}
  renderOutdoor(s.Outdoor);
@@ -1168,10 +1170,7 @@ function renderPVInverters(card,inverters){
  for(const inverter of inverters){
   const box=document.createElement('div');box.className='pvInverter';
   const row=document.createElement('div');row.className='row';const name=document.createElement('span'),power=document.createElement('strong');text(name,inverter.name+' · AC');text(power,inverter.power?.text);row.append(name,power);box.append(row);
-  const watts=typeof inverter.power?.raw==='number'?inverter.power.raw:null;
-  const producing=watts!==null&&watts<3?false:inverter.producing;
-  const status=document.createElement('div');status.className='pvProduction';status.dataset.producing=String(producing);
-  text(status,watts!==null&&watts<3?'Keine Produktion (Ruhestrom)':producing===true?'Produziert: Ja':producing===false?'Produziert: Nein':'Produziert: Unbekannt');box.append(status);list.append(box);
+  const status=document.createElement('div');status.className='pvProduction';status.dataset.producing=String(inverter.producing);text(status,inverter.producing===true?'Produziert: Ja':inverter.producing===false?'Produziert: Nein':'Produziert: Unbekannt');box.append(status);list.append(box);
  }
  card.append(list);
 }
