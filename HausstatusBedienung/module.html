@@ -28,6 +28,10 @@
 .outdoorDevice{min-width:0}.outdoorDevice h3{margin:0 0 8px;font-size:13px}.outdoorDevice .small{line-height:1.5}
 .outdoorDevice+.outdoorDevice{border-left:1px solid #8883;padding-left:16px}.outdoorToggle{display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;min-height:36px;cursor:pointer}
 .outdoorToggle input{width:18px;height:18px;margin:0;accent-color:#3c78d2}.grid>#card-permission{grid-column:1/-1}
+/* Sicherheitsabfrage fuer motorisierte Outdoor-Aktionen. */
+#outdoorDialog{max-width:390px}
+#outdoorExplanation{white-space:normal;overflow-wrap:break-word}
+#outdoorYes{background:#d8a33b25;border-color:#bf8629}
 .grid.sophieView{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
 .grid.sophieView #card-lock,.grid.sophieView #card-alarm{min-width:0}
 .grid.sophieView #card-permission{grid-column:1/-1}
@@ -182,6 +186,18 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
  .presenceChanges .row{display:grid;grid-template-columns:minmax(0,1fr);gap:1px}
  .presenceChanges .row span:first-child,.presenceChanges .row span:last-child{max-width:100%;overflow-wrap:normal;word-break:normal;hyphens:none;white-space:nowrap;text-align:left}
 }
+/* Auch bei sehr schmalen Kacheln: Anwesend / Abwesend in genau einer Zeile. */
+.presencePerson .presenceState,.presencePerson.isSystem .presenceState{
+ white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;
+ hyphens:none!important;font-size:clamp(10px,2.7vw,12px);letter-spacing:-.02em;
+ padding:5px 3px;min-width:0;max-width:100%;text-align:center;overflow:hidden;
+}
+.presencePerson h3{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:600px){
+ .overview-status #card-presence .label,.overview-status #card-presence .value{
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;hyphens:none;
+ }
+}
 
 /* 0.40 - FritzBox cards, matching the neutral compact Hausstatus style. */
 .fritzGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:10px;align-items:start}
@@ -315,6 +331,11 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 <div class="head"><span class="small">0.56</span><span id="refreshStatus" class="refreshStatus" role="status" aria-live="polite"></span><button id="refresh" type="button" aria-label="Werte aktualisieren" title="Hausstatus 0.56">&#8635; Aktualisieren</button></div>
 </main>
 <dialog id="doorDialog" aria-labelledby="doorQuestion"><h2 id="doorQuestion">Haust&uuml;r wirklich &ouml;ffnen?</h2><p>Die Falle wird entriegelt. Eine Person vor der T&uuml;r kann eintreten.</p><div class="buttons"><button id="doorCancel" type="button">Abbrechen</button><button id="doorYes" class="confirm-open" type="button">Ja, T&uuml;r &ouml;ffnen</button></div></dialog>
+<dialog id="outdoorDialog" aria-labelledby="outdoorQuestion">
+<h2 id="outdoorQuestion">Fahrbefehl bestätigen</h2>
+<p id="outdoorExplanation"></p>
+<div class="buttons"><button id="outdoorCancel" type="button">Abbrechen</button><button id="outdoorYes" type="button">Jetzt ausführen</button></div>
+</dialog>
 <dialog id="dockerDialog" aria-labelledby="dockerQuestion">
 <h2 id="dockerQuestion">Docker-Aktion bestätigen</h2>
 <p id="dockerExplanation"></p>
@@ -324,6 +345,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 let state=/*INITIAL_STATE*/null;
 let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let dockerPending=null;
+let outdoorPending=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
@@ -422,10 +444,31 @@ function safeRange(range,preview,commit){
  range.addEventListener('pointercancel',event=>finish(event,true));
  range.addEventListener('blur',()=>{if(touch){restore(touch.start);touch=null;}if(editing){editing=false;render();}});
 }
+// Erst nach einem ausdruecklichen zweiten Tipp wird eine Outdoor-Aktion gesendet.
+function confirmOutdoorAction(command,target,device,label,current,control=null){
+ if(busy||outdoorPending!==null)return;
+ if(typeof requestAction!=='function'){
+  showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verfuegbar.');render();return;
+ }
+ if(current===target){render();return;}
+ const isPosition=command==='AwningPosition'||command==='RoofPosition';
+ const detail=isPosition
+  ?device+': Position auf '+sliderText(target,control,String(target))+' setzen?'
+  :device+': '+label+' '+(target?'einschalten':'ausschalten')+'?';
+ outdoorPending={command,value:target};
+ text(el('outdoorExplanation'),detail+' Der Befehl wird erst nach deiner Bestaetigung gesendet.');
+ el('outdoorDialog').showModal();
+ el('outdoorCancel').focus();
+}
+function closeOutdoorDialog(restore=true){
+ outdoorPending=null;
+ if(el('outdoorDialog').open)el('outdoorDialog').close();
+ if(restore)render();
+}
 function outdoorToggle(box,label,entry,command,enabled){
  const row=document.createElement('label');row.className='outdoorToggle';
  const input=document.createElement('input');input.type='checkbox';input.checked=entry.raw===true;input.disabled=!enabled||busy;
- input.addEventListener('change',()=>send(command,input.checked));
+ input.addEventListener('change',()=>confirmOutdoorAction(command,input.checked,command.startsWith('Awning')?'Markise':'Dachfenster',label,entry.raw));
  const caption=document.createElement('span');text(caption,label+': '+boolValue(entry));row.append(input,caption);box.append(row);
 }
 function renderOutdoor(data){
@@ -438,7 +481,8 @@ function renderOutdoor(data){
   const position=document.createElement('div');position.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,'Position');text(value,d.position.text);position.append(label,value);box.append(position);
   if(d.control&&typeof d.position.raw==='number'){
    const range=document.createElement('input');range.type='range';range.min=String(d.control.min);range.max=String(d.control.max);range.step=String(d.control.step);range.value=String(d.position.raw);range.disabled=busy;range.setAttribute('aria-label',title+' Position');
-   safeRange(range,valueNow=>text(value,sliderText(valueNow,d.control,d.position.text)),valueNow=>send(name+'Position',valueNow));box.append(range);
+   safeRange(range,valueNow=>text(value,sliderText(valueNow,d.control,d.position.text)),
+     valueNow=>confirmOutdoorAction(name+'Position',valueNow,title,'Position',d.position.raw,d.control));box.append(range);
   }else if(d.reason){const n=document.createElement('div');n.className='small';text(n,d.reason);box.append(n);}
   const status=document.createElement('div');status.className='row outdoorStatus';const statusLabel=document.createElement('span'),statusValue=document.createElement('span');text(statusLabel,'Status');text(statusValue,d.status.text);status.append(statusLabel,statusValue);box.append(status);
   outdoorToggle(box,'Automatik',d.auto,name+'Auto',d.canAuto);
@@ -1403,6 +1447,13 @@ function prepareDoor(){
 function closeDoorDialog(){clearTimeout(doorExpiryTimer);doorToken=null;doorRequest=null;if(el('doorDialog').open)el('doorDialog').close();render();}
 el('doorCancel').addEventListener('click',closeDoorDialog);
 el('doorDialog').addEventListener('cancel',closeDoorDialog);
+el('outdoorCancel').addEventListener('click',()=>closeOutdoorDialog());
+el('outdoorDialog').addEventListener('cancel',event=>{event.preventDefault();closeOutdoorDialog();});
+el('outdoorYes').addEventListener('click',()=>{
+ const pending=outdoorPending;
+ closeOutdoorDialog(false);
+ if(pending)send(pending.command,pending.value);
+});
 el('dockerCancel').addEventListener('click',closeDockerDialog);
 el('dockerDialog').addEventListener('cancel',closeDockerDialog);
 el('dockerConfirm').addEventListener('click',()=>{
