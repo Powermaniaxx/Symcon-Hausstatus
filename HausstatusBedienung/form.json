@@ -768,6 +768,40 @@
         },
         {
           "type": "SelectVariable",
+          "name": "OutdoorTemperature",
+          "caption": "Aktuelle Außentemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "FeelsLikeTemperature",
+          "caption": "Gefühlte Temperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "TodayLowTemperature",
+          "caption": "Heute: erwartete Tiefsttemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "TodayHighTemperature",
+          "caption": "Heute: erwartete Höchsttemperatur"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "RainProbability",
+          "caption": "Regenwahrscheinlichkeit heute (%)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "OutdoorHumidity",
+          "caption": "Luftfeuchtigkeit außen"
+        },
+        {
+          "type": "Label",
+          "caption": "Tages-Minimum/Maximum und Regenwahrscheinlichkeit mit passenden Tagesprognose-Variablen verbinden, nicht mit den Min/Max-Werten eines einzelnen Vorhersageintervalls. Nicht zugewiesene Angaben bleiben ausgeblendet."
+        },
+        {
+          "type": "SelectVariable",
           "name": "Wind",
           "caption": "Wind"
         },
