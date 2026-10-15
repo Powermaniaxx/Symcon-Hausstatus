@@ -54,6 +54,61 @@ trait HausstatusLaundrySupport
         return array_values(array_unique(array_filter($ids)));
     }
 
+    private function LaundryEnergy(int $powerID, int $now): array
+    {
+        $empty = ['week' => null, 'month' => null, 'year' => null, 'note' => 'Keine Verbrauchsdaten im Symcon-Archiv.'];
+        if ($powerID <= 0 || !IPS_VariableExists($powerID)) { return $empty; }
+        $archives = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
+        if (count($archives) !== 1) { $empty['note'] = 'Archiv nicht eindeutig zugeordnet.'; return $empty; }
+        $archive = (int)$archives[0];
+        try {
+            if (!AC_GetLoggingStatus($archive, $powerID)) { return $empty; }
+            $timezone = new DateTimeZone('Europe/Berlin');
+            $today = (new DateTimeImmutable('@' . $now))->setTimezone($timezone);
+            $starts = [
+                'week' => $today->modify('monday this week')->setTime(0, 0)->getTimestamp(),
+                'month' => $today->modify('first day of this month')->setTime(0, 0)->getTimestamp(),
+                'year' => $today->setDate((int)$today->format('Y'), 1, 1)->setTime(0, 0)->getTimestamp()
+            ];
+            $cacheKey = 'LaundryEnergy_' . $powerID;
+            $cache = json_decode($this->GetBuffer($cacheKey), true);
+            if (is_array($cache) && ($cache['until'] ?? 0) > $now
+                && ($cache['yearStart'] ?? null) === $starts['year']) {
+                return $cache['value'];
+            }
+            // Stündliche Archivmittelwerte als Näherung integrieren; fehlende Stunden nicht als Nullverbrauch behaupten.
+            $hourStart = (int)(floor($starts['year'] / 3600) * 3600);
+            $values = AC_GetAggregatedValues($archive, $powerID, 0, $hourStart, $now, 10000);
+            $result = ['week' => 0.0, 'month' => 0.0, 'year' => 0.0, 'note' => 'Ca.-Werte aus archivierten Stundenmittelwerten.'];
+            $coverage = ['week' => 0, 'month' => 0, 'year' => 0];
+            foreach ($values as $entry) {
+                $start = (int)($entry['TimeStamp'] ?? 0);
+                $average = $entry['Avg'] ?? null;
+                if ($start < $hourStart || !is_numeric($average) || !is_finite((float)$average) || (float)$average < 0) { continue; }
+                $end = min($start + 3600, $now);
+                foreach ($starts as $period => $periodStart) {
+                    $seconds = max(0, $end - max($start, $periodStart));
+                    if ($seconds === 0) { continue; }
+                    $result[$period] += (float)$average * $seconds / 3600000;
+                    $coverage[$period] += $seconds;
+                }
+            }
+            foreach ($starts as $period => $periodStart) {
+                if ($coverage[$period] === 0) { $result[$period] = null; }
+                else { $result[$period] = round($result[$period], 3); }
+            }
+            if (count($values) >= 10000) { $result['note'] = 'Archivabfrage begrenzt: Verbrauch möglicherweise unvollständig.'; }
+            elseif (min($coverage) < ($now - $starts['year']) * 0.95) {
+                $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
+            }
+            $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'yearStart' => $starts['year'], 'value' => $result], JSON_THROW_ON_ERROR));
+            return $result;
+        } catch (Throwable $e) {
+            $empty['note'] = 'Verbrauchsarchiv derzeit nicht lesbar.';
+            return $empty;
+        }
+    }
+
     private function LaundryState(): ?array
     {
         if (!$this->HasLaundryView()) { return null; }
@@ -83,7 +138,7 @@ trait HausstatusLaundrySupport
                 if ($watts === null) { $notes[] = 'Aktuelle Leistung nicht verfügbar.'; }
             } catch (Throwable $e) { $notes[] = 'Quelle momentan nicht lesbar.'; }
             $devices[] = ['key' => $source['key'], 'name' => $source['name'], 'running' => $running,
-                'watts' => $watts, 'since' => $since, 'note' => implode(' ', $notes)];
+                'watts' => $watts, 'since' => $since, 'energy' => $this->LaundryEnergy($source['powerID'], $now), 'note' => implode(' ', $notes)];
         }
         return ['now' => $now, 'devices' => $devices];
     }
