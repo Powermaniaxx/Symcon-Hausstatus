@@ -104,6 +104,28 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        // A child tile may start before its master module instance is ready.
+        // Never abort the entire Symcon boot when the shared configuration
+        // cannot yet be read. The master reapplies child settings once ready.
+        $sharedSource = $this->ReadPropertyInteger('ConfigSource');
+        if ($sharedSource > 0) {
+            $sharedReady = false;
+            try {
+                if ($sharedSource !== $this->InstanceID && IPS_InstanceExists($sharedSource)) {
+                    $sharedInfo = IPS_GetInstance($sharedSource);
+                    $sharedReady = (string)($sharedInfo['ModuleInfo']['ModuleID'] ?? '') === '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+                        && (int)IPS_GetProperty($sharedSource, 'ConfigSource') === 0;
+                }
+            } catch (Throwable $e) {
+                $this->SendDebug('Master-Konfiguration', $e->getMessage(), 0);
+            }
+            if (!$sharedReady) {
+                $this->SetTimerInterval('Refresh', 0);
+                $this->SetStatus(104);
+                $this->SetSummary('Warte auf gueltige zentrale Hausstatus-Instanz ' . $sharedSource);
+                return;
+            }
+        }
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
             $this->SetBuffer('DoorChallenges', '{}');
