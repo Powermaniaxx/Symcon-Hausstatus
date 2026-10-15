@@ -1,4 +1,9 @@
-# Hausstatus 0.55 für IP-Symcon
+# Hausstatus 0.56 für IP-Symcon
+
+## 0.56 / Build 57: Hausstatus-Update in der System-Visualisierung
+
+Der neue Kacheltyp **System: Hausstatus-Modul aktualisieren** (Ansicht 30) ermöglicht die Updateprüfung und eine ausdrücklich bestätigte Installation aus dem bestehenden Module-Control-Repository. Eine eigene Modulinstanz als Kachel in der privaten System-Visualisierung hinzufügen und in deren Einstellungen **Modulupdates über diese System-Kachel erlauben** aktivieren. Diese Berechtigung ist standardmäßig deaktiviert. Die Aktion betrifft keine anderen Module. Das Repository wird auf die Hausstatus-Bibliothek beschränkt; ein einmaliger Aufruf über Module Control ist erforderlich, um diese Version überhaupt zu installieren.
+
 
 ## 0.55 / Build 56: Gleiche Kachelhöhe innerhalb einer Zeile
 
