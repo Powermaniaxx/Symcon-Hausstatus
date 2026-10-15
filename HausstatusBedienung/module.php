@@ -54,6 +54,8 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('View', 0);
+        // Sensitive maintenance action: opt-in for a separate, private System tile.
+        $this->RegisterPropertyBoolean('ModuleUpdateEnabled', false);
         $this->RegisterPropertyInteger('DockerCategory', 0);
         $this->RegisterPropertyInteger('DockerTileCategory', 0);
         $this->RegisterPropertyBoolean('DockerAllowSymconRestart', false);
@@ -326,6 +328,7 @@ class HausstatusBedienung extends IPSModuleStrict
             'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
         $fields['ExtraTileSettings'] = ['visible' => true, 'expanded' => $view === 19];
         $fields['DockerSettings'] = ['visible' => $own, 'expanded' => $own && $view === 25];
+        $fields['ModuleUpdateSettings'] = ['visible' => $view === 30, 'expanded' => $view === 30];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
             if ($source === $this->InstanceID || !IPS_InstanceExists($source)
@@ -391,6 +394,10 @@ class HausstatusBedienung extends IPSModuleStrict
             $Value = ['id' => (int)$match[1], 'value' => $Value]; $Ident = 'RoomValue';
         }
         if (!$this->ReadPropertyBoolean('ActiveView')) { throw new RuntimeException('Diese Ansicht ist pausiert. Bitte die gemeinsame Hausstatus-Kachel verwenden.'); }
+        if (in_array($Ident, ['ModuleUpdateCheck', 'ModuleUpdateInstall'], true)) {
+            $this->HandleHausstatusModuleUpdate($Ident, $Value);
+            return;
+        }
         if ($Ident === 'ViewerPing') {
             $this->SetBuffer('LastViewerSeen', (string)time());
             return;
@@ -476,6 +483,92 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+
+    // Update only the installed Hausstatus library, never every installed module.
+    private function HausstatusModuleControl(): array
+    {
+        $libraryID = '{2AC4EF61-E417-423C-A0E7-A0A797A0357A}';
+        if (!IPS_LibraryExists($libraryID)) {
+            throw new RuntimeException('Die Hausstatus-Bibliothek ist nicht installiert.');
+        }
+        foreach (IPS_GetModuleListByType(0) as $moduleID) {
+            $module = IPS_GetModule($moduleID);
+            if (!in_array((string)($module['ModuleName'] ?? ''), ['Module Control', 'Modules'], true)) {
+                continue;
+            }
+            foreach (IPS_GetInstanceListByModuleID($moduleID) as $controlID) {
+                foreach (MC_GetModuleList($controlID) as $installedName) {
+                    if (!in_array($installedName, ['Hausstatus', 'Symcon-Hausstatus'], true)) {
+                        continue;
+                    }
+                    // Refuse a demonstrably different repository, if its URL is supplied.
+                    $info = MC_GetModuleRepositoryInfo($controlID, $installedName);
+                    $encoded = strtolower(json_encode($info, JSON_INVALID_UTF8_SUBSTITUTE) ?: '');
+                    if (str_contains($encoded, 'github.com/') &&
+                        !str_contains($encoded, 'github.com/powermaniaxx/symcon-hausstatus')) {
+                        throw new RuntimeException('Das installierte Repository stimmt nicht mit Hausstatus überein.');
+                    }
+                    return [$controlID, $installedName];
+                }
+            }
+        }
+        throw new RuntimeException('Hausstatus wurde in Module Control nicht gefunden.');
+    }
+
+    private function HandleHausstatusModuleUpdate(string $action, mixed $value): void
+    {
+        if ($this->ReadPropertyInteger('View') !== 30 ||
+            !$this->ReadPropertyBoolean('ModuleUpdateEnabled')) {
+            throw new RuntimeException('Modulupdates sind für diese Kachel nicht freigegeben.');
+        }
+        $lock = 'SVHSModuleUpdate';
+        if (!IPS_SemaphoreEnter($lock, 1000)) {
+            throw new RuntimeException('Ein Update-Vorgang läuft bereits.');
+        }
+        try {
+            [$controlID, $module] = $this->HausstatusModuleControl();
+            if ($action === 'ModuleUpdateCheck') {
+                if (!function_exists('MC_IsModuleUpdateAvailable')) {
+                    throw new RuntimeException('Die Updateprüfung wird von dieser Symcon-Version nicht unterstützt.');
+                }
+                $available = MC_IsModuleUpdateAvailable($controlID, $module);
+                $this->SetBuffer('ModuleUpdateStatus', json_encode([
+                    'checked' => time(), 'available' => $available,
+                    'token' => $available ? bin2hex(random_bytes(16)) : '',
+                    'message' => $available ? 'Update verfügbar. Installation bestätigen.' : 'Kein Update verfügbar.'
+                ], JSON_THROW_ON_ERROR));
+                $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->BaseState()],
+                    JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+                return;
+            }
+            $status = json_decode($this->GetBuffer('ModuleUpdateStatus'), true);
+            if (!is_string($value) || !is_array($status) ||
+                !($status['available'] ?? false) ||
+                (int)($status['checked'] ?? 0) < time() - 180 ||
+                !hash_equals((string)($status['token'] ?? ''), $value)) {
+                throw new RuntimeException('Update-Freigabe abgelaufen. Bitte erneut prüfen.');
+            }
+            $this->SetBuffer('ModuleUpdateStatus', json_encode([
+                'checked' => time(), 'available' => false, 'token' => '',
+                'message' => 'Update gestartet. Nach Abschluss die System-Kachel neu laden.'
+            ], JSON_THROW_ON_ERROR));
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->BaseState()],
+                JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+            if (!MC_UpdateModule($controlID, $module)) {
+                throw new RuntimeException('Module Control konnte das Update nicht installieren.');
+            }
+            IPS_LogMessage('Hausstatus', 'Hausstatus-Modulupdate über System-Kachel ausgeführt.');
+        } catch (Throwable $e) {
+            $this->SetBuffer('ModuleUpdateStatus', json_encode([
+                'checked' => time(), 'available' => false, 'token' => '',
+                'message' => 'Fehler: ' . $e->getMessage()
+            ], JSON_INVALID_UTF8_SUBSTITUTE));
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'error' => $e->getMessage(),
+                'state' => $this->BaseState()], JSON_INVALID_UTF8_SUBSTITUTE));
+        } finally {
+            IPS_SemaphoreLeave($lock);
+        }
+    }
 
     private function ConfigValue(string $name): mixed
     {
@@ -1018,6 +1111,20 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function State(): array
     {
+        if ($this->CurrentView() === 30) {
+            $status = json_decode($this->GetBuffer('ModuleUpdateStatus'), true);
+            return [
+                'View' => 30, 'Controls' => [],
+                'ModuleUpdate' => [
+                    'enabled' => $this->ReadPropertyBoolean('ModuleUpdateEnabled'),
+                    'message' => is_array($status) ? (string)($status['message'] ?? '') : '',
+                    'available' => is_array($status) && !empty($status['available']) &&
+                        (int)($status['checked'] ?? 0) >= time() - 180,
+                    'token' => is_array($status) ? (string)($status['token'] ?? '') : '',
+                    'checked' => is_array($status) ? (int)($status['checked'] ?? 0) : 0
+                ]
+            ];
+        }
         $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
         $detailsID = $this->BatteryWarningDetailsID();
