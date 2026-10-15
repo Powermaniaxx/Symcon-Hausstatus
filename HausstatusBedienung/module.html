@@ -268,6 +268,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .overview-energy>#card-battery{margin-top:14px;padding-top:12px;border-top:1px solid #8883}
 .overview-energy #card-battery .dashboardCardHeading{margin-bottom:6px}
 .overview-energy #card-battery>.value{font-size:17px}
+.batteryWarningList{margin-top:8px;display:flex;flex-direction:column;gap:5px;font-size:12px;line-height:1.4;overflow-wrap:anywhere}.batteryWarningEntry{border-top:1px solid #8883;padding-top:5px;white-space:pre-wrap}
 .dashboard>.overview-outdoor{grid-column:auto}
 .dashboard .laundryDevices{flex:1}.dashboard .laundryDevice{background:#88888808}
 .dashboard .laundryDevice.isRunning{background:#26896b0d}
@@ -497,7 +498,17 @@ function render(){
 
  card('alarm','\u{1f6e1}','Alarm innen',displayBool('Alarm',s.Alarm),kind(s.Alarm));
  const warnings=s.BatteryWarnings.raw;
- card('battery','\u{1f50b}','Ger\u00e4te',Number.isInteger(warnings)?warnings>0?`${warnings} Warnung(en)`:'Alles OK':s.BatteryWarnings.raw===null?'Nicht eingerichtet':'Unbekannt',Number.isInteger(warnings)?warnings>0?'danger':'on':'');
+ const batteryCard=card('battery','\u{1f50b}','Ger\u00e4te',Number.isInteger(warnings)?warnings>0?`${warnings} Warnung(en)`:'Alles OK':s.BatteryWarnings.raw===null?'Nicht eingerichtet':'Unbekannt',Number.isInteger(warnings)?warnings>0?'danger':'on':'');
+ if(Number.isInteger(warnings)&&warnings>0){
+  const details=String(s.BatteryWarningDetails||'').trim();
+  if(details&&details!=='Alle überwachten Batteriegeräte OK'){
+   const list=document.createElement('div');list.className='batteryWarningList';
+   for(const line of details.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)){
+    const entry=document.createElement('div');entry.className='batteryWarningEntry';text(entry,line);list.append(entry);
+   }
+   batteryCard.append(list);
+  } else {const note=document.createElement('div');note.className='small';text(note,'Gerätedetails nicht verbunden');batteryCard.append(note);}
+ }
  const light=card('light','\u{1f4a1}','Wohnzimmerlicht',displayBool('LightState',s.LightState),kind(s.LightState));
  buttons(light,'Light',s.Controls.Light,s.LightState.raw);
  const range=document.createElement('input');range.type='range';range.min='1';range.max='100';range.step='1';range.setAttribute('aria-label','Helligkeit '+displayText('LightState','Wohnzimmerlicht'));range.value=Number.isInteger(s.Brightness.raw)?Math.max(1,Math.min(100,s.Brightness.raw)):50;range.disabled=!s.Controls.Brightness||busy;
