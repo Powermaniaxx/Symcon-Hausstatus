@@ -61,6 +61,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('DockerAllowSymconRestart', false);
         $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
+        // User-specific System folder; missing folders are ignored safely.
+        $this->RegisterPropertyInteger('SystemUpdateCategory', 59176);
         $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
@@ -176,6 +178,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if ($this->ReadPropertyInteger('View') === 18) {
             foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
+            $ids[] = 12936; // Separate Google-Home-Vergleichsquelle.
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15, 29], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
@@ -208,6 +211,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->HideTileMaximize();
         $this->OrganizeHomepageDetails();
         $this->OrganizeSeparateHomepage();
+        try { $this->EnsureSystemUpdateTile(); }
+        catch (Throwable $e) { $this->SendDebug('System-Update-Kachel', $e->getMessage(), 0); }
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
