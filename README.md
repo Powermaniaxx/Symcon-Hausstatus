@@ -1,27 +1,14 @@
-# Hausstatus 0.60 für IP-Symcon
+# Hausstatus 0.61 für IP-Symcon
 
-## 0.60 / Build 61: Abgesicherter Symcon-Start
+## 0.61 / Build 62: Sichere Basis 0.55 plus drei Anzeigeanpassungen
 
-Rettungsupdate: Der komplette Startvorgang jeder Hausstatus-Instanz (`ApplyChanges()`) wird gegen PHP-Ausnahmen abgeschirmt. Ein defekter Bezug zur zentralen Konfiguration führt zu einer Fehlermeldung in der Instanz und im Symcon-Protokoll, soll aber den Start des gesamten Symcon-Kernels nicht mehr abbrechen. Die automatische Anlage der System-Update-Kachel wurde bis zur Klärung der Benutzer-ID 59176 vorsorglich deaktiviert. Bestehende Instanzen und Variablen werden nicht gelöscht.
+Die Version basiert bewusst auf dem funktionsfaehigen Code von 0.55 / Build 56. Wieder enthalten sind ausschliesslich:
 
+- Google Home (Variable 12936) als unabhaengige Statusanzeige neben dem bisherigen Hausstatus in Ansicht 18.
+- Ein eigener 24-Stunden-Verlauf fuer Google Home aus dem Symcon-Archiv, sofern die Variable archiviert wird. Die Anzeige aendert keinerlei Anwesenheits- oder Alarmvariablen.
+- Verbesserte Zeilenumbrueche der Anwesenheitskachel auf Smartphones.
 
-## 0.59 / Build 60: Symcon-Start absichern
-
-Fehlerbehebung: Beim Start eines untergeordneten Hausstatus-Kachelmoduls kann die zentrale Master-Instanz noch nicht verfügbar sein. Bisher löste eine Konfigurationsabfrage in `ApplyChanges()` eine unbehandelte Ausnahme aus ("Zentrale Hausstatus-Konfiguration fehlt oder ist ungültig"), die den Symcon-Start blockieren konnte. Betroffene Kachel-Instanzen warten jetzt mit Fehlerstatus auf die Master-Instanz; der Kernel-Start wird deswegen nicht mehr abgebrochen. Die zentrale Instanz übernimmt anschließend wie bisher die erneute Konfiguration ihrer abhängigen Kacheln.
-
-**Wiederherstellung bei nicht startender Docker-Installation:** In der Terminal-Sitzung des Symcon-Containers den aktuell installierten Modulordner `/var/lib/symcon/modules/Symcon-Hausstatus` auf den korrigierten main-Stand aktualisieren (z. B. `git -C /var/lib/symcon/modules/Symcon-Hausstatus pull --ff-only origin main`) und den Container neu starten. Nur vorgehen, wenn dieser Ordner tatsächlich existiert und das Arbeitsverzeichnis ein Git-Repository ist. Vor einer manuellen Bearbeitung Sicherung erstellen.
-
-
-## 0.58 / Build 59: Google Home getrennt vergleichen und System-Update-Kachel
-
-In der Anwesenheits-/Verlaufskachel (Ansicht 18) erscheint **Google Home** zusätzlich neben **Hausstatus**. Diese separate, nur lesende Anzeige nutzt unmittelbar Variable **12936**. Der Zustand und – bei aktivierter Archivierung – der Verlauf der letzten 24 Stunden werden unabhängig vom ausgewählten Hausstatus-Wert dargestellt. Die bestehende Anwesenheitserkennung, Variablen und Alarmsteuerung bleiben unverändert. Wenn die Google-Home-Variable nicht archiviert wird, zeigt die Kachel einen Hinweis statt eines erfundenen Verlaufs.
-
-Bei vorhandener Symcon-System-Kategorie **59176** wird beim Übernehmen der zentralen Hausstatus-Instanz automatisch eine separate **Hausstatus-Modul aktualisieren**-Kachel (Ansicht 30) dort angelegt, sofern nicht bereits eine existiert. Die Zielkategorie ist in den Startseiteneinstellungen änderbar. Die Kachel erlaubt zunächst **keine Installation**, bis ihre Freigabe in den Einstellungen bewusst aktiviert wurde. Auch danach ist eine separate Bestätigung nötig.
-
-
-## 0.56 / Build 57: Hausstatus-Update in der System-Visualisierung
-
-Der neue Kacheltyp **System: Hausstatus-Modul aktualisieren** (Ansicht 30) ermöglicht die Updateprüfung und eine ausdrücklich bestätigte Installation aus dem bestehenden Module-Control-Repository. Eine eigene Modulinstanz als Kachel in der privaten System-Visualisierung hinzufügen und in deren Einstellungen **Modulupdates über diese System-Kachel erlauben** aktivieren. Diese Berechtigung ist standardmäßig deaktiviert. Die Aktion betrifft keine anderen Module. Das Repository wird auf die Hausstatus-Bibliothek beschränkt; ein einmaliger Aufruf über Module Control ist erforderlich, um diese Version überhaupt zu installieren.
+Die automatische Anlage der System-Update-Kachel, die Kategorie-Einstellung `SystemUpdateCategory` und die spaeteren Aenderungen an `ApplyChanges()` sind **nicht enthalten**. Die bestehende manuelle Update-Kachel-Funktion aus 0.55 bleibt unveraendert. Bitte Modulaktualisierung erst nach Sicherung und Kontrolle des Symcon-Starts ausfuehren.
 
 
 ## 0.55 / Build 56: Gleiche Kachelhöhe innerhalb einer Zeile
