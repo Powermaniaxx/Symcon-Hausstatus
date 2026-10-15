@@ -238,6 +238,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .laundryHeader+.laundrySince{margin-top:16px}
 .laundryDuration{display:block;font-size:11px;opacity:.7}
 .laundryNote{font-size:11px;line-height:1.5;margin:10px 0 0;opacity:.75}
+.laundryDevice{display:flex;flex-direction:column}.laundryEnergy{margin-top:auto;padding-top:18px}.laundryEnergyHeading{font-weight:600;font-size:13px;border-top:1px solid #8883;padding-top:12px;margin-bottom:8px}.laundryEnergyRow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px}.laundryEnergyRow strong{font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap}
 @media(max-width:600px){.dashboard>.laundry-card{grid-column:1/-1}.laundryDevice{padding:12px}.laundryDevices{gap:8px}}
 
 
@@ -471,6 +472,17 @@ function renderLaundry(data){
   text(sinceValue,valid?laundryStart(device.since,data.now):device.running===false?'—': 'Unbekannt');
   if(valid){const duration=document.createElement('span');duration.className='laundryDuration';text(duration,laundryDuration(device.since,data.now));sinceValue.append(duration);}
   since.append(sinceLabel,sinceValue);box.append(since);
+  const energy=document.createElement('div');energy.className='laundryEnergy';
+  const energyHeading=document.createElement('div');energyHeading.className='laundryEnergyHeading';text(energyHeading,'Verbrauch');energy.append(energyHeading);
+  for(const [key,label] of [['week','Diese Woche'],['month','Diesen Monat'],['year','Dieses Jahr']]){
+   const row=document.createElement('div');row.className='laundryEnergyRow';
+   const caption=document.createElement('span');text(caption,label);
+   const value=document.createElement('strong');const amount=device.energy?.[key];
+   text(value,typeof amount==='number'&&Number.isFinite(amount)?'≈ '+amount.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—');
+   row.append(caption,value);energy.append(row);
+  }
+  if(device.energy?.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.note);energy.append(note);}
+  box.append(energy);
   if(device.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.note);box.append(note);}
   devices.append(box);
  }
