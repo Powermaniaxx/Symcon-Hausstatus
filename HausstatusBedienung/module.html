@@ -513,9 +513,11 @@ function render(){
  const weatherExtra=[['Temperatur','OutdoorTemperature'],['Gefühlt','FeelsLikeTemperature'],['Heute min.','TodayLowTemperature'],['Heute max.','TodayHighTemperature'],['Regenwahrscheinlichkeit','RainProbability'],['Luftfeuchtigkeit','OutdoorHumidity']].filter(([,key])=>s.WeatherAvailable?.[key]).map(([label,key])=>[label,s[key]?.text??'–']);
   const wetterCom=s.WetterComForecast;
   const wetterComRows=wetterCom?.available?[
-    ['wetter.com · Heute',wetterCom.today.low+' / '+wetterCom.today.high+' °C (Tief / Hoch)'],
-    ['wetter.com · Morgen',wetterCom.tomorrow.low+' / '+wetterCom.tomorrow.high+' °C (Tief / Hoch)']
-  ]:[['wetter.com · Vorhersage','Derzeit nicht verfügbar']];
+    ['Heute',wetterCom.today.low+' / '+wetterCom.today.high+' °C (Tief / Hoch)'],
+    ...(wetterCom.today.description?[['Heute · Wetter',wetterCom.today.description]]:[]),
+    ...(Number.isInteger(wetterCom.today.rainProbability)?[['Heute · Regenwahrscheinlichkeit',wetterCom.today.rainProbability+' %']]:[]),
+    ['Morgen',wetterCom.tomorrow.low+' / '+wetterCom.tomorrow.high+' °C (Tief / Hoch)']
+  ]:[['Vorhersage','Derzeit nicht verfügbar']];
   const weatherBase=[['Wetter',s.Weather.text],...weatherExtra,...wetterComRows,['Wind',s.Wind.text]];
   rows('weather',(s.View===16||s.View===0&&s.SeparateDetails===true)?weatherBase:[...weatherBase,['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
