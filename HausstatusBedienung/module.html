@@ -314,6 +314,41 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .moduleUpdateBox{max-width:520px;margin:8px auto;padding:16px;border:1px solid #8884;border-radius:12px;background:Canvas}
 .moduleUpdateBox h2{font-size:17px;margin:0 0 8px}.moduleUpdateBox p{font-size:13px;line-height:1.5}
 .moduleUpdateBox .buttons{flex-wrap:wrap}.moduleUpdateBox button{min-height:46px}
+/* Anwesenheitsseite: kein doppelt reservierter Platz unter dem Symcon-Kacheltitel. */
+body.presenceHistoryView main{padding-top:6px}
+#presenceHistorySection:not([hidden]){padding-top:8px;margin-top:0}
+/* Hohe 24h-Verlaeufe machen auch kuerzere Statuswechsel lesbar. */
+.presencePerson .presenceTrack{height:26px;margin-top:10px;border-radius:7px}
+.presencePerson.isSystem .presenceTrack{height:22px;margin-top:8px}
+.presencePerson.isResident .presenceTrack{height:30px;margin-top:11px}
+.presencePerson .presenceScale{font-size:12px;margin-top:5px}
+.presencePerson.isSystem h3{font-size:14px}
+.presencePerson.isSystem .presenceState{font-size:13px;padding:7px 6px}
+.presencePerson.isResident h3{font-size:16px}
+.presencePerson.isResident .presenceState{font-size:15px;padding:8px 10px}
+/* Auf dem Handy bekommen Sven und Susi die ganze Breite fuer ihren 24h-Verlauf. */
+@media(max-width:600px){
+ .presenceHistoryGrid-person{grid-template-columns:1fr;gap:10px}
+ .presencePerson.isResident{
+  display:grid;grid-template-columns:76px minmax(0,1fr);
+  gap:4px 12px;align-items:center;padding:12px;
+ }
+ .presencePerson.isResident .presenceAvatar{
+  grid-column:1;grid-row:1/3;width:76px;height:76px;margin:0;
+ }
+ .presencePerson.isResident h3{
+  grid-column:2;grid-row:1;margin:0;text-align:left;font-size:17px;
+ }
+ .presencePerson.isResident .presenceState{
+  grid-column:2;grid-row:2;font-size:15px;padding:8px 10px;
+ }
+ .presencePerson.isResident .presenceTrack{
+  grid-column:1/-1;grid-row:3;height:30px;margin-top:12px;
+ }
+ .presencePerson.isResident .presenceScale{grid-column:1/-1;grid-row:4}
+ .presencePerson.isResident .presenceChanges{grid-column:1/-1;grid-row:5}
+ .presencePerson.isSystem .presenceState{font-size:12px}
+}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -607,6 +642,7 @@ function render(){
  const s=state;
  if(s.View===30){renderModuleUpdate(s.ModuleUpdate??{});return;}
  document.body.classList.toggle('compactTemperatures',s.View===9);
+ document.body.classList.toggle('presenceHistoryView',s.View===18);
  for(const [id,key,fallback] of [['motionTitle','MotionTitle','Bewegung – letzte 24 Stunden'],['temperatureTitle','TemperatureTitle','Räume'],['weatherTitle','WeatherTitle','Wetter'],['networkTitle','NetworkTitle','FritzBox']])if(el(id))text(el(id),displayText(key,fallback));
  card('presence','\u{1f3e0}','Anwesenheit',displayBool('Presence',s.Presence,'Zu Hause','Abwesend'),kind(s.Presence));
  const doorOpen=s.DoorContact.raw===1||s.DoorContact.raw===true;
@@ -743,7 +779,7 @@ function renderPresenceHistory(data){
  ];
  for(const group of groups){
   const section=document.createElement('section');
-  group.element.className='presenceHistoryGrid';group.element.setAttribute('aria-label',group.name);section.append(group.element);group.section=section;
+  group.element.className='presenceHistoryGrid presenceHistoryGrid-'+group.kind;group.element.setAttribute('aria-label',group.name);section.append(group.element);group.section=section;
  }
  for(const person of data.people){
   const isPerson=person.kind==='person',isAlarm=person.kind==='alarm';
