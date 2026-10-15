@@ -230,12 +230,6 @@
           "caption": "Zielkategorie der Startseite für einzelne Kacheln"
         },
         {
-          "type": "SelectCategory",
-          "name": "SystemUpdateCategory",
-          "caption": "Zielkategorie für die Modulupdate-Kachel (59176 = System)",
-          "onChange": ""
-        },
-        {
           "type": "Label",
           "caption": "Die Kategorie auswählen, die in der Visualisierung deine Startseite enthält. Ohne Auswahl wird nur ein eindeutiger Link auf die gemeinsame Hausstatus-Kachel als Ziel verwendet. Zum Zurückkehren die Aufteilung deaktivieren und Änderungen übernehmen."
         },
