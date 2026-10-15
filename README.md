@@ -1,4 +1,8 @@
-# Hausstatus 0.53 für IP-Symcon
+# Hausstatus 0.54 für IP-Symcon
+
+## 0.54 / Build 55: Kacheln ohne erzwungene Höhe
+
+Die Startseitenkacheln richten sich nach ihrem Inhalt. Das Raster erzwingt keine einheitliche Höhe mehr und streckt kürzere Kacheln nicht auf die Höhe ihrer Nachbarn. Auch Markise und Dachfenster bleiben auf Inhaltshöhe. Wetter und Räume mit Temperaturen stehen auf breiten Bildschirmen nebeneinander, auf dem Handy untereinander.
 
 ## 0.53 / Build 54: Bewegungsmelder alphabetisch
 
