@@ -89,6 +89,7 @@ trait HausstatusPresenceHistorySupport
         $result = [];
         $seen = [
             $this->ConfigInteger('Presence') => true,
+            12936 => true, // Google Home ist als feste Vergleichsquelle enthalten.
             $this->ConfigInteger('Alarm') => true,
             $this->ConfigInteger('SvenPresence') => true,
             $this->ConfigInteger('SusiPresence') => true
@@ -112,6 +113,9 @@ trait HausstatusPresenceHistorySupport
         $rows = [
             ['source' => 'Presence', 'id' => $this->ConfigInteger('Presence'),
                 'name' => 'Hausstatus', 'kind' => 'house'],
+            // Unveränderte Rohquelle aus Google Home, unabhängig vom Hausstatus.
+            ['source' => 'GoogleHomePresence', 'id' => 12936,
+                'name' => 'Google Home', 'kind' => 'house'],
             ['source' => 'SvenPresence', 'id' => $this->ConfigInteger('SvenPresence'),
                 'name' => 'Sven', 'kind' => 'person'],
             ['source' => 'SusiPresence', 'id' => $this->ConfigInteger('SusiPresence'),
