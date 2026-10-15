@@ -1,4 +1,11 @@
-# Hausstatus 0.58 für IP-Symcon
+# Hausstatus 0.59 für IP-Symcon
+
+## 0.59 / Build 60: Symcon-Start absichern
+
+Fehlerbehebung: Beim Start eines untergeordneten Hausstatus-Kachelmoduls kann die zentrale Master-Instanz noch nicht verfügbar sein. Bisher löste eine Konfigurationsabfrage in `ApplyChanges()` eine unbehandelte Ausnahme aus ("Zentrale Hausstatus-Konfiguration fehlt oder ist ungültig"), die den Symcon-Start blockieren konnte. Betroffene Kachel-Instanzen warten jetzt mit Fehlerstatus auf die Master-Instanz; der Kernel-Start wird deswegen nicht mehr abgebrochen. Die zentrale Instanz übernimmt anschließend wie bisher die erneute Konfiguration ihrer abhängigen Kacheln.
+
+**Wiederherstellung bei nicht startender Docker-Installation:** In der Terminal-Sitzung des Symcon-Containers den aktuell installierten Modulordner `/var/lib/symcon/modules/Symcon-Hausstatus` auf den korrigierten main-Stand aktualisieren (z. B. `git -C /var/lib/symcon/modules/Symcon-Hausstatus pull --ff-only origin main`) und den Container neu starten. Nur vorgehen, wenn dieser Ordner tatsächlich existiert und das Arbeitsverzeichnis ein Git-Repository ist. Vor einer manuellen Bearbeitung Sicherung erstellen.
+
 
 ## 0.58 / Build 59: Google Home getrennt vergleichen und System-Update-Kachel
 
