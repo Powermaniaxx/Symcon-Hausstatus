@@ -1168,7 +1168,10 @@ function renderPVInverters(card,inverters){
  for(const inverter of inverters){
   const box=document.createElement('div');box.className='pvInverter';
   const row=document.createElement('div');row.className='row';const name=document.createElement('span'),power=document.createElement('strong');text(name,inverter.name+' · AC');text(power,inverter.power?.text);row.append(name,power);box.append(row);
-  const status=document.createElement('div');status.className='pvProduction';status.dataset.producing=String(inverter.producing);text(status,inverter.producing===true?'Produziert: Ja':inverter.producing===false?'Produziert: Nein':'Produziert: Unbekannt');box.append(status);list.append(box);
+  const watts=typeof inverter.power?.raw==='number'?inverter.power.raw:null;
+  const producing=watts!==null&&watts<3?false:inverter.producing;
+  const status=document.createElement('div');status.className='pvProduction';status.dataset.producing=String(producing);
+  text(status,watts!==null&&watts<3?'Keine Produktion (Ruhestrom)':producing===true?'Produziert: Ja':producing===false?'Produziert: Nein':'Produziert: Unbekannt');box.append(status);list.append(box);
  }
  card.append(list);
 }
