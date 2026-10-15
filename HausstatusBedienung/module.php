@@ -62,7 +62,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
         // User-specific System folder; missing folders are ignored safely.
-        $this->RegisterPropertyInteger('SystemUpdateCategory', 59176);
+        $this->RegisterPropertyInteger('SystemUpdateCategory', 0);
         $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
@@ -103,7 +103,8 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function ApplyChanges(): void
     {
-        parent::ApplyChanges();
+        try {
+            parent::ApplyChanges();
         // A child tile may start before its master module instance is ready.
         // Never abort the entire Symcon boot when the shared configuration
         // cannot yet be read. The master reapplies child settings once ready.
@@ -233,8 +234,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->HideTileMaximize();
         $this->OrganizeHomepageDetails();
         $this->OrganizeSeparateHomepage();
-        try { $this->EnsureSystemUpdateTile(); }
-        catch (Throwable $e) { $this->SendDebug('System-Update-Kachel', $e->getMessage(), 0); }
+        // System update tile auto-creation disabled until the folder ID is verified.
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
@@ -261,6 +261,18 @@ class HausstatusBedienung extends IPSModuleStrict
                         IPS_SetHidden($id, true);
                     }
                 }
+            }
+        }
+        } catch (Throwable $e) {
+            // Never abort Symcon startup because of one damaged visualization instance.
+            $message = 'Hausstatus #' . $this->InstanceID . ': ' . $e->getMessage();
+            IPS_LogMessage('Hausstatus Startschutz', $message);
+            try {
+                $this->SetTimerInterval('Refresh', 0);
+                $this->SetStatus(104);
+                $this->SetSummary('Konfiguration pruefen: ' . $e->getMessage());
+            } catch (Throwable $ignored) {
+                // Kernel startup must survive even if status reporting is unavailable.
             }
         }
     }
