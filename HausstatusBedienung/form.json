@@ -135,6 +135,10 @@
             {
               "value": 29,
               "caption": "Gemeinsam: PV-Anlage und Batteriewarnung"
+            },
+            {
+              "value": 30,
+              "caption": "System: Hausstatus-Modul aktualisieren"
             }
           ],
           "onChange": "SVHS_UpdateSettingsForm($id, $ConfigSource, $View);"
@@ -241,6 +245,24 @@
         {
           "type": "Label",
           "caption": "Downgrade: In Module Control beim Hausstatus-Zahnrad den Zweig rollback-0.26 wählen. Danach in der zentralen Instanz Änderungen übernehmen. main enthält die aktuelle Version."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "ModuleUpdateSettings",
+      "caption": "System · Hausstatus-Modulupdate",
+      "expanded": false,
+      "visible": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Nur in privater System-Visualisierung verwenden. Die Freigabe ist standardmäßig deaktiviert. Ein Update erfordert eine separate Bestätigung."
+        },
+        {
+          "type": "CheckBox",
+          "name": "ModuleUpdateEnabled",
+          "caption": "Modulupdates über diese System-Kachel erlauben"
         }
       ]
     },
