@@ -511,7 +511,12 @@ function render(){
  el('heatingProfileSection').hidden=!s.HeatingProfileItem;
  if(s.View===9&&s.TemperatureRows?.length){const board=climateBoard(s.TemperatureRows);addClimateSteps(board,s.TemperatureRows);el('rooms').replaceChildren(board);el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';if(!s.Rooms.length)text(el('rooms'),'Keine Temperaturen eingerichtet.');}
  const weatherExtra=[['Temperatur','OutdoorTemperature'],['Gefühlt','FeelsLikeTemperature'],['Heute min.','TodayLowTemperature'],['Heute max.','TodayHighTemperature'],['Regenwahrscheinlichkeit','RainProbability'],['Luftfeuchtigkeit','OutdoorHumidity']].filter(([,key])=>s.WeatherAvailable?.[key]).map(([label,key])=>[label,s[key]?.text??'–']);
-  const weatherBase=[['Wetter',s.Weather.text],...weatherExtra,['Wind',s.Wind.text]];
+  const wetterCom=s.WetterComForecast;
+  const wetterComRows=wetterCom?.available?[
+    ['wetter.com · Heute',wetterCom.today.low+' / '+wetterCom.today.high+' °C (Tief / Hoch)'],
+    ['wetter.com · Morgen',wetterCom.tomorrow.low+' / '+wetterCom.tomorrow.high+' °C (Tief / Hoch)']
+  ]:[['wetter.com · Vorhersage','Derzeit nicht verfügbar']];
+  const weatherBase=[['Wetter',s.Weather.text],...weatherExtra,...wetterComRows,['Wind',s.Wind.text]];
   rows('weather',(s.View===16||s.View===0&&s.SeparateDetails===true)?weatherBase:[...weatherBase,['Regenmenge',s.Rain.text],['Warnstufe',s.Warning.text],['Sonnenaufgang',s.Sunrise.text],['Sonnenuntergang',s.Sunset.text]]);
  renderRainHistory(el('weather'),s.RainHistory);
  renderPresenceHistory(s.PresenceHistory);
