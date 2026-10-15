@@ -963,6 +963,20 @@ class HausstatusBedienung extends IPSModuleStrict
                 if ($low > $high || $high > 60 || $low < -60) { continue; }
                 if (!isset($days[$key])) { $days[$key] = ['high' => $high, 'low' => $low]; }
             }
+            // Die kompakte Tagesübersicht enthält Beschreibung und Regenwahrscheinlichkeit.
+            // Nur Werte übernehmen, wenn sie direkt hinter dem passenden Tagesdatum stehen.
+            $detailPattern = '/\\b(?:MO|DI|MI|DO|FR|SA|SO)\\s+(\\d{1,2})\\.(\\d{1,2})\\.\\s+(-?\\d{1,2})\\s*°\\s*\\/\\s*(-?\\d{1,2})\\s*°\\s+([^%]{3,110}?)\\s+(\\d{1,3})\\s*%/iu';
+            preg_match_all($detailPattern, $plain, $details, PREG_SET_ORDER);
+            foreach ($details as $detail) {
+                $key = sprintf('%02d.%02d.', (int) $detail[1], (int) $detail[2]);
+                $high = (int) $detail[3]; $low = (int) $detail[4]; $rain = (int) $detail[6];
+                $description = trim((string) $detail[5]);
+                if (!isset($days[$key]) || $days[$key]['high'] !== $high || $days[$key]['low'] !== $low
+                    || $rain < 0 || $rain > 100 || mb_strlen($description) > 100) { continue; }
+                if (preg_match('/(?:gefühlt|km\\/h|Uhr|l\\/m)/iu', $description)) { continue; }
+                $days[$key]['rainProbability'] = $rain;
+                $days[$key]['description'] = $description;
+            }
             $tz = new DateTimeZone('Europe/Berlin');
             $today = (new DateTimeImmutable('now', $tz))->format('d.m.');
             $tomorrow = (new DateTimeImmutable('tomorrow', $tz))->format('d.m.');
