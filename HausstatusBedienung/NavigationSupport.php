@@ -7,10 +7,15 @@ trait HausstatusNavigationSupport
     {
         // The native tile header is outside the HTML frame. This API exists from 9.1.
         if (!function_exists('IPS_SetHiddenMaximize') || version_compare(IPS_GetKernelVersion(), '9.1', '<')) { return; }
+        // Only the combined homepage tile (View 0) should lose its native title.
+        // Keep all other tile titles visible for orientation.
+        $hideTitle = $this->ReadPropertyInteger('View') === 0 && function_exists('IPS_SetHiddenTitle');
         IPS_SetHiddenMaximize($this->InstanceID, true);
+        if ($hideTitle) { IPS_SetHiddenTitle($this->InstanceID, true); }
         foreach (IPS_GetObjectList() as $id) {
             if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) {
                 IPS_SetHiddenMaximize($id, true);
+                if ($hideTitle) { IPS_SetHiddenTitle($id, true); }
             }
         }
     }
