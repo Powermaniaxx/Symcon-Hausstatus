@@ -1,4 +1,9 @@
-# Hausstatus 0.59 für IP-Symcon
+# Hausstatus 0.60 für IP-Symcon
+
+## 0.60 / Build 61: Abgesicherter Symcon-Start
+
+Rettungsupdate: Der komplette Startvorgang jeder Hausstatus-Instanz (`ApplyChanges()`) wird gegen PHP-Ausnahmen abgeschirmt. Ein defekter Bezug zur zentralen Konfiguration führt zu einer Fehlermeldung in der Instanz und im Symcon-Protokoll, soll aber den Start des gesamten Symcon-Kernels nicht mehr abbrechen. Die automatische Anlage der System-Update-Kachel wurde bis zur Klärung der Benutzer-ID 59176 vorsorglich deaktiviert. Bestehende Instanzen und Variablen werden nicht gelöscht.
+
 
 ## 0.59 / Build 60: Symcon-Start absichern
 
