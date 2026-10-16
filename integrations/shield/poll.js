@@ -75,7 +75,15 @@ async function send(status) {
     const response = await fetch(url,{method:'POST',headers,signal:AbortSignal.timeout(2000),body:JSON.stringify({jsonrpc:'2.0',id:1,method:'SVHS_UpdateShield',params:[id,JSON.stringify(status)]})});
     if(!response.ok) throw new Error('Symcon HTTP '+response.status);
     const result = await response.json();
-    if(result.error || result.id !== 1 || !Object.hasOwn(result,'result')) throw new Error('Symcon RPC fehlgeschlagen: Modul/Instanz/Autorisierung prüfen.');
+    if(result.error) {
+        let detail = String(result.error.message || 'Unbekannter RPC-Fehler');
+        for(const secret of [process.env.SYMCON_RPC_PASSWORD,process.env.SYMCON_RPC_USER]) {
+            if(secret) detail = detail.split(secret).join('[ausgeblendet]');
+        }
+        detail = detail.replace(/[\r\n]+/g,' ').slice(0,1000);
+        throw new Error('Symcon RPC fehlgeschlagen ('+String(result.error.code ?? '?')+'): '+detail);
+    }
+    if(result.id !== 1 || !Object.hasOwn(result,'result')) throw new Error('Ungültige Symcon-RPC-Antwort.');
 }
 
 async function main() {
