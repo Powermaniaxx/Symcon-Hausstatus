@@ -8,6 +8,8 @@ trait HausstatusShieldSupport
     private function CreateShield(): void
     {
         $this->RegisterPropertyBoolean('ShieldEnabled', false);
+        // Presentation belongs to this view, independently of ConfigSource.
+        $this->RegisterPropertyBoolean('ShieldCompact', false);
         $this->RegisterVariableBoolean('ShieldOnline', 'Shield online', '', 80);
         foreach (['ShieldPower' => 'Shield awake/standby', 'ShieldApp' => 'Shield aktive App',
             'ShieldPlayback' => 'Shield Playback', 'ShieldTitle' => 'Shield Medientitel', 'ShieldError' => 'Shield Diagnose'] as $ident => $name) {
@@ -89,6 +91,11 @@ trait HausstatusShieldSupport
             $data['online'] = false; $data['power'] = 'unknown'; $data['playback'] = 'unknown';
             $data['app'] = ''; $data['title'] = '';
             $data['error'] = 'Keine aktuellen Shield-Daten.';
+        }
+        $data['compact'] = $this->ReadPropertyBoolean('ShieldCompact');
+        if ($data['compact']) {
+            return ['online' => $data['online'], 'error' => $data['error'],
+                'stale' => $data['stale'], 'compact' => true];
         }
         return $data;
     }
