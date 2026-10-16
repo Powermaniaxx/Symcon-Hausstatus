@@ -211,7 +211,8 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
-                $this->RegisterMessage($id, VM_UPDATE);
+                // Statuskacheln nur bei Wertänderung benachrichtigen.
+                $this->RegisterMessage($id, VM_CHANGE);
                 $this->RegisterMessage($id, VM_DELETE);
             }
         }
@@ -305,7 +306,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
-        if ($Message === VM_UPDATE || $Message === VM_DELETE) {
+        if ($Message === VM_CHANGE || $Message === VM_DELETE) {
             $this->DiagnosticTick('MessageSink', $SenderID);
             if (!$this->HasLiveViewers()) { $this->DiagnosticTick('MessageSinkOhneViewer'); return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
