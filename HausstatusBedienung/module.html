@@ -366,6 +366,28 @@ body.homepagePart .mediaLivingContent{flex:1 1 auto;align-items:stretch}
 body.homepagePart .mediaLivingContent>.card,
 body.homepagePart .mediaLivingContent>.mediaDeviceColumn{height:100%}
 body.homepagePart .laundryDevices{flex:1 1 auto}
+/* The weather/awning and rooms/heater split tiles use #weatherRoomsRow,
+   not #cards. Stretch this wrapper and its active pair to the iframe height. */
+body.homepagePart #weatherRoomsRow.homeInfoRow{
+ display:flex;
+ flex:1 1 auto;
+ flex-direction:column;
+ min-height:0;
+}
+body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden]){
+ flex:1 1 auto;
+ display:grid;
+ grid-auto-rows:minmax(min-content,1fr);
+ align-items:stretch;
+ min-height:0;
+ margin-top:0;
+}
+body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden])>.section,
+body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden])>.card{
+ height:100%;
+ min-height:0;
+ align-self:stretch;
+}
 /* Split homepage tiles already show their title in the native Symcon tile header. */
 .homepagePart #card-laundry > h2,
 .homepagePart #card-light > .dashboardCardHeading,
