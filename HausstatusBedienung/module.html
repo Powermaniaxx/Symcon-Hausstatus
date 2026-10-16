@@ -352,6 +352,7 @@ body.presenceHistoryView main{padding-top:56px}
 .mediaLivingGroup{grid-column:1/-1}.mediaLivingContent,.comfortLivingRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.mediaLivingContent>*,.comfortLivingRow>*{min-width:0}.mediaLivingContent.single{grid-template-columns:1fr}.mediaLivingContent>.shieldStatus{border-left:1px solid #8883;padding-left:12px}.mediaLivingContent h3{margin:0 0 8px;font-size:13px}.comfortLivingRow{grid-column:1/-1;align-items:stretch}.comfortLivingRow>.overview-outdoor{grid-column:auto}.comfortLivingRow>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881}
 .livingMediaStatus{margin-top:12px;padding-top:8px;border-top:1px solid #8883}.livingMediaStatus h3{font-size:11px;margin:0 0 4px}.livingMediaStatus .row{font-size:11px;line-height:1.35;padding:3px 0}.shieldStatus>.buttons{margin-top:22px;gap:10px}
 #weatherRoomsRow.homeInfoRow{display:block}.homeEnvironmentPair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;margin-top:12px}.homeEnvironmentPair.single{grid-template-columns:1fr}.homeEnvironmentPair>.section{margin-top:0;min-width:0}.homeEnvironmentPair>.overview-outdoor{grid-column:auto}.homeEnvironmentPair>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.compactHeatingProfile{position:relative;display:table;margin:6px 0 10px}.compactHeatingProfile>summary{cursor:pointer;list-style:none;display:inline-block;padding:5px 9px;border:1px solid #8885;border-radius:7px;background:#8881;font-size:11px;line-height:1.4}.compactHeatingProfile>summary::-webkit-details-marker{display:none}.compactHeatingProfile>summary:focus-visible{outline:2px solid #3c78d2}.profileChoices{display:flex;gap:5px;flex-wrap:wrap;padding-top:7px}.profileChoices button{min-height:32px;padding:5px 8px;font-size:11px}@media(max-width:600px){.homeEnvironmentPair{grid-template-columns:1fr}}
+.mediaDeviceColumn{min-width:0;border-left:1px solid #8883;padding-left:12px}.mediaDeviceColumn>.shieldStatus+.shieldStatus{margin-top:18px;padding-top:14px;border-top:1px solid #8883}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1159,11 +1160,13 @@ function renderMediaLiving(cinema,shield,status=[],tv=null){
  const receiver=document.createElement('div');receiver.className='card';
  receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
  renderLivingMediaStatus(receiver,status);
- if(tv)renderShield(receiver,tv);
  const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
- const content=document.createElement('div');content.className='mediaLivingContent'+(shield?'':' single');content.append(receiver);
+ const content=document.createElement('div');content.className='mediaLivingContent'+(shield||tv?'':' single');content.append(receiver);
  cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);
- renderShield(content,shield);
+ if(shield||tv){
+  const devices=document.createElement('div');devices.className='mediaDeviceColumn';
+  renderShield(devices,shield);if(tv)renderShield(devices,tv);content.append(devices);
+ }
 }
 function comfortLivingRow(items){
  const row=document.createElement('div');row.className='comfortLivingRow';
