@@ -1,0 +1,80 @@
+[
+  {
+    "id": "philips_tv_shield_status_15s",
+    "type": "tab",
+    "label": "Philips TV Wohnzimmer",
+    "disabled": false,
+    "info": "Direkte Philips-API, unabhängig von CEC. Vorab lokal per PIN koppeln."
+  },
+  {
+    "id": "philips_tv_shield_poll_tick",
+    "type": "inject",
+    "z": "philips_tv_shield_status_15s",
+    "name": "TV alle 15 Sekunden",
+    "props": [],
+    "repeat": "15",
+    "once": true,
+    "onceDelay": "13",
+    "x": 170,
+    "y": 100,
+    "wires": [
+      [
+        "philips_tv_shield_poll_exec"
+      ]
+    ]
+  },
+  {
+    "id": "philips_tv_shield_poll_exec",
+    "type": "exec",
+    "z": "philips_tv_shield_status_15s",
+    "command": "node /data/shield/poll.js philips",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "22",
+    "winHide": true,
+    "oldrc": false,
+    "name": "Philips TV → Symcon",
+    "x": 420,
+    "y": 100,
+    "wires": [
+      [
+        "philips_tv_shield_poll_ok"
+      ],
+      [
+        "philips_tv_shield_poll_error"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "philips_tv_shield_poll_ok",
+    "type": "debug",
+    "z": "philips_tv_shield_status_15s",
+    "name": "Philips TV Übertragung",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 680,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "philips_tv_shield_poll_error",
+    "type": "debug",
+    "z": "philips_tv_shield_status_15s",
+    "name": "Philips TV Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 670,
+    "y": 140,
+    "wires": []
+  }
+]

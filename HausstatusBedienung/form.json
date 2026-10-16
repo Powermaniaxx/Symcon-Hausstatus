@@ -16,6 +16,11 @@
           "caption": "Diese Kachel aktivieren"
         },
         {
+          "type": "CheckBox",
+          "name": "ShieldCompact",
+          "caption": "Shield kompakt anzeigen – nur Online und Diagnose (nur diese Ansicht)"
+        },
+        {
           "type": "Select",
           "name": "View",
           "caption": "Welche Kachel möchtest du anzeigen?",
@@ -522,6 +527,33 @@
       "caption": "09 · Mediengeräte und HEOS",
       "expanded": false,
       "items": [
+        {"type": "CheckBox", "name": "PhilipsTvEnabled", "caption": "Philips TV Wohnzimmer anzeigen und bedienen (192.168.178.190)"},
+        {"type": "CheckBox", "name": "ShieldEnabled", "caption": "Nvidia Shield Status anzeigen (nur lesbar)"},
+        {"type": "Label", "caption": "Shield-Flow an die zentrale Hausstatus-Instanz senden. Statusvariablen werden automatisch angelegt; Timeout nach 60 Sekunden."},
+        {
+          "type": "Label",
+          "caption": "Wohnzimmer · Gerätestatus (nur Anzeige)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingRearHeight",
+          "caption": "Rear Height – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingSubwoofer",
+          "caption": "Subwoofer Cinema 40 – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingSpeakers",
+          "caption": "Surround + Front Lautsprecher – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingFan",
+          "caption": "Ventilator Cinema 40 – Status"
+        },
         {
           "type": "SelectVariable",
           "name": "CinemaState",
@@ -570,6 +602,49 @@
         {
           "type": "Label",
           "caption": "Quelle und Lautstärke verwenden die Optionen und Grenzen der Variablendarstellung. Die Power-Variable benötigt eine vorhandene Bedienaktion."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "BedroomMediaSettings",
+      "caption": "Medien Schlafzimmer · Marantz SR-5010 und Subwoofer",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "BedroomMediaEnabled",
+          "caption": "AVR im Schlafzimmer bedienen"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrPower",
+          "caption": "AVR Power"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrZone",
+          "caption": "MainZone Power"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrSource",
+          "caption": "Quelle"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrVolume",
+          "caption": "Lautstärke"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrMute",
+          "caption": "Stumm"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomSubwoofer",
+          "caption": "Subwoofer – nur Status"
         }
       ]
     },

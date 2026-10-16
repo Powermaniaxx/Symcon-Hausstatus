@@ -349,6 +349,11 @@ body.presenceHistoryView main{padding-top:56px}
  .presencePerson.isResident .presenceChanges{grid-column:1/-1;grid-row:5}
  .presencePerson.isSystem .presenceState{font-size:12px}
 }
+.mediaLivingGroup{grid-column:1/-1}.mediaLivingContent,.comfortLivingRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.mediaLivingContent>*,.comfortLivingRow>*{min-width:0}.mediaLivingContent.single{grid-template-columns:1fr}.mediaLivingContent>.shieldStatus{border-left:1px solid #8883;padding-left:12px}.mediaLivingContent h3{margin:0 0 8px;font-size:13px}.comfortLivingRow{grid-column:1/-1;align-items:stretch}.comfortLivingRow>.overview-outdoor{grid-column:auto}.comfortLivingRow>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881}
+.livingMediaStatus{margin-top:12px;padding-top:8px;border-top:1px solid #8883}.livingMediaStatus h3{font-size:11px;margin:0 0 4px}.livingMediaStatus .row{font-size:11px;line-height:1.35;padding:3px 0}.shieldStatus>.buttons{margin-top:22px;gap:10px}
+#weatherRoomsRow.homeInfoRow{display:block}.homeEnvironmentPair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;margin-top:12px}.homeEnvironmentPair.single{grid-template-columns:1fr}.homeEnvironmentPair>.section{margin-top:0;min-width:0}.homeEnvironmentPair>.overview-outdoor{grid-column:auto}.homeEnvironmentPair>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.compactHeatingProfile{position:relative;display:table;margin:6px 0 10px}.compactHeatingProfile>summary{cursor:pointer;list-style:none;display:inline-block;padding:5px 9px;border:1px solid #8885;border-radius:7px;background:#8881;font-size:11px;line-height:1.4}.compactHeatingProfile>summary::-webkit-details-marker{display:none}.compactHeatingProfile>summary:focus-visible{outline:2px solid #3c78d2}.profileChoices{display:flex;gap:5px;flex-wrap:wrap;padding-top:7px}.profileChoices button{min-height:32px;padding:5px 8px;font-size:11px}@media(max-width:600px){.homeEnvironmentPair{grid-template-columns:1fr}}
+.mediaDeviceColumn{min-width:0;border-left:1px solid #8883;padding-left:12px}.mediaDeviceColumn>.shieldStatus+.shieldStatus{margin-top:18px;padding-top:14px;border-top:1px solid #8883}
+a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line-height:1.4;color:inherit;text-decoration:underline;cursor:pointer}a.pvDetailLink[aria-disabled=true]{opacity:.45;cursor:default}.tvHdmiButton{margin-top:8px;min-height:32px;padding:5px 10px;font-size:12px}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -638,6 +643,7 @@ function renderModuleUpdate(data){
 function render(){
  updateRefreshButton();
  if(!state)return;
+ restoreOverviewPairing();
  el('cards').replaceChildren();
  const s=state;
  if(s.View===30){renderModuleUpdate(s.ModuleUpdate??{});return;}
@@ -679,18 +685,17 @@ function render(){
  if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
- const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);
+ const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus,s.PhilipsTv);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
  const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
  const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
  const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
  if([0,15,29].includes(s.View))renderPVInverters(pv,s.PVInverters??[]);
- if([0,15,29].includes(s.View)&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('button');b.type='button';b.className='detailLink';text(b,'Details öffnen');b.disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.addEventListener('click',()=>s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details'));pv.append(b);}
+ if([0,15,29].includes(s.View)&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('a');b.href='#';b.className='pvDetailLink';text(b,'Details');const disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.setAttribute('aria-disabled',String(disabled));b.tabIndex=disabled?-1:0;b.addEventListener('click',event=>{event.preventDefault();if(disabled)return;s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details');});pv.append(b);}
  renderOutdoor(s.Outdoor);
  renderMotion(s.Motion);
  renderNetwork(s.Network);
  renderDockerContainers(s.Docker);
- const profile=el('heatingProfile');profile.replaceChildren();if(s.HeatingProfileItem){profile.append(roomItemBox(s.HeatingProfileItem));displayDescription(profile,'HeatingProfile');}
- el('heatingProfileSection').hidden=!s.HeatingProfileItem;
+ renderHeatingProfile(s);
  if(s.View===9&&s.TemperatureRows?.length){const board=climateBoard(s.TemperatureRows);addClimateSteps(board,s.TemperatureRows);el('rooms').replaceChildren(board);el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';if(!s.Rooms.length)text(el('rooms'),'Keine Temperaturen eingerichtet.');}
  const wetterCom=s.WetterComForecast;
   const validWeather=(key)=>s.WeatherAvailable?.[key] && s[key]?.text && s[key].text!=='–';
@@ -1040,7 +1045,7 @@ function renderNetwork(data){
 }
 function applyView(view){
  el('weatherRoomsRow').classList.toggle('homeInfoRow',view===0);
- const keys={1:['presence','alarm'],2:['lock','contact','permission'],26:['lock','alarm','permission'],27:['laundry'],28:['presence','alarm','lock','contact','permission'],29:['pv','battery'],4:['battery'],5:['light'],6:['cinema'],7:['pv'],8:[],9:[],10:[],11:['outdoor'],14:['heater'],15:['pv'],16:[],17:['dining']};
+ const keys={1:['presence','alarm'],2:['lock','contact','permission'],26:['lock','alarm','permission'],27:['laundry'],28:['presence','alarm','lock','contact','permission'],29:['pv','battery'],4:['battery'],5:['light'],6:['cinema','shield-ankleidezimmer','shield-schlafzimmer'],7:['pv'],8:[],9:[],10:[],11:['outdoor'],14:['heater'],15:['pv'],16:[],17:['dining']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));
  if(view===26){const alarm=el('card-alarm'),permission=el('card-permission');if(alarm&&permission)el('cards').insertBefore(alarm,permission);}
  if(view===0)groupOverview();
@@ -1053,6 +1058,44 @@ function applyView(view){
  el('dockerSection').hidden=view!==25;el('cards').className=view===0?'dashboard':view===26?'grid sophieView':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v&&!(id==='weatherSection'&&view===16);
  if(view===0&&state.RainHistory)el('weatherSection').hidden=false;
+ if(view===0)pairOverviewSections();
+}
+function restoreOverviewPairing(){
+ const root=el('weatherRoomsRow'),weather=el('weatherSection'),rooms=el('roomsSection');
+ if(root&&weather&&rooms)root.replaceChildren(weather,rooms);
+}
+function pairOverviewSections(){
+ const root=el('weatherRoomsRow'),weather=el('weatherSection'),rooms=el('roomsSection');
+ const outdoor=el('card-outdoor'),heater=el('card-heater');
+ const pair=(name,left,right)=>{
+  const row=document.createElement('div');row.className='homeEnvironmentPair';row.id=name;
+  for(const node of [left,right]){if(node&&!node.hidden)row.append(node);}
+  if(row.children.length<2)row.className+=' single';row.hidden=!row.children.length;return row;
+ };
+ const weatherRow=pair('weatherOutdoorPair',weather,outdoor),roomsRow=pair('roomsHeaterPair',rooms,heater);
+ // Keep hidden permanent sections attached so subsequent updates can find them.
+ root.replaceChildren(weatherRow,roomsRow);
+ if(!weather.parentNode)root.append(weather);if(!rooms.parentNode)root.append(rooms);
+}
+function renderHeatingProfile(s){
+ const root=el('heatingProfile'),section=el('heatingProfileSection');root.replaceChildren();
+ el('roomsHeatingProfile')?.remove();
+ const item=s.HeatingProfileItem;
+ section.hidden=!item||[0,9].includes(s.View);
+ if(!item)return;
+ if(![0,9].includes(s.View)){root.append(roomItemBox(item));displayDescription(root,'HeatingProfile');return;}
+ const panel=document.createElement('details');panel.id='roomsHeatingProfile';panel.className='compactHeatingProfile';
+ const summary=document.createElement('summary');text(summary,'Heizungsprofil: '+(item.value?.text??'Unbekannt'));panel.append(summary);
+ if(item.control?.kind==='enum'){
+  const options=document.createElement('div');options.className='profileChoices';
+  for(const option of item.control.options??[]){
+   const button=document.createElement('button');button.type='button';text(button,option.name);button.disabled=busy||item.value?.raw===option.value;
+   button.setAttribute('aria-pressed',String(item.value?.raw===option.value));
+   button.addEventListener('click',()=>{panel.open=false;send(item.command||'RoomValue',item.command?option.value:{id:item.id,value:option.value});});options.append(button);
+  }
+  panel.append(options);
+ }else{const note=document.createElement('div');note.className='small';text(note,item.note||'Nur Statusanzeige.');panel.append(note);}
+ el('roomsSection').insertBefore(panel,el('rooms'));
 }
 function entryGroup(items){
  const group=(name,title,keys)=>{const box=document.createElement('section');box.className='overview-group '+name;const h=document.createElement('h2');text(h,displayText(name,title));box.append(h);displayDescription(box,name);const inside=document.createElement('div');inside.className='group-content';for(const key of keys)inside.append(items[key]);box.append(inside);return box;};
@@ -1075,7 +1118,88 @@ function energyGroup(items){
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
- const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);if(items.heater)ordered.push(items.heater);if(items.outdoor)ordered.push(items.outdoor);for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+ const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);for(const room of ['schlafzimmer','ankleidezimmer']){if(items['shield-'+room])ordered.push(items['shield-'+room]);}if(items.heater)ordered.push(items.heater);if(items.outdoor)ordered.push(items.outdoor);for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+}
+function renderOtherShields(devices,bedroom=[]){
+ if(!devices)return;
+ for(const [room,name] of [['schlafzimmer','Schlafzimmer'],['ankleidezimmer','Ankleidezimmer']]){
+  const status=devices[room];if(!status)continue;
+  const box=card('shield-'+room,'','', '');box.replaceChildren();box.className='overview-group';
+  const title=document.createElement('h2');text(title,'Medien '+name);box.append(title);
+  if(room==='schlafzimmer'){
+   box.className+=' mediaLivingGroup';
+   const content=document.createElement('div');content.className='mediaLivingContent';
+   const receiver=document.createElement('div');receiver.className='card';renderBedroomMedia(receiver,bedroom);content.append(receiver);
+   renderShield(content,status);box.append(content);
+  }else{renderShield(box,status);}
+ }
+}
+function renderBedroomMedia(box,items){
+ if(!items?.length)return;
+ const heading=document.createElement('h3');text(heading,'Marantz SR-5010 und Subwoofer');box.append(heading);
+ for(const item of items){
+  if(item.command==='BedroomAvrZone')continue;
+  const field=document.createElement('div');field.className='roomItem';
+  const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);text(value,item.value?.text??'Nicht eingerichtet');row.append(label,value);field.append(row);
+  renderRoomControl(field,item,value);
+  if(item.note){const note=document.createElement('div');note.className='small';text(note,item.note);field.append(note);}
+  box.append(field);
+ }
+}
+function renderLivingMediaStatus(box,items){
+ if(!items?.length)return;
+ const section=document.createElement('div');section.className='livingMediaStatus';
+ const heading=document.createElement('h3');text(heading,'Gerätestatus');section.append(heading);
+ for(const item of items){
+  const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);
+  const entry=item.value; text(value,typeof entry?.raw==='boolean'?(entry.raw?'Ein':'Aus'):(entry?.text??'Unbekannt'));
+  row.append(label,value);section.append(row);
+ }
+ box.append(section);
+}
+function renderMediaLiving(cinema,shield,status=[],tv=null){
+ const receiver=document.createElement('div');receiver.className='card';
+ receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
+ renderLivingMediaStatus(receiver,status);
+ const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
+ const content=document.createElement('div');content.className='mediaLivingContent'+(shield||tv?'':' single');content.append(receiver);
+ cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);
+ if(shield||tv){
+  const devices=document.createElement('div');devices.className='mediaDeviceColumn';
+  renderShield(devices,shield);if(tv)renderShield(devices,tv);content.append(devices);
+ }
+}
+function comfortLivingRow(items){
+ const row=document.createElement('div');row.className='comfortLivingRow';
+ for(const item of [items.heater,items.outdoor]){if(!item)continue;if(item.classList.contains('card'))dashboardHeading(item);row.append(item);}
+ if(row.children.length===1)row.style.gridTemplateColumns='1fr';return row;
+}
+function renderShield(cinema,shield){
+ if(!shield)return;
+ const box=document.createElement('section');box.className='card shieldStatus';box.setAttribute('aria-label','Nvidia Shield Status');
+ const title=document.createElement('h3');text(title,shield.kind==='tv'?'Philips TV':'Nvidia Shield');box.append(title);
+ const playback={playing:'Läuft',paused:'Pausiert',stopped:'Gestoppt',unknown:'Unbekannt'};
+ const rows=shield.kind==='tv'
+  ? [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Nicht erreichbar'],['Betrieb',shield.power==='awake'?'Ein':shield.power==='standby'?'Standby':'Unbekannt'],['Diagnose',shield.error||'OK']]
+  : shield.compact
+  ? [['Online',shield.stale?'Unbekannt – Daten veraltet':shield.online?'Online':'Offline'],['Diagnose',shield.error||'OK']]
+  : [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']];
+ if(shield.kind!=='tv'&&!shield.compact&&(shield.app==='com.zattoo.player'||shield.channel)){
+  rows.splice(rows.length-2,0,['Sender',shield.channel||'—']);
+  rows.find(row=>row[0]==='Medientitel')[0]='Sendung';
+  if(shield.subtitle)rows.splice(rows.length-1,0,['Details',shield.subtitle]);
+ }
+ for(const [name,value] of rows){
+  const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
+ }
+ if(shield.device){
+  buttons(box,'ShieldPower_'+shield.device,shield.kind==='tv'||(shield.online===true&&!shield.stale),shield.power==='awake'?true:shield.power==='standby'?false:null);
+  if(shield.kind==='tv'){const hdmi=document.createElement('button');hdmi.type='button';hdmi.className='tvHdmiButton';text(hdmi,'HDMI 3');hdmi.disabled=busy||shield.online!==true||shield.power!=='awake';hdmi.addEventListener('click',()=>send('PhilipsHdmi3',true));box.append(hdmi);}
+  const hint=document.createElement('div');hint.className='small';text(hint,shield.kind==='tv'?'Ein → HDMI 3 · Aus = Standby · Ausführung innerhalb von 15 Sekunden':'Aus = Standby · Ausführung innerhalb von 15 Sekunden');box.append(hint);
+ }
+ if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
+ cinema.append(box);
+ return box;
 }
 function renderCinemaFields(box,s){
  const fields=document.createElement('div');fields.className='cinemaFields';
