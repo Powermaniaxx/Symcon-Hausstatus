@@ -1096,10 +1096,13 @@ function renderShield(cinema,shield){
  const box=document.createElement('section');box.className='card shieldStatus';box.setAttribute('aria-label','Nvidia Shield Status');
  const title=document.createElement('h3');text(title,'Nvidia Shield');box.append(title);
  const playback={playing:'Läuft',paused:'Pausiert',stopped:'Gestoppt',unknown:'Unbekannt'};
- for(const [name,value] of [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']]){
+ const rows=shield.compact
+  ? [['Online',shield.stale?'Unbekannt – Daten veraltet':shield.online?'Online':'Offline'],['Diagnose',shield.error||'OK']]
+  : [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']];
+ for(const [name,value] of rows){
   const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
  }
- if(shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
+ if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
  cinema.append(box);
 }
 function renderCinemaFields(box,s){
