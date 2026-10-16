@@ -260,7 +260,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->DiagnosticTick('DiagnosticTimer');
     }
 
-    private function DiagnosticTick(string $event): void
+    private function DiagnosticTick(string $event, int $senderID = 0): void
     {
         $now = time();
         $raw = $this->GetBuffer('RefreshDiagnostic');
@@ -269,6 +269,10 @@ class HausstatusBedienung extends IPSModuleStrict
             $data = ['since' => $now, 'counts' => []];
         }
         $data['counts'][$event] = ($data['counts'][$event] ?? 0) + 1;
+        if ($event === 'MessageSink' && $senderID > 0) {
+            $key = (string)$senderID;
+            $data['sources'][$key] = ($data['sources'][$key] ?? 0) + 1;
+        }
         if ($now - (int)$data['since'] >= 300) {
             $lastViewer = (int)$this->GetBuffer('LastViewerSeen');
             $viewerAge = $lastViewer > 0 ? ($now - $lastViewer) . 's' : 'nie';
@@ -276,6 +280,16 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach (['MessageSink', 'MessageSinkOhneViewer', 'Refresh', 'BaseState', 'VisualizationUpdate', 'GetVisualizationTile', 'ViewerPing'] as $key) {
                 $parts[] = $key . '=' . ($data['counts'][$key] ?? 0);
             }
+            $sourceCounts = $data['sources'] ?? [];
+            arsort($sourceCounts, SORT_NUMERIC);
+            $top = [];
+            foreach (array_slice($sourceCounts, 0, 12, true) as $sourceID => $count) {
+                $sourceName = IPS_ObjectExists((int)$sourceID)
+                    ? IPS_GetName((int)$sourceID) : 'gelöscht';
+                $top[] = $sourceID . '(' . $sourceName . ')=' . $count;
+            }
+            IPS_LogMessage('Hausstatus Quellen #' . $this->InstanceID,
+                'Top 12 in 5min: ' . ($top ? implode('; ', $top) : 'keine'));
             IPS_LogMessage('Hausstatus Diagnose #' . $this->InstanceID,
                 '5min: ' . implode(', ', $parts) . '; Viewer vor ' . $viewerAge);
             $data = ['since' => $now, 'counts' => []];
@@ -292,7 +306,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
-            $this->DiagnosticTick('MessageSink');
+            $this->DiagnosticTick('MessageSink', $SenderID);
             if (!$this->HasLiveViewers()) { $this->DiagnosticTick('MessageSinkOhneViewer'); return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
             if ($this->ReadPropertyInteger('View') === 18) {
