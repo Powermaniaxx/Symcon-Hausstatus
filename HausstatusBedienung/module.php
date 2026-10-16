@@ -103,11 +103,13 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('LightCommandScript', 0);
         $this->RegisterPropertyString('Rooms', '[]');
         $this->RegisterTimer('Refresh', 0, 'SVHS_Refresh($_IPS["TARGET"]);');
+        $this->RegisterTimer('DiagnosticReport', 300000, 'SVHS_DiagnosticReport($_IPS["TARGET"]);');
     }
 
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        $this->SetTimerInterval('DiagnosticReport', 300000);
         $this->SetTimerInterval('ShieldWatchdog', ($this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyBoolean('PhilipsTvEnabled')) && $this->ReadPropertyInteger('ConfigSource') === 0 ? 15000 : 0);
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
@@ -253,6 +255,11 @@ class HausstatusBedienung extends IPSModuleStrict
     // Ein gemeinsamer Zeitstempel funktioniert auch mit mehreren geoeffneten Tabs.
     // Temporäre Diagnose: aggregierte Aufrufzahlen, maximal eine Meldung pro 5 Minuten.
     // Keine Werte/Personendaten im Log. Nur für den Testzweig vorgesehen.
+    public function DiagnosticReport(): void
+    {
+        $this->DiagnosticTick('DiagnosticTimer');
+    }
+
     private function DiagnosticTick(string $event): void
     {
         $now = time();
