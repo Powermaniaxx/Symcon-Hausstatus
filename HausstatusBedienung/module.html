@@ -1184,6 +1184,11 @@ function renderShield(cinema,shield){
   : shield.compact
   ? [['Online',shield.stale?'Unbekannt – Daten veraltet':shield.online?'Online':'Offline'],['Diagnose',shield.error||'OK']]
   : [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']];
+ if(shield.kind!=='tv'&&!shield.compact&&(shield.app==='com.zattoo.player'||shield.channel)){
+  rows.splice(rows.length-2,0,['Sender',shield.channel||'—']);
+  rows.find(row=>row[0]==='Medientitel')[0]='Sendung';
+  if(shield.subtitle)rows.splice(rows.length-1,0,['Details',shield.subtitle]);
+ }
  for(const [name,value] of rows){
   const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
  }

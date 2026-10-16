@@ -45,3 +45,9 @@ const onParent=new Element();context.renderShield(onParent,{kind:'tv',device:'ph
 const hdmi=onParent.children[0].children.find(n=>n.className==='tvHdmiButton');assert.equal(hdmi.disabled,false);hdmi.events.click();
 assert.deepEqual(sent[0],['PhilipsHdmi3',true]);
 console.log('Shield room layout, compact rendering and TV source button: passed');
+const zattoo=new Element();
+context.renderShield(zattoo,{...full,app:'com.zattoo.player',title:'Bares für Rares',channel:'ZDFneo',subtitle:'Folge 2156'});
+assert.match(flatten(zattoo),/Sender ZDFneo.*Sendung Bares für Rares.*Details Folge 2156/);
+const compact=new Element();
+context.renderShield(compact,{...full,compact:true,app:'com.zattoo.player',channel:'ZDFneo',subtitle:'Folge 2156'});
+assert.doesNotMatch(flatten(compact),/ZDFneo|Folge 2156|Sender|Sendung/);

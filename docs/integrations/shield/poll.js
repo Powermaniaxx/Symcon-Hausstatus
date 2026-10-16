@@ -65,7 +65,9 @@ async function collect() {
         const raw = await adb(['-s',TARGET,'shell',command],6500,env);
         const parts = raw.split(/__SHIELD_ACTIVITY__\r?\n|__SHIELD_MEDIA__\r?\n/);
         if(parts.length !== 3) return blank('ADB-Antwort unvollständig.');
-        return parse(...parts);
+        const status = parse(...parts);
+        try { return await require('./cast-media.js').enrich(status, TARGET.split(':')[0]); }
+        catch { return status; } // An older installation without Cast helper keeps ADB status.
     } catch(error) { return blank(error.message); }
 }
 

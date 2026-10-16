@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 trait HausstatusShieldSupport
 {
-    private const SHIELD_FIELDS = ['ShieldOnline', 'ShieldPower', 'ShieldApp', 'ShieldPlayback', 'ShieldTitle', 'ShieldError', 'ShieldUpdated'];
+    private const SHIELD_FIELDS = ['ShieldOnline', 'ShieldPower', 'ShieldApp', 'ShieldPlayback', 'ShieldTitle', 'ShieldChannel', 'ShieldSubtitle', 'ShieldError', 'ShieldUpdated'];
 
     private const SHIELD_DEVICES = ['wohnzimmer' => 'Shield', 'ankleidezimmer' => 'ShieldDressing', 'schlafzimmer' => 'ShieldBedroom', 'philips' => 'PhilipsTv'];
 
@@ -18,7 +18,7 @@ trait HausstatusShieldSupport
             $label = $room === 'philips' ? 'Philips TV Wohnzimmer' : 'Shield ' . $room;
             $this->RegisterVariableBoolean($prefix . 'Online', $label . ' online', '', 80);
             foreach (['Power' => 'awake/standby', 'App' => 'aktive App', 'Playback' => 'Playback',
-                'Title' => 'Medientitel', 'Error' => 'Diagnose'] as $field => $name) {
+                'Title' => 'Medientitel', 'Channel' => 'Sender', 'Subtitle' => 'Sendungsdetails', 'Error' => 'Diagnose'] as $field => $name) {
                 $this->RegisterVariableString($prefix . $field, $label . ' ' . $name, '', 81);
             }
             $this->RegisterVariableInteger($prefix . 'Updated', $label . ' letzte Abfrage', '', 87);
@@ -105,12 +105,19 @@ trait HausstatusShieldSupport
                 throw new InvalidArgumentException('Ungültiges Shield-Textfeld.');
             }
         }
+        foreach (['channel', 'subtitle'] as $key) {
+            $data[$key] = $data[$key] ?? '';
+            if (!is_string($data[$key]) || strlen($data[$key]) > 4096) {
+                throw new InvalidArgumentException('Ungültiges Shield-Senderfeld.');
+            }
+        }
         if (!$data['online'] || $data['power'] !== 'awake') {
             $data['app'] = ''; $data['title'] = ''; $data['playback'] = 'unknown';
+            $data['channel'] = ''; $data['subtitle'] = '';
         }
         $this->SetValue($prefix . 'Online', $data['online']);
         $this->SetValue($prefix . 'Power', $data['online'] ? $data['power'] : 'unknown');
-        foreach (['App' => 'app', 'Playback' => 'playback', 'Title' => 'title', 'Error' => 'error'] as $ident => $key) {
+        foreach (['App' => 'app', 'Playback' => 'playback', 'Title' => 'title', 'Channel' => 'channel', 'Subtitle' => 'subtitle', 'Error' => 'error'] as $ident => $key) {
             $this->SetValue($prefix . $ident, $data[$key]);
         }
         // Receipt time is the commit marker and does not depend on the NAS clock.
@@ -129,7 +136,7 @@ trait HausstatusShieldSupport
             if ($updated > 0 && time() - $updated > 60) {
                 $this->SetValue($prefix . 'Online', false);
                 foreach (['Power', 'Playback'] as $name) { $this->SetValue($prefix . $name, 'unknown'); }
-                foreach (['App', 'Title'] as $name) { $this->SetValue($prefix . $name, ''); }
+                foreach (['App', 'Title', 'Channel', 'Subtitle'] as $name) { $this->SetValue($prefix . $name, ''); }
                 $this->SetValue($prefix . 'Error', 'Seit über 60 Sekunden keine Abfrage empfangen.');
             }
         }
@@ -146,7 +153,7 @@ trait HausstatusShieldSupport
         $data['stale'] = !$data['updated'] || time() - (int)$data['updated'] > 60;
         if ($data['stale']) {
             $data['online'] = false; $data['power'] = 'unknown'; $data['playback'] = 'unknown';
-            $data['app'] = ''; $data['title'] = '';
+            $data['app'] = ''; $data['title'] = ''; $data['channel'] = ''; $data['subtitle'] = '';
             $data['error'] = $prefix === 'PhilipsTv' ? 'Keine aktuellen TV-Daten.' : 'Keine aktuellen Shield-Daten.';
         }
         $data['compact'] = $this->ReadPropertyBoolean('ShieldCompact');
