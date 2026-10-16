@@ -133,7 +133,7 @@ trait HausstatusHomepageSupport
         $hidden = [];
         foreach (IPS_GetChildrenIDs($root) as $id) {
             if (!IPS_LinkExists($id)) { continue; }
-            $name = preg_replace('/\\s+/u', ' ', trim(IPS_GetName($id)));
+            $name = trim(IPS_GetName($id));
             if (!in_array($name, $names, true)) { continue; }
             if (!IPS_ObjectExists((int)IPS_GetLink($id)['TargetID'])) { continue; }
             if (!(IPS_GetObject($id)['ObjectIsHidden'] ?? false)) { IPS_SetHidden($id, true); }
