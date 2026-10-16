@@ -3,6 +3,7 @@
 const https=require('node:https'),crypto=require('node:crypto'),fs=require('node:fs'),dgram=require('node:dgram');
 const HOST=process.env.PHILIPS_TV_HOST||'192.168.178.190';
 const FILE=process.env.PHILIPS_TV_CONFIG||'/data/shield/philips-tv.credentials.json';
+const HDMI_PENDING=FILE+'.hdmi3-pending';
 const FINGERPRINT='88CA8280AA7C86E1457AC62C717F3052F5F6B29B8339D223F96011D1566BF3F9';
 const SHARED_KEY=Buffer.from('ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA==','base64');
 const md5=value=>crypto.createHash('md5').update(value).digest('hex');
@@ -69,23 +70,46 @@ async function wake(mac,broadcast){
  });
 }
 
+function hdmi3Intent(){
+ return {extras:{uri:'content://android.media.tv/passthrough/'+encodeURIComponent('com.mediatek.tvinput/.hdmi.HDMIInputService/HW7')},action:'org.droidtv.playtv.SELECTURI',component:{packageName:'org.droidtv.playtv',className:'org.droidtv.playtv.PlayTvActivity'}};
+}
+
+function clearPendingHdmi3(){if(fs.existsSync(HDMI_PENDING))fs.unlinkSync(HDMI_PENDING);}
+
+async function selectHdmi3(config,request=api){
+ await request('POST','activities/launch',{intent:hdmi3Intent()},config);
+}
+
+async function applyPendingHdmi3(config,isOn,request=api){
+ if(!fs.existsSync(HDMI_PENDING))return;
+ const pending=JSON.parse(fs.readFileSync(HDMI_PENDING,'utf8'));
+ if(!Number.isFinite(pending.until)||pending.until<Date.now()){clearPendingHdmi3();return;}
+ if(!isOn)return;
+ await selectHdmi3(config,request);clearPendingHdmi3();
+}
+
 async function collect(){
  const empty={online:false,power:'unknown',app:'',title:'',playback:'unknown',error:''};
  try{
-  const state=await api('GET','powerstate',undefined,credentials());
-  return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error:['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.'};
+  const config=credentials();const state=await api('GET','powerstate',undefined,config);
+  let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
+  try{await applyPendingHdmi3(config,state.powerstate==='On');}catch(e){error='HDMI 3 noch nicht gesetzt: '+e.message;}
+  return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
  }catch(error){return {...empty,error:error.message};}
 }
 
 async function execute(command,request=api,wakeDevice=wake){
- if(!command||!/^[a-f0-9]{24}$/.test(command.id)||!['wake','sleep'].includes(command.action)||!Number.isInteger(command.expires))throw new Error('Ungültiger TV-Schaltbefehl.');
+ if(!command||!/^[a-f0-9]{24}$/.test(command.id)||!['wake','sleep','hdmi3'].includes(command.action)||!Number.isInteger(command.expires))throw new Error('Ungültiger TV-Schaltbefehl.');
  if(command.expires<Math.floor(Date.now()/1000))return false;
  const config=credentials();
+ if(command.action==='hdmi3'){await selectHdmi3(config,request);clearPendingHdmi3();return true;}
+ if(command.action==='sleep')clearPendingHdmi3();
  try{await request('POST','powerstate',{powerstate:command.action==='wake'?'On':'Standby'},config);}
  catch(error){
   if(command.action!=='wake'||!/nicht erreichbar|ECONNREFUSED|EHOSTUNREACH|ETIMEDOUT|ECONNRESET/.test(error.message))throw error;
   await wakeDevice(config.mac,config.broadcast);
  }
+ if(command.action==='wake')fs.writeFileSync(HDMI_PENDING,JSON.stringify({until:Date.now()+90000}),{mode:0o600});
  return true;
 }
 
@@ -103,7 +127,7 @@ async function pair(){
  fs.writeFileSync(FILE,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.chmodSync(FILE,0o600);
  console.log('TV gekoppelt. Zugangsdaten ausschließlich lokal gespeichert.');
 }
-module.exports={digest,api,wakePacket,collect,execute};
+module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3};
 if(require.main===module){
  const action=process.argv[2]||'status';
  (action==='pair'?pair():action==='status'?collect().then(status=>console.log(JSON.stringify(status))):Promise.reject(new Error('Aufruf: philips-tv.js pair oder status'))).catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -11,7 +11,7 @@ Im Modul `HausstatusBedienung` gemeinsam ersetzen:
 Danach beim Master 52627 Änderungen übernehmen und die Visu neu laden.
 Die Option „Philips TV Wohnzimmer anzeigen und bedienen“ liegt unter Medien/HEOS.
 Sie ist standardmäßig aktiviert. TV-Status und Ein/Aus stehen unter der
-AVR-Bedienung in „Medien Wohnzimmer“.
+Shield in der rechten Spalte von „Medien Wohnzimmer“.
 
 Im bestehenden Node-RED-Datenordner `/data/shield` die vollständige `poll.js`
 ersetzen und `philips-tv.js` hinzufügen. Die Shield-Flows bleiben bestehen.
@@ -68,8 +68,24 @@ Validierung: PHP-/JavaScript-Syntax, Digest-Challenge, separate TV-Warteschlange
 explizite On/Standby-Payloads, Wake-Paket, Ablehnung ungültiger Befehle,
 keine Wake-Wiederholung bei Anmeldefehlern, TV-Darstellung und vorhandene
 Shield-/Layout-Tests. Lesender Zugriff am echten TV mit Zertifikatsprüfung erfolgreich.
-PIN-Kopplung und Schaltung am echten TV stehen noch aus. Das Einschalten aus längerem
+PIN-Kopplung und Schaltung wurden vom Nutzer bestätigt. Das Einschalten aus längerem
 Standby muss getestet werden; WLAN-Wecken kann vom TV bzw. Access Point abhängen.
+
+## HDMI 3 und automatische TV-Kopplung
+
+Nach einem Ein-Befehl wird HDMI 3 einmal angewählt, sobald die API den TV als
+eingeschaltet meldet. Während des Aufwachens wird bis zu 90 Sekunden versucht.
+Zusätzlich steht bei eingeschaltetem TV die kleine Schaltfläche „HDMI 3“ bereit.
+Der verwendete Eingang HW7 wurde am echten TV als HDMI 3 bestätigt.
+
+`ShieldWohnzimmer-TV-Kopplung.php` vollständig in ein neues PHP-Skript in Symcon
+kopieren und einmal manuell ausführen. Es legt ein eigenes Ereignis am Skript an,
+das auf vollständige Statusmeldungen der Wohnzimmer-Shield in Master 52627 reagiert.
+Wach schaltet den TV ein, Standby schaltet ihn aus. Unbekannte, veraltete oder
+offline gemeldete Zustände lösen kein Ausschalten aus. Bei Wiederverbindung wird
+einmal synchronisiert; unveränderte Statusmeldungen erzeugen keine neuen Befehle.
+Die bestehenden Node-RED-Flows bleiben unverändert. Wegen der Abfrageintervalle
+kann die Reaktion bis zu etwa 30 Sekunden plus TV-Startzeit dauern.
 
 Protokollgrundlagen: [Philips-Integration](https://www.home-assistant.io/integrations/philips_js/)
 und [ha-philipsjs](https://github.com/danielperna84/ha-philipsjs).

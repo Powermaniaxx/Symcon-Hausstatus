@@ -432,7 +432,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
             'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
@@ -449,7 +449,9 @@ class HausstatusBedienung extends IPSModuleStrict
                 if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
                 $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
             }
-            if (str_starts_with($Ident, 'ShieldPower_')) {
+            if ($Ident === 'PhilipsHdmi3') {
+                $this->SetPhilipsHdmi3($Value);
+            } elseif (str_starts_with($Ident, 'ShieldPower_')) {
                 $this->SetShieldPower(substr($Ident, 12), $Value);
             } elseif (isset(self::BEDROOM_DEFAULTS[$Ident])) {
                 $this->SetBedroomMedia($Ident, $Value);

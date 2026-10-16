@@ -47,15 +47,18 @@ trait HausstatusShieldSupport
         return $ids;
     }
 
-    private function ShieldPowerQueue(string $device, ?bool $on = null, string $ack = ''): ?array
+    private function ShieldPowerQueue(string $device, bool|string|null $on = null, string $ack = ''): ?array
     {
+        if ($on !== null && !is_bool($on) && !($device === 'philips' && $on === 'hdmi3')) {
+            throw new InvalidArgumentException('Ungültiger Medienbefehl.');
+        }
         $key = 'SVHSShieldQueue' . $this->InstanceID;
         if (!IPS_SemaphoreEnter($key, 1000)) { throw new RuntimeException('Shield-Bedienung beschäftigt.'); }
         try {
             $queue = json_decode($this->ReadAttributeString('ShieldPowerQueue'), true, 16, JSON_THROW_ON_ERROR);
             if (!is_array($queue)) { $queue = []; }
             if ($on !== null) {
-                $queue[$device] = ['id' => bin2hex(random_bytes(12)), 'action' => $on ? 'wake' : 'sleep', 'expires' => time() + 45];
+                $queue[$device] = ['id' => bin2hex(random_bytes(12)), 'action' => $on === 'hdmi3' ? 'hdmi3' : ($on ? 'wake' : 'sleep'), 'expires' => time() + 45];
             } elseif (isset($queue[$device]) && (($queue[$device]['expires'] ?? 0) < time() || $ack === ($queue[$device]['id'] ?? ''))) {
                 unset($queue[$device]);
             }
@@ -71,6 +74,15 @@ trait HausstatusShieldSupport
         $owner = $this->ShieldOwner();
         if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'ShieldPower_' . $device, $on); return; }
         $this->ShieldPowerQueue($device, $on);
+    }
+
+    private function SetPhilipsHdmi3(mixed $value): void
+    {
+        if ($value !== true) { throw new InvalidArgumentException('HDMI 3 erwartet true.'); }
+        if (!$this->ConfigBoolean('PhilipsTvEnabled')) { throw new RuntimeException('Philips TV ist deaktiviert.'); }
+        $owner = $this->ShieldOwner();
+        if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'PhilipsHdmi3', true); return; }
+        $this->ShieldPowerQueue('philips', 'hdmi3');
     }
 
     public function UpdateShield(string $JSON): string

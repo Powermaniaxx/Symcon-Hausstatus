@@ -48,6 +48,7 @@ class Fixture {
     public function living(): array { return $this->LivingMediaStatus(); }
     public function operate(string $name, mixed $value): void { $this->SetBedroomMedia($name,$value); }
     public function power(string $device, mixed $value): void { $this->SetShieldPower($device,$value); }
+    public function hdmi(mixed $value): void { $this->SetPhilipsHdmi3($value); }
 }
 $m=new Fixture();
 $status=['online'=>true,'power'=>'awake','app'=>'smarttube','playback'=>'playing','title'=>'Wohnzimmer','error'=>''];
@@ -103,6 +104,10 @@ $m->props['ShieldEnabled']=false;
 $m->power('philips',true);
 $tvReply=json_decode($m->UpdateShield(json_encode(['device'=>'philips']+$status)),true);
 check($tvReply['command']['action']==='wake','TV queue works independently of Shield setting');
+$m->hdmi(true);
+$hdmiReply=json_decode($m->UpdateShield(json_encode(['device'=>'philips']+$status)),true);
+check($hdmiReply['command']['action']==='hdmi3','HDMI command queued only for TV');
+rejects(fn()=>$m->hdmi(false));
 $m->props['PhilipsTvEnabled']=false;
 rejects(fn()=>$m->power('philips',false));
 rejects(fn()=>$m->UpdateShield(json_encode(['device'=>'philips']+$status)));
