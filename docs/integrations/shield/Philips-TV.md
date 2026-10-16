@@ -55,6 +55,12 @@ anderen Subnetz beim Koppeln PHILIPS_TV_BROADCAST passend setzen.
 Ein gesendetes Weckpaket bestätigt noch kein eingeschaltetes Gerät. Der
 tatsächliche Zustand wird anschließend über die TV-API abgefragt.
 
+Kurze Netzwerk-/TLS-Abbrüche bei einer Statusabfrage werden einmal nach 250 ms
+wiederholt, wenn der erste Versuch weniger als 1,5 Sekunden gedauert hat.
+Längere Timeouts und Schreibbefehle werden nicht automatisch wiederholt.
+Ein Verbindungsabbruch vor dem TLS-Aufbau erlaubt beim expliziten Ein-Befehl
+ebenfalls WLAN-Wecken. PIN- und Zertifikatsfehler erlauben dies nicht.
+
 TV-Ein bleibt auch bei nicht erreichbarer API verfügbar, damit WLAN-Wecken möglich
 ist. Fehlende Kopplung wird als Diagnose angezeigt. Die Steuerung verwendet das
 konkret am TV geprüfte Zertifikat; bei einem Zertifikatswechsel wird die Verbindung

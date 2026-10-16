@@ -39,10 +39,25 @@ function transport(method,uri,data,authorization){
  });
 }
 
+function networkFailure(error){
+ return /nicht erreichbar|ECONNREFUSED|EHOSTUNREACH|ETIMEDOUT|ECONNRESET|EPIPE|ENETUNREACH|before secure TLS connection was established|socket hang up/i.test(String(error.code||'')+' '+String(error.message||''));
+}
+
 async function api(method,path,data,credentials,request=transport){
  const uri='/6/'+path;
- let response=await request(method,uri,data);
- if(response.status===401&&credentials)response=await request(method,uri,data,digest(response.challenge,method,uri,credentials));
+ const started=Date.now();
+ const attempt=async()=>{
+  let response=await request(method,uri,data);
+  if(response.status===401&&credentials)response=await request(method,uri,data,digest(response.challenge,method,uri,credentials));
+  return response;
+ };
+ let response;
+ try{response=await attempt();}
+ catch(error){
+  // Retry only a fast, failed status read. Bound total poll duration, never replay writes.
+  if(method!=='GET'||!networkFailure(error)||Date.now()-started>=1500)throw error;
+  await new Promise(resolve=>setTimeout(resolve,250));response=await attempt();
+ }
  if(response.status===401)throw new Error('Philips TV muss per PIN gekoppelt werden.');
  if(response.status<200||response.status>=300)throw new Error('Philips HTTP '+response.status);
  if(!response.text.trim()||response.text.trim().startsWith('<'))return {};
@@ -95,7 +110,7 @@ async function collect(){
   let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
   try{await applyPendingHdmi3(config,state.powerstate==='On');}catch(e){error='HDMI 3 noch nicht gesetzt: '+e.message;}
   return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
- }catch(error){return {...empty,error:error.message};}
+ }catch(error){return {...empty,error:networkFailure(error)?'TV-Netzwerkverbindung unterbrochen; Standby oder WLAN/API prüfen.':error.message};}
 }
 
 async function execute(command,request=api,wakeDevice=wake){
@@ -106,7 +121,7 @@ async function execute(command,request=api,wakeDevice=wake){
  if(command.action==='sleep')clearPendingHdmi3();
  try{await request('POST','powerstate',{powerstate:command.action==='wake'?'On':'Standby'},config);}
  catch(error){
-  if(command.action!=='wake'||!/nicht erreichbar|ECONNREFUSED|EHOSTUNREACH|ETIMEDOUT|ECONNRESET/.test(error.message))throw error;
+  if(command.action!=='wake'||!networkFailure(error))throw error;
   await wakeDevice(config.mac,config.broadcast);
  }
  if(command.action==='wake')fs.writeFileSync(HDMI_PENDING,JSON.stringify({until:Date.now()+90000}),{mode:0o600});
@@ -127,7 +142,7 @@ async function pair(){
  fs.writeFileSync(FILE,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.chmodSync(FILE,0o600);
  console.log('TV gekoppelt. Zugangsdaten ausschließlich lokal gespeichert.');
 }
-module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3};
+module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3,networkFailure};
 if(require.main===module){
  const action=process.argv[2]||'status';
  (action==='pair'?pair():action==='status'?collect().then(status=>console.log(JSON.stringify(status))):Promise.reject(new Error('Aufruf: philips-tv.js pair oder status'))).catch(error=>{console.error(error.message);process.exitCode=1;});
