@@ -448,6 +448,56 @@ body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden])>.card{
   max-width:100%;text-align:left;overflow-wrap:break-word;word-break:normal;
  }
 }
+/* Consistent rounded corners across the Hausstatus HTML surfaces.
+   Native Symcon tile frames are outside this iframe and remain unchanged.
+   Inner subgroups that form one continuous card keep their square joins. */
+:root{
+ --svhs-radius-frame:16px;
+ --svhs-radius-card:14px;
+ --svhs-radius-inner:12px;
+ --svhs-radius-control:10px;
+}
+.dashboard{border-radius:var(--svhs-radius-frame)}
+#cards>.card,
+#cards>.overview-group,
+#weatherRoomsRow>.section,
+.homeEnvironmentPair>.section,
+.homeEnvironmentPair>.card,
+.section,
+.moduleUpdateBox{
+ border-radius:var(--svhs-radius-card);
+}
+.laundryDevice,
+.roomPage .roomGroup,
+.roomDevice,
+.roomPage .roomDevice,
+.wifiCard,
+.fritzPanel,
+.dockerItem,
+.extraTileItem,
+.presencePerson,
+.climateBoard,
+.roomMetric,
+.mediaLivingContent>.card,
+.mediaLivingContent>.shieldStatus,
+.mediaDeviceColumn>.shieldStatus,
+.comfortLivingRow>.card{
+ border-radius:var(--svhs-radius-inner);
+}
+button,
+select,
+input[type=text],
+input[type=number],
+input[type=color],
+textarea{
+ border-radius:var(--svhs-radius-control);
+}
+/* Nested status blocks have shared borders/dividers, not separate frames. */
+.overview-entry>.overview-group,
+.overview-energy>.card{
+ border-radius:0;
+}
+/* Switch knobs and circular indicators retain their original geometry. */
 /* Separate Hausstatus tiles use automatic loading; the repeated manual-refresh footer wastes space. */
 body.hausstatusSingleTile .head{display:none}
 </style></head><body><main>
