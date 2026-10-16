@@ -1,6 +1,6 @@
 'use strict';
 // JointSPACE 6, HTTPS Digest authentication. No additional Node packages.
-const https=require('node:https'),crypto=require('node:crypto'),fs=require('node:fs'),dgram=require('node:dgram');
+const https=require('node:https'),http=require('node:http'),crypto=require('node:crypto'),fs=require('node:fs'),dgram=require('node:dgram');
 const HOST=process.env.PHILIPS_TV_HOST||'192.168.178.190';
 const FILE=process.env.PHILIPS_TV_CONFIG||'/data/shield/philips-tv.credentials.json';
 const HDMI_PENDING=FILE+'.hdmi3-pending';
@@ -103,14 +103,35 @@ async function applyPendingHdmi3(config,isOn,request=api){
  await selectHdmi3(config,request);clearPendingHdmi3();
 }
 
-async function collect(){
+function reachable(){
+ // Public system information only; never send pairing/digest data over HTTP.
+ return new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(!settled){settled=true;clearTimeout(timer);resolve(value);}};
+  const request=http.get({host:HOST,port:1925,path:'/6/system',agent:false},response=>{
+   let text='';response.on('data',chunk=>{text+=chunk;if(text.length>65536)request.destroy(new Error('Systemantwort zu groß'));});
+   response.on('end',()=>{try{const system=JSON.parse(text);finish(response.statusCode===200&&system.api_version?.Major===6);}catch{finish(false);}});
+   response.on('error',()=>finish(false));
+  });
+  const timer=setTimeout(()=>{finish(false);request.destroy();},1000);
+  request.on('error',()=>finish(false));
+ });
+}
+
+async function collect(request=api,health=reachable){
  const empty={online:false,power:'unknown',app:'',title:'',playback:'unknown',error:''};
  try{
-  const config=credentials();const state=await api('GET','powerstate',undefined,config);
+  const config=credentials();const state=await request('GET','powerstate',undefined,config);
   let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
   try{await applyPendingHdmi3(config,state.powerstate==='On');}catch(e){error='HDMI 3 noch nicht gesetzt: '+e.message;}
   return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
- }catch(error){return {...empty,error:networkFailure(error)?'TV-Netzwerkverbindung unterbrochen; Standby oder WLAN/API prüfen.':error.message};}
+ }catch(error){
+  if(networkFailure(error)){
+   let online=false;try{online=await health();}catch{}
+   return {...empty,online,error:online?'TV erreichbar, verschlüsselte Steuerung antwortet nicht. TV vollständig neu starten.':'TV-Netzwerkverbindung unterbrochen; Standby oder WLAN/API prüfen.'};
+  }
+  return {...empty,error:error.message};
+ }
 }
 
 async function execute(command,request=api,wakeDevice=wake){
@@ -142,7 +163,7 @@ async function pair(){
  fs.writeFileSync(FILE,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.chmodSync(FILE,0o600);
  console.log('TV gekoppelt. Zugangsdaten ausschließlich lokal gespeichert.');
 }
-module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3,networkFailure};
+module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3,networkFailure,reachable};
 if(require.main===module){
  const action=process.argv[2]||'status';
  (action==='pair'?pair():action==='status'?collect().then(status=>console.log(JSON.stringify(status))):Promise.reject(new Error('Aufruf: philips-tv.js pair oder status'))).catch(error=>{console.error(error.message);process.exitCode=1;});

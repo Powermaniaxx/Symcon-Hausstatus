@@ -61,6 +61,13 @@ Längere Timeouts und Schreibbefehle werden nicht automatisch wiederholt.
 Ein Verbindungsabbruch vor dem TLS-Aufbau erlaubt beim expliziten Ein-Befehl
 ebenfalls WLAN-Wecken. PIN- und Zertifikatsfehler erlauben dies nicht.
 
+Wenn die HTTPS-Steuerung ausfällt, wird zusätzlich die öffentliche Systemantwort
+auf HTTP-Port 1925 höchstens eine Sekunde lang abgefragt. Dabei werden keine
+Zugangsdaten übertragen. Antwortet diese Schnittstelle, bleibt die Verbindung
+online, der Betrieb aber unbekannt. Die Diagnose unterscheidet den Ausfall der
+verschlüsselten Steuerung von einem insgesamt nicht erreichbaren TV. Dies ersetzt
+keine Energiezustandsmessung und repariert keinen hängenden Dienst im TV.
+
 TV-Ein bleibt auch bei nicht erreichbarer API verfügbar, damit WLAN-Wecken möglich
 ist. Fehlende Kopplung wird als Diagnose angezeigt. Die Steuerung verwendet das
 konkret am TV geprüfte Zertifikat; bei einem Zertifikatswechsel wird die Verbindung
