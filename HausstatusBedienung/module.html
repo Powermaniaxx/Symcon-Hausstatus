@@ -1084,8 +1084,9 @@ function renderOtherShields(devices,bedroom=[]){
  for(const [room,name] of [['schlafzimmer','Schlafzimmer'],['ankleidezimmer','Ankleidezimmer']]){
   const status=devices[room];if(!status)continue;
   const box=card('shield-'+room,'','', '');box.replaceChildren();box.className='overview-group';
-  const title=document.createElement('h2');text(title,'Medien '+name);box.append(title);renderShield(box,status);
+  const title=document.createElement('h2');text(title,'Medien '+name);box.append(title);
   if(room==='schlafzimmer')renderBedroomMedia(box,bedroom);
+  renderShield(box,status);
  }
 }
 function renderBedroomMedia(box,items){
