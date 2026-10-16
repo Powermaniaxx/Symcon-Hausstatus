@@ -19,8 +19,16 @@ const server = http.createServer((req,res) => {
         assert.equal(received.body.params[0],12345);
         assert.deepEqual(JSON.parse(received.body.params[1]),status);
         assert.equal(received.auth,'Basic '+Buffer.from('fixture:local-test').toString('base64'));
-        reply={jsonrpc:'2.0',id:1,error:{code:-1,message:'fixture'}};
-        await assert.rejects(send(status),/Symcon RPC fehlgeschlagen/);
+        const command={id:'a'.repeat(24),action:'wake',expires:12345};
+        reply={jsonrpc:'2.0',id:1,result:JSON.stringify({command})};
+        assert.deepEqual(await send(status),command);
+        reply={jsonrpc:'2.0',id:1,error:{code:-1,message:'fixture local-test'}};
+        await assert.rejects(send(status),error => {
+            assert.match(error.message,/Symcon RPC fehlgeschlagen \(-1\):/);
+            assert.ok(!error.message.includes('local-test'));
+            assert.ok(!error.message.includes('fixture'));
+            return true;
+        });
         process.env.SYMCON_INSTANCE_ID='invalid';
         await assert.rejects(send(status),/fehlen/);
         console.log('Shield RPC: 6 checks passed');

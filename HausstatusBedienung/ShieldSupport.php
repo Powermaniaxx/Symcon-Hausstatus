@@ -10,6 +10,7 @@ trait HausstatusShieldSupport
     private function CreateShield(): void
     {
         $this->RegisterPropertyBoolean('ShieldEnabled', false);
+        $this->RegisterAttributeString('ShieldPowerQueue', '{}');
         // Presentation belongs to this view, independently of ConfigSource.
         $this->RegisterPropertyBoolean('ShieldCompact', false);
         foreach (self::SHIELD_DEVICES as $room => $prefix) {
@@ -43,7 +44,33 @@ trait HausstatusShieldSupport
         return $ids;
     }
 
-    public function UpdateShield(string $JSON): void
+    private function ShieldPowerQueue(string $device, ?bool $on = null, string $ack = ''): ?array
+    {
+        $key = 'SVHSShieldQueue' . $this->InstanceID;
+        if (!IPS_SemaphoreEnter($key, 1000)) { throw new RuntimeException('Shield-Bedienung beschäftigt.'); }
+        try {
+            $queue = json_decode($this->ReadAttributeString('ShieldPowerQueue'), true, 16, JSON_THROW_ON_ERROR);
+            if (!is_array($queue)) { $queue = []; }
+            if ($on !== null) {
+                $queue[$device] = ['id' => bin2hex(random_bytes(12)), 'action' => $on ? 'wake' : 'sleep', 'expires' => time() + 45];
+            } elseif (isset($queue[$device]) && (($queue[$device]['expires'] ?? 0) < time() || $ack === ($queue[$device]['id'] ?? ''))) {
+                unset($queue[$device]);
+            }
+            $this->WriteAttributeString('ShieldPowerQueue', json_encode($queue, JSON_THROW_ON_ERROR));
+            return $queue[$device] ?? null;
+        } finally { IPS_SemaphoreLeave($key); }
+    }
+
+    private function SetShieldPower(string $device, mixed $on): void
+    {
+        if (!isset(self::SHIELD_DEVICES[$device]) || !is_bool($on)) { throw new InvalidArgumentException('Ungültiger Shield-Befehl.'); }
+        if (!$this->ConfigBoolean('ShieldEnabled')) { throw new RuntimeException('Shield ist deaktiviert.'); }
+        $owner = $this->ShieldOwner();
+        if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'ShieldPower_' . $device, $on); return; }
+        $this->ShieldPowerQueue($device, $on);
+    }
+
+    public function UpdateShield(string $JSON): string
     {
         if (!$this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyInteger('ConfigSource') !== 0) {
             throw new RuntimeException('Shield in der zentralen Hausstatus-Instanz aktivieren.');
@@ -73,6 +100,9 @@ trait HausstatusShieldSupport
         }
         // Receipt time is the commit marker and does not depend on the NAS clock.
         $this->SetValue($prefix . 'Updated', time());
+        $ack = $data['powerAck'] ?? '';
+        if (!is_string($ack) || strlen($ack) > 64) { $ack = ''; }
+        return json_encode(['command' => $this->ShieldPowerQueue($device, null, $ack)], JSON_THROW_ON_ERROR);
     }
 
     public function ExpireShield(): void
@@ -108,6 +138,7 @@ trait HausstatusShieldSupport
             $data = ['online' => $data['online'], 'error' => $data['error'],
                 'stale' => $data['stale'], 'compact' => true];
         }
+        $data['device'] = array_search($prefix, self::SHIELD_DEVICES, true);
         if ($prefix === 'Shield') {
             $data['devices'] = ['ankleidezimmer' => $this->ShieldState('ShieldDressing'),
                 'schlafzimmer' => $this->ShieldState('ShieldBedroom')];

@@ -48,10 +48,14 @@ function adb(args, timeout, env) {
     }));
 }
 
-async function collect() {
+function adbEnvironment() {
     const home = process.env.SHIELD_ADB_HOME || '/data/shield-adb';
     fs.mkdirSync(path.join(home,'.android'),{recursive:true,mode:0o700});
-    const env = {...process.env, HOME:home, ANDROID_USER_HOME:path.join(home,'.android'), ADB_VENDOR_KEYS:path.join(home,'.android')};
+    return {...process.env, HOME:home, ANDROID_USER_HOME:path.join(home,'.android'), ADB_VENDOR_KEYS:path.join(home,'.android')};
+}
+
+async function collect() {
+    const env = adbEnvironment();
     try {
         // No kill-server/disconnect: other ADB consumers must keep their connections.
         await adb(['connect',TARGET],2000,env);
@@ -84,6 +88,19 @@ async function send(status) {
         throw new Error('Symcon RPC fehlgeschlagen ('+String(result.error.code ?? '?')+'): '+detail);
     }
     if(result.id !== 1 || !Object.hasOwn(result,'result')) throw new Error('Ungültige Symcon-RPC-Antwort.');
+    if(result.result == null) return null; // Older module: polling remains compatible.
+    const reply = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+    return reply.command ?? null;
+}
+
+async function executePower(command, run = adb) {
+    if(command == null) return false;
+    if(!command || !/^[a-f0-9]{24}$/.test(command.id) || !['wake','sleep'].includes(command.action)
+        || !Number.isInteger(command.expires)) throw new Error('Ungültiger Shield-Schaltbefehl.');
+    if(command.expires < Math.floor(Date.now()/1000)) return false;
+    if(!TARGET) throw new Error('Unbekannte Shield.');
+    await run(['-s',TARGET,'shell','input','keyevent',command.action === 'wake' ? '224' : '223'],1500,adbEnvironment());
+    return true;
 }
 
 async function main() {
@@ -96,10 +113,13 @@ async function main() {
         fs.rmdirSync(lock); fs.mkdirSync(lock);
     }
     try {
-        const status = {...await collect(),device};
-        await send(status);
+        const ackFile = '/data/shield/power-ack-'+device;
+        const powerAck = fs.existsSync(ackFile) ? fs.readFileSync(ackFile,'utf8').trim() : '';
+        const status = {...await collect(),device,powerAck};
+        const command = await send(status);
+        if(command && status.online && await executePower(command)) fs.writeFileSync(ackFile,command.id,{mode:0o600});
         console.log(JSON.stringify({ok:true,device,online:status.online,power:status.power,error:status.error}));
     } finally { fs.rmdirSync(lock); }
 }
-module.exports = {parse,blank,collect,send};
+module.exports = {parse,blank,collect,send,executePower};
 if(require.main === module) main().catch(error => {console.error(error.message);process.exitCode=1;});

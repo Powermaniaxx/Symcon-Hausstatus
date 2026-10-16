@@ -1135,6 +1135,10 @@ function renderShield(cinema,shield){
  for(const [name,value] of rows){
   const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
  }
+ if(shield.device){
+  buttons(box,'ShieldPower_'+shield.device,shield.online===true&&!shield.stale,shield.power==='awake'?true:shield.power==='standby'?false:null);
+  const hint=document.createElement('div');hint.className='small';text(hint,'Aus = Standby · Ausführung innerhalb von 15 Sekunden');box.append(hint);
+ }
  if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
  cinema.append(box);
  return box;

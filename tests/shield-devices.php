@@ -9,6 +9,8 @@ function IPS_GetObjectIDByIdent(string $ident, int $owner): int|false { return a
 function IPS_VariableExists(int $id): bool { return isset($GLOBALS['vars'][$id]); }
 function GetValue(int $id): mixed { return $GLOBALS['vars'][$id]['value']; }
 function RequestAction(int $id, mixed $value): bool { $GLOBALS['actions'][] = [$id, $value]; return true; }
+function IPS_SemaphoreEnter(string $key, int $timeout): bool { return true; }
+function IPS_SemaphoreLeave(string $key): void {}
 function check(bool $ok, string $message): void { if (!$ok) { throw new RuntimeException($message); } }
 function rejects(callable $fn): void { try { $fn(); } catch (InvalidArgumentException|RuntimeException $e) { return; } throw new Exception('Expected rejection'); }
 class Fixture {
@@ -16,10 +18,14 @@ class Fixture {
     use HausstatusBedroomMediaSupport;
     public int $InstanceID = 100;
     public array $props = ['ConfigSource' => 0];
+    public array $attributes = [];
     public function __construct() { $this->CreateShield(); $this->CreateBedroomMedia(); $this->props['ShieldEnabled'] = true; }
     private function RegisterPropertyBoolean(string $key, bool $default): void { $this->props[$key] = $default; }
     private function RegisterPropertyInteger(string $key, int $default): void { $this->props[$key] = $default; }
     private function RegisterTimer(mixed ...$args): void {}
+    private function RegisterAttributeString(string $key, string $value): void { $this->attributes[$key]=$value; }
+    private function ReadAttributeString(string $key): string { return $this->attributes[$key]; }
+    private function WriteAttributeString(string $key, string $value): void { $this->attributes[$key]=$value; }
     private function register(string $ident, mixed $default): void { $id=count($GLOBALS['vars'])+1000; $GLOBALS['vars'][$id]=['id'=>$id,'ident'=>$ident,'value'=>$default]; }
     private function RegisterVariableBoolean(string $ident, mixed ...$args): void { $this->register($ident,false); }
     private function RegisterVariableString(string $ident, mixed ...$args): void { $this->register($ident,''); }
@@ -41,10 +47,26 @@ class Fixture {
     public function bedroom(): array { return $this->BedroomMediaState(); }
     public function living(): array { return $this->LivingMediaStatus(); }
     public function operate(string $name, mixed $value): void { $this->SetBedroomMedia($name,$value); }
+    public function power(string $device, mixed $value): void { $this->SetShieldPower($device,$value); }
 }
 $m=new Fixture();
 $status=['online'=>true,'power'=>'awake','app'=>'smarttube','playback'=>'playing','title'=>'Wohnzimmer','error'=>''];
 $m->UpdateShield(json_encode($status));
+$m->power('wohnzimmer',true);
+$wake=json_decode($m->UpdateShield(json_encode($status)),true)['command'];
+check($wake['action']==='wake','Explicit wake queued');
+check(json_decode($m->UpdateShield(json_encode($status)),true)['command']['id']===$wake['id'],'Retried until acknowledged');
+$m->power('wohnzimmer',false);
+$sleep=json_decode($m->UpdateShield(json_encode(['powerAck'=>$wake['id']]+$status)),true)['command'];
+check($sleep['action']==='sleep'&&$sleep['id']!==$wake['id'],'Old acknowledgement preserves newer command');
+check(json_decode($m->UpdateShield(json_encode(['powerAck'=>$sleep['id']]+$status)),true)['command']===null,'Acknowledgement clears command');
+$m->power('schlafzimmer',true);
+check(json_decode($m->UpdateShield(json_encode($status)),true)['command']===null,'Commands isolated per room');
+$queue=json_decode($m->attributes['ShieldPowerQueue'],true);$queue['schlafzimmer']['expires']=time()-1;
+$m->attributes['ShieldPowerQueue']=json_encode($queue);
+check(json_decode($m->UpdateShield(json_encode(['device'=>'schlafzimmer']+$status)),true)['command']===null,'Expired commands discarded');
+rejects(fn()=>$m->power('wohnzimmer',1));
+rejects(fn()=>$m->power('unknown',true));
 $m->UpdateShield(json_encode(['device'=>'ankleidezimmer']+array_replace($status,['title'=>'Ankleide'])));
 $m->UpdateShield(json_encode(['device'=>'schlafzimmer']+array_replace($status,['title'=>'Schlafen'])));
 $s=$m->state();

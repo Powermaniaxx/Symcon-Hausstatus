@@ -9,14 +9,16 @@ class Element {
  setAttribute(){}
 }
 const html=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.html','utf8');
-const root=new Element();let controls=[];
-const context={document:{createElement:()=>new Element()},text:(el,value)=>{el.textContent=String(value);},card:()=>{const box=new Element();root.append(box);return box;},renderRoomControl:(box,item)=>controls.push(item.command)};
+const root=new Element();let controls=[];const powerButtons=[];
+const context={document:{createElement:()=>new Element()},text:(el,value)=>{el.textContent=String(value);},card:()=>{const box=new Element();root.append(box);return box;},renderRoomControl:(box,item)=>controls.push(item.command),buttons:(box,command,enabled)=>powerButtons.push({command,enabled})};
 vm.createContext(context);
 vm.runInContext(html.slice(html.indexOf('function renderOtherShields('),html.indexOf('function renderLivingMediaStatus(')),context);
 vm.runInContext(html.slice(html.indexOf('function renderShield('),html.indexOf('function renderCinemaFields(')),context);
 const full={online:true,power:'awake',app:'smarttube',playback:'playing',title:'Video title',error:'',updated:10};
 const bedroom=['BedroomAvrPower','BedroomAvrZone','BedroomAvrSource','BedroomAvrVolume','BedroomAvrMute','BedroomSubwoofer'].map(command=>({command,name:command,value:{text:'Status'}}));
-context.renderOtherShields({ankleidezimmer:full,schlafzimmer:full},bedroom);
+context.renderOtherShields({ankleidezimmer:{...full,device:'ankleidezimmer'},schlafzimmer:{...full,device:'schlafzimmer'}},bedroom);
+assert.equal(powerButtons[0].command,'ShieldPower_schlafzimmer');
+assert.equal(powerButtons[1].command,'ShieldPower_ankleidezimmer');
 assert.equal(root.children.length,2);
 assert.equal(root.children[0].children[0].textContent,'Medien Schlafzimmer');
 assert.equal(root.children[1].children[0].textContent,'Medien Ankleidezimmer');
@@ -24,7 +26,9 @@ assert.deepEqual(controls,bedroom.filter(item=>item.command!=='BedroomAvrZone').
 const flatten=el=>[el.textContent,...el.children.map(flatten)].join(' ');
 assert.match(flatten(root),/Video title/);
 root.replaceChildren();controls=[];
-context.renderOtherShields({ankleidezimmer:{online:true,error:'OK',compact:true},schlafzimmer:{online:false,error:'Timeout',compact:true}},bedroom);
+context.renderOtherShields({ankleidezimmer:{online:true,error:'OK',compact:true,device:'ankleidezimmer'},schlafzimmer:{online:false,error:'Timeout',compact:true,device:'schlafzimmer'}},bedroom);
+assert.equal(powerButtons[2].enabled,false);
+assert.equal(powerButtons[3].enabled,true);
 assert.doesNotMatch(flatten(root),/Video title|Aktive App|Wiedergabe|Letzte Abfrage/);
 assert.match(flatten(root),/Online.*Diagnose/);
 assert.deepEqual(controls,bedroom.filter(item=>item.command!=='BedroomAvrZone').map(item=>item.command));
