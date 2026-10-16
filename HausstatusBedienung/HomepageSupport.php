@@ -111,12 +111,35 @@ trait HausstatusHomepageSupport
         if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
         $this->SetBuffer('HomepageLayoutError', '');
         if (!$this->ReadPropertyBoolean('SeparateHomepageTiles')) { $this->RestoreCombinedHomepage(); return; }
-        try { $this->BuildSeparateHomepage(); }
+        try {
+            $this->BuildSeparateHomepage();
+            $this->HideHomepageQuickLinks();
+        }
         catch (Throwable $e) {
             $this->RestoreCombinedHomepage();
             $this->SetBuffer('HomepageLayoutError', $e->getMessage());
             $this->SendDebug('Startseite', $e->getMessage(), 0);
         }
+    }
+
+    /**
+     * Only hide duplicate links placed directly on the homepage.
+     * The target categories stay visible for native sidebar navigation.
+     */
+    private function HideHomepageQuickLinks(): void
+    {
+        $root = $this->HomepageCategory();
+        $names = ['Anwesenheit', 'Heizung · Pläne und Wetter', 'PV-Details', 'System', 'Räume'];
+        $hidden = [];
+        foreach (IPS_GetChildrenIDs($root) as $id) {
+            if (!IPS_LinkExists($id)) { continue; }
+            $name = preg_replace('/\\s+/u', ' ', trim(IPS_GetName($id)));
+            if (!in_array($name, $names, true)) { continue; }
+            if (!IPS_ObjectExists((int)IPS_GetLink($id)['TargetID'])) { continue; }
+            if (!(IPS_GetObject($id)['ObjectIsHidden'] ?? false)) { IPS_SetHidden($id, true); }
+            $hidden[] = $id;
+        }
+        $this->SetBuffer('HiddenHomepageQuickLinks', json_encode($hidden, JSON_THROW_ON_ERROR));
     }
 
     private function BuildSeparateHomepage(): void
