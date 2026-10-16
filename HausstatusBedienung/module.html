@@ -351,6 +351,7 @@ body.presenceHistoryView main{padding-top:56px}
 }
 .mediaLivingGroup{grid-column:1/-1}.mediaLivingContent,.comfortLivingRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.mediaLivingContent>*,.comfortLivingRow>*{min-width:0}.mediaLivingContent.single{grid-template-columns:1fr}.mediaLivingContent>.shieldStatus{border-left:1px solid #8883;padding-left:12px}.mediaLivingContent h3{margin:0 0 8px;font-size:13px}.comfortLivingRow{grid-column:1/-1;align-items:stretch}.comfortLivingRow>.overview-outdoor{grid-column:auto}.comfortLivingRow>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881}
 .livingMediaStatus{margin-top:12px;padding-top:8px;border-top:1px solid #8883}.livingMediaStatus h3{font-size:11px;margin:0 0 4px}.livingMediaStatus .row{font-size:11px;line-height:1.35;padding:3px 0}.shieldStatus>.buttons{margin-top:22px;gap:10px}
+#weatherRoomsRow.homeInfoRow{display:block}.homeEnvironmentPair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;margin-top:12px}.homeEnvironmentPair.single{grid-template-columns:1fr}.homeEnvironmentPair>.section{margin-top:0;min-width:0}.homeEnvironmentPair>.overview-outdoor{grid-column:auto}.homeEnvironmentPair>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.compactHeatingProfile{position:relative;display:table;margin:6px 0 10px}.compactHeatingProfile>summary{cursor:pointer;list-style:none;display:inline-block;padding:5px 9px;border:1px solid #8885;border-radius:7px;background:#8881;font-size:11px;line-height:1.4}.compactHeatingProfile>summary::-webkit-details-marker{display:none}.compactHeatingProfile>summary:focus-visible{outline:2px solid #3c78d2}.profileChoices{display:flex;gap:5px;flex-wrap:wrap;padding-top:7px}.profileChoices button{min-height:32px;padding:5px 8px;font-size:11px}@media(max-width:600px){.homeEnvironmentPair{grid-template-columns:1fr}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -640,6 +641,7 @@ function renderModuleUpdate(data){
 function render(){
  updateRefreshButton();
  if(!state)return;
+ restoreOverviewPairing();
  el('cards').replaceChildren();
  const s=state;
  if(s.View===30){renderModuleUpdate(s.ModuleUpdate??{});return;}
@@ -691,8 +693,7 @@ function render(){
  renderMotion(s.Motion);
  renderNetwork(s.Network);
  renderDockerContainers(s.Docker);
- const profile=el('heatingProfile');profile.replaceChildren();if(s.HeatingProfileItem){profile.append(roomItemBox(s.HeatingProfileItem));displayDescription(profile,'HeatingProfile');}
- el('heatingProfileSection').hidden=!s.HeatingProfileItem;
+ renderHeatingProfile(s);
  if(s.View===9&&s.TemperatureRows?.length){const board=climateBoard(s.TemperatureRows);addClimateSteps(board,s.TemperatureRows);el('rooms').replaceChildren(board);el('rooms').className='roomSurface';}else{rows('rooms',s.Rooms.map(r=>[r.name,r.value]));el('rooms').className='';if(!s.Rooms.length)text(el('rooms'),'Keine Temperaturen eingerichtet.');}
  const wetterCom=s.WetterComForecast;
   const validWeather=(key)=>s.WeatherAvailable?.[key] && s[key]?.text && s[key].text!=='–';
@@ -1055,6 +1056,44 @@ function applyView(view){
  el('dockerSection').hidden=view!==25;el('cards').className=view===0?'dashboard':view===26?'grid sophieView':view===1||view===2?'grid':'grid single';
  for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v&&!(id==='weatherSection'&&view===16);
  if(view===0&&state.RainHistory)el('weatherSection').hidden=false;
+ if(view===0)pairOverviewSections();
+}
+function restoreOverviewPairing(){
+ const root=el('weatherRoomsRow'),weather=el('weatherSection'),rooms=el('roomsSection');
+ if(root&&weather&&rooms)root.replaceChildren(weather,rooms);
+}
+function pairOverviewSections(){
+ const root=el('weatherRoomsRow'),weather=el('weatherSection'),rooms=el('roomsSection');
+ const outdoor=el('card-outdoor'),heater=el('card-heater');
+ const pair=(name,left,right)=>{
+  const row=document.createElement('div');row.className='homeEnvironmentPair';row.id=name;
+  for(const node of [left,right]){if(node&&!node.hidden)row.append(node);}
+  if(row.children.length<2)row.className+=' single';row.hidden=!row.children.length;return row;
+ };
+ const weatherRow=pair('weatherOutdoorPair',weather,outdoor),roomsRow=pair('roomsHeaterPair',rooms,heater);
+ // Keep hidden permanent sections attached so subsequent updates can find them.
+ root.replaceChildren(weatherRow,roomsRow);
+ if(!weather.parentNode)root.append(weather);if(!rooms.parentNode)root.append(rooms);
+}
+function renderHeatingProfile(s){
+ const root=el('heatingProfile'),section=el('heatingProfileSection');root.replaceChildren();
+ el('roomsHeatingProfile')?.remove();
+ const item=s.HeatingProfileItem;
+ section.hidden=!item||[0,9].includes(s.View);
+ if(!item)return;
+ if(![0,9].includes(s.View)){root.append(roomItemBox(item));displayDescription(root,'HeatingProfile');return;}
+ const panel=document.createElement('details');panel.id='roomsHeatingProfile';panel.className='compactHeatingProfile';
+ const summary=document.createElement('summary');text(summary,'Heizungsprofil: '+(item.value?.text??'Unbekannt'));panel.append(summary);
+ if(item.control?.kind==='enum'){
+  const options=document.createElement('div');options.className='profileChoices';
+  for(const option of item.control.options??[]){
+   const button=document.createElement('button');button.type='button';text(button,option.name);button.disabled=busy||item.value?.raw===option.value;
+   button.setAttribute('aria-pressed',String(item.value?.raw===option.value));
+   button.addEventListener('click',()=>{panel.open=false;send(item.command||'RoomValue',item.command?option.value:{id:item.id,value:option.value});});options.append(button);
+  }
+  panel.append(options);
+ }else{const note=document.createElement('div');note.className='small';text(note,item.note||'Nur Statusanzeige.');panel.append(note);}
+ el('roomsSection').insertBefore(panel,el('rooms'));
 }
 function entryGroup(items){
  const group=(name,title,keys)=>{const box=document.createElement('section');box.className='overview-group '+name;const h=document.createElement('h2');text(h,displayText(name,title));box.append(h);displayDescription(box,name);const inside=document.createElement('div');inside.className='group-content';for(const key of keys)inside.append(items[key]);box.append(inside);return box;};
@@ -1077,7 +1116,7 @@ function energyGroup(items){
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
- const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);for(const room of ['schlafzimmer','ankleidezimmer']){if(items['shield-'+room])ordered.push(items['shield-'+room]);}if(items.heater||items.outdoor)ordered.push(comfortLivingRow(items));for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+ const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);for(const room of ['schlafzimmer','ankleidezimmer']){if(items['shield-'+room])ordered.push(items['shield-'+room]);}if(items.heater)ordered.push(items.heater);if(items.outdoor)ordered.push(items.outdoor);for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
 }
 function renderOtherShields(devices,bedroom=[]){
  if(!devices)return;
@@ -1636,3 +1675,4 @@ handleMessage=function(data){
 const renderContents=render;render=function(){try{renderContents();}catch(e){showStatus('Darstellung konnte nicht geladen werden: '+String(e?.message??e));}};
 render();
 </script></body></html>
+
