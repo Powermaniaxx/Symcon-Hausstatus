@@ -1076,11 +1076,11 @@ function energyGroup(items){
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
- const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);for(const room of ['ankleidezimmer','schlafzimmer']){if(items['shield-'+room])ordered.push(items['shield-'+room]);}if(items.heater||items.outdoor)ordered.push(comfortLivingRow(items));for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+ const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);for(const room of ['schlafzimmer','ankleidezimmer']){if(items['shield-'+room])ordered.push(items['shield-'+room]);}if(items.heater||items.outdoor)ordered.push(comfortLivingRow(items));for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
 }
 function renderOtherShields(devices,bedroom=[]){
  if(!devices)return;
- for(const [room,name] of [['ankleidezimmer','Ankleidezimmer'],['schlafzimmer','Schlafzimmer']]){
+ for(const [room,name] of [['schlafzimmer','Schlafzimmer'],['ankleidezimmer','Ankleidezimmer']]){
   const status=devices[room];if(!status)continue;
   const box=card('shield-'+room,'','', '');box.replaceChildren();box.className='overview-group';
   const title=document.createElement('h2');text(title,'Medien '+name);box.append(title);renderShield(box,status);
@@ -1091,6 +1091,7 @@ function renderBedroomMedia(box,items){
  if(!items?.length)return;
  const heading=document.createElement('h3');text(heading,'Marantz SR-5010 und Subwoofer');box.append(heading);
  for(const item of items){
+  if(item.command==='BedroomAvrZone')continue;
   const field=document.createElement('div');field.className='roomItem';
   const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);text(value,item.value?.text??'Nicht eingerichtet');row.append(label,value);field.append(row);
   renderRoomControl(field,item,value);
