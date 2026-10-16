@@ -401,6 +401,8 @@ a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line
   max-width:100%;text-align:left;overflow-wrap:break-word;word-break:normal;
  }
 }
+/* Separate Hausstatus tiles use automatic loading; the repeated manual-refresh footer wastes space. */
+body.hausstatusSingleTile .head{display:none}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -775,6 +777,7 @@ function render(){
 function applyHomepagePart(s){
  const part=Number(s.HomepagePart)||0;
  document.body.classList.toggle('homepagePart',part>0&&s.View===0);
+  document.body.classList.toggle('hausstatusSingleTile',s.View!==0||part>0);
  if(!part||s.View!==0)return;
  const cards={1:'card-entry',2:'card-energy',3:'card-laundry',4:'card-light',5:'card-cinema',6:'card-shield-schlafzimmer',7:'card-shield-ankleidezimmer'};
  for(const node of el('cards').children)node.hidden=node.hidden||node.id!==cards[part];
