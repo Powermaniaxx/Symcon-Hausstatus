@@ -349,6 +349,7 @@ body.presenceHistoryView main{padding-top:56px}
  .presencePerson.isResident .presenceChanges{grid-column:1/-1;grid-row:5}
  .presencePerson.isSystem .presenceState{font-size:12px}
 }
+.mediaLivingGroup{grid-column:1/-1}.mediaLivingContent,.comfortLivingRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.mediaLivingContent>*,.comfortLivingRow>*{min-width:0}.mediaLivingContent.single{grid-template-columns:1fr}.mediaLivingContent>.shieldStatus{border-left:1px solid #8883;padding-left:12px}.mediaLivingContent h3{margin:0 0 8px;font-size:13px}.comfortLivingRow{grid-column:1/-1}.comfortLivingRow>.overview-outdoor{grid-column:auto}.comfortLivingRow>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -679,7 +680,7 @@ function render(){
  if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
- const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderShield(cinema,s.Shield);
+ const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield);
  const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
  const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
  const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
@@ -1075,7 +1076,20 @@ function energyGroup(items){
 }
 function groupOverview(){
  const items=Object.fromEntries(Array.from(el('cards').children).map(n=>[n.id.replace('card-',''),n]));
- const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);if(items.heater)ordered.push(items.heater);if(items.outdoor)ordered.push(items.outdoor);for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+ const ordered=[entryGroup(items),energyGroup(items)];if(items.laundry)ordered.push(items.laundry);ordered.push(items.light,items.cinema);if(items.heater||items.outdoor)ordered.push(comfortLivingRow(items));for(const item of ordered){if(item.classList.contains('card'))dashboardHeading(item);}el('cards').replaceChildren(...ordered);
+}
+function renderMediaLiving(cinema,shield){
+ const receiver=document.createElement('div');receiver.className='card';
+ receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
+ const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
+ const content=document.createElement('div');content.className='mediaLivingContent'+(shield?'':' single');content.append(receiver);
+ cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);
+ renderShield(content,shield);
+}
+function comfortLivingRow(items){
+ const row=document.createElement('div');row.className='comfortLivingRow';
+ for(const item of [items.heater,items.outdoor]){if(!item)continue;if(item.classList.contains('card'))dashboardHeading(item);row.append(item);}
+ if(row.children.length===1)row.style.gridTemplateColumns='1fr';return row;
 }
 function renderShield(cinema,shield){
  if(!shield)return;
