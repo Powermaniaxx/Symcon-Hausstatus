@@ -1113,11 +1113,11 @@ function renderLivingMediaStatus(box,items){
 function renderMediaLiving(cinema,shield,status=[]){
  const receiver=document.createElement('div');receiver.className='card';
  receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
- renderLivingMediaStatus(receiver,status);
  const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
  const content=document.createElement('div');content.className='mediaLivingContent'+(shield?'':' single');content.append(receiver);
  cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);
- renderShield(content,shield);
+ const shieldBox=renderShield(content,shield);
+ renderLivingMediaStatus(shieldBox||receiver,status);
 }
 function comfortLivingRow(items){
  const row=document.createElement('div');row.className='comfortLivingRow';
@@ -1137,6 +1137,7 @@ function renderShield(cinema,shield){
  }
  if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
  cinema.append(box);
+ return box;
 }
 function renderCinemaFields(box,s){
  const fields=document.createElement('div');fields.className='cinemaFields';
