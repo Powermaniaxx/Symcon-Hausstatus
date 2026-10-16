@@ -246,3 +246,7 @@ Unter **Module Control** beim Hausstatus auf das **Zahnrad** klicken und den Zwe
 Zur aktuellen Version über dasselbe Zahnrad wieder **main** wählen. Die Quellen bleiben erhalten. Das Downgrade betrifft dieses Modul, nicht die installierte Symcon-Version. Alte ungepflegte Code-Stände ohne Wiederherstellung sind nicht als Rückkehrweg vorgesehen.
 
 [Offizielle Dokumentation: Module Control – Zweig wechseln](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/module-control/)
+
+## Nvidia Shield Status
+
+Separate, nur lesbare Shield-Kachel innerhalb Cinema/HEOS; eigenständiger Node-RED-Flow mit 15-Sekunden-Poll und automatischem Timeout. Vollständige Einrichtung einschließlich dauerhaftem ADB: [integrations/shield/README.md](integrations/shield/README.md).

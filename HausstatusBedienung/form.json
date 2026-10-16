@@ -522,6 +522,8 @@
       "caption": "09 · Mediengeräte und HEOS",
       "expanded": false,
       "items": [
+        {"type": "CheckBox", "name": "ShieldEnabled", "caption": "Nvidia Shield Status anzeigen (nur lesbar)"},
+        {"type": "Label", "caption": "Shield-Flow an die zentrale Hausstatus-Instanz senden. Statusvariablen werden automatisch angelegt; Timeout nach 60 Sekunden."},
         {
           "type": "SelectVariable",
           "name": "CinemaState",

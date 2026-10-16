@@ -1,0 +1,80 @@
+[
+  {
+    "id": "shield_status_15s",
+    "type": "tab",
+    "label": "Shield Status (separat)",
+    "disabled": false,
+    "info": "Nur lesend; keine bestehenden Flows ersetzen. Siehe README im Shield-Paket."
+  },
+  {
+    "id": "shield_poll_tick",
+    "type": "inject",
+    "z": "shield_status_15s",
+    "name": "Alle 15 Sekunden",
+    "props": [],
+    "repeat": "15",
+    "once": true,
+    "onceDelay": "3",
+    "x": 170,
+    "y": 100,
+    "wires": [
+      [
+        "shield_poll_exec"
+      ]
+    ]
+  },
+  {
+    "id": "shield_poll_exec",
+    "type": "exec",
+    "z": "shield_status_15s",
+    "command": "node /data/shield/poll.js",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "name": "ADB lesen → Symcon",
+    "x": 420,
+    "y": 100,
+    "wires": [
+      [
+        "shield_poll_ok"
+      ],
+      [
+        "shield_poll_error"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "shield_poll_ok",
+    "type": "debug",
+    "z": "shield_status_15s",
+    "name": "Shield Übertragung",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 680,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "shield_poll_error",
+    "type": "debug",
+    "z": "shield_status_15s",
+    "name": "Shield Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 670,
+    "y": 140,
+    "wires": []
+  }
+]

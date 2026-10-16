@@ -1,0 +1,5 @@
+ARG NODE_RED_IMAGE
+FROM ${NODE_RED_IMAGE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends adb && rm -rf /var/lib/apt/lists/*
+USER node-red

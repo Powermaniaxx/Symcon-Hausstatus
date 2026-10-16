@@ -11,6 +11,7 @@ require_once __DIR__ . '/HomepageSupport.php';
 require_once __DIR__ . '/PresenceHistorySupport.php';
 require_once __DIR__ . '/DockerSupport.php';
 require_once __DIR__ . '/LaundrySupport.php';
+require_once __DIR__ . '/ShieldSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -25,6 +26,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusPresenceHistorySupport;
     use HausstatusDockerSupport;
     use HausstatusLaundrySupport;
+    use HausstatusShieldSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -50,6 +52,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function Create(): void
     {
         parent::Create();
+        $this->CreateShield();
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
@@ -102,6 +105,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        $this->SetTimerInterval('ShieldWatchdog', $this->ReadPropertyBoolean('ShieldEnabled') && $this->ReadPropertyInteger('ConfigSource') === 0 ? 15000 : 0);
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
             $this->SetBuffer('DoorChallenges', '{}');
@@ -165,6 +169,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
+        foreach ($this->ShieldIDs() as $id) { $ids[] = $id; }
         foreach ($this->LaundrySourceIDs() as $id) { $ids[] = $id; }
         if ($this->ReadPropertyInteger('View') === 25) {
             foreach ($this->DockerContainerIDs() as $dockerInstanceID) {
@@ -1150,6 +1155,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['PresenceHistory'] = $this->CurrentView() === 18 ? $this->PresenceHistoryState() : null;
         $state['ExtraTileVariables'] = $this->ExtraTileVariables();
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
+        $state['Shield'] = $this->ShieldState();
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
         $state['HeosRadioItem'] = $this->HeosSplitItem('HeosRadio');
