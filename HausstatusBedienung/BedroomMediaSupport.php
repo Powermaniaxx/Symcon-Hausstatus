@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 trait HausstatusBedroomMediaSupport
 {
+    private const LIVING_MEDIA_STATUS = [
+        'LivingRearHeight' => [13241, 'Rear Height'],
+        'LivingSubwoofer' => [50165, 'Subwoofer Cinema 40'],
+        'LivingSpeakers' => [40994, 'Surround + Front Lautsprecher'],
+        'LivingFan' => [17569, 'Ventilator Cinema 40']
+    ];
     private const BEDROOM_DEFAULTS = [
         'BedroomAvrPower' => 13490, 'BedroomAvrZone' => 47173,
         'BedroomAvrSource' => 33178, 'BedroomAvrVolume' => 18046,
@@ -13,16 +19,19 @@ trait HausstatusBedroomMediaSupport
     {
         $this->RegisterPropertyBoolean('BedroomMediaEnabled', true);
         foreach (self::BEDROOM_DEFAULTS as $name => $id) { $this->RegisterPropertyInteger($name, $id); }
+        foreach (self::LIVING_MEDIA_STATUS as $name => [$id, $label]) { $this->RegisterPropertyInteger($name, $id); }
     }
 
     private function BedroomMediaIDs(): array
     {
         if (!in_array($this->CurrentView(), [0, 6], true)) { return []; }
-        return array_map(fn(string $name): int => $this->ConfigInteger($name), array_keys(self::BEDROOM_DEFAULTS));
+        return array_map(fn(string $name): int => $this->ConfigInteger($name),
+            array_merge(array_keys(self::BEDROOM_DEFAULTS), array_keys(self::LIVING_MEDIA_STATUS)));
     }
 
     private function BedroomMediaControl(string $name): ?array
     {
+        if ($name === 'BedroomSubwoofer') { return null; }
         if (!$this->ConfigBoolean('BedroomMediaEnabled')) { return null; }
         $id = $this->ConfigInteger($name);
         if (!IPS_VariableExists($id)) { return null; }
@@ -47,6 +56,15 @@ trait HausstatusBedroomMediaSupport
             catch (Throwable $e) { $note = $e->getMessage(); }
             $items[] = ['id' => $id, 'name' => $label, 'command' => $name,
                 'value' => $this->Read($id), 'control' => $control, 'note' => $note];
+        }
+        return $items;
+    }
+
+    private function LivingMediaStatus(): array
+    {
+        $items = [];
+        foreach (self::LIVING_MEDIA_STATUS as $name => [$defaultID, $label]) {
+            $items[] = ['name' => $label, 'value' => $this->Read($this->ConfigInteger($name))];
         }
         return $items;
     }

@@ -1163,6 +1163,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['Shield'] = $this->ShieldState();
         $state['BedroomMedia'] = in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
+        $state['LivingMediaStatus'] = in_array($this->CurrentView(), [0, 6], true) ? $this->LivingMediaStatus() : [];
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
         $state['HeosRadioItem'] = $this->HeosSplitItem('HeosRadio');

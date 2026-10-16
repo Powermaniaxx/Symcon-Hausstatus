@@ -39,6 +39,7 @@ class Fixture {
     public function state(): ?array { return $this->ShieldState(); }
     public function ids(): array { return $this->ShieldIDs(); }
     public function bedroom(): array { return $this->BedroomMediaState(); }
+    public function living(): array { return $this->LivingMediaStatus(); }
     public function operate(string $name, mixed $value): void { $this->SetBedroomMedia($name,$value); }
 }
 $m=new Fixture();
@@ -61,7 +62,8 @@ $m->props['ShieldCompact']=true; $s=$m->state();
 foreach ([$s,...array_values($s['devices'])] as $device) { check(!isset($device['title'])&&!isset($device['app'])&&$device['compact'],'Compact all rooms'); }
 rejects(fn()=>$m->UpdateShield(json_encode(['device'=>'unknown']+$status)));
 foreach ([13490=>0,47173=>0,33178=>1,18046=>2,41849=>0,20175=>0] as $id=>$type) { $GLOBALS['vars'][$id]=['id'=>$id,'ident'=>'fixture'.$id,'value'=>0,'type'=>$type,'action'=>true]; }
-$m->operate('BedroomSubwoofer',true);check(end($GLOBALS['actions'])===[20175,true],'Subwoofer routed');
+rejects(fn()=>$m->operate('BedroomSubwoofer',true));
+check(array_values(array_filter($m->bedroom(),fn($item)=>$item['command']==='BedroomSubwoofer'))[0]['control']===null,'Subwoofer status only');
 $m->operate('BedroomAvrSource',2);check(end($GLOBALS['actions'])===[33178,2],'Source routed');
 $m->operate('BedroomAvrVolume',-64.0);check(end($GLOBALS['actions'])===[18046,-64.0],'Volume routed');
 rejects(fn()=>$m->operate('BedroomAvrSource',99));
@@ -69,4 +71,10 @@ rejects(fn()=>$m->operate('BedroomAvrPower',1));
 rejects(fn()=>$m->operate('BedroomAvrVolume',10));
 rejects(fn()=>$m->operate('Cinema',true));
 $m->props['BedroomMediaEnabled']=false;rejects(fn()=>$m->operate('BedroomSubwoofer',false));
+foreach ([13241,50165,40994,17569] as $id) { $GLOBALS['vars'][$id]=['id'=>$id,'ident'=>'status'.$id,'value'=>true]; }
+$before=count($GLOBALS['actions']);
+$living=$m->living();
+check(array_column($living,'name')===['Rear Height','Subwoofer Cinema 40','Surround + Front Lautsprecher','Ventilator Cinema 40'],'Living status labels');
+check(count(array_filter($living,fn($item)=>$item['value']['raw']===true))===4,'Living status values');
+check(count($GLOBALS['actions'])===$before,'Reading status never operates devices');
 echo "Shield devices and bedroom actions: passed\n";

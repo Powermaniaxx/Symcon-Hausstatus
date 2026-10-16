@@ -530,6 +530,30 @@
         {"type": "CheckBox", "name": "ShieldEnabled", "caption": "Nvidia Shield Status anzeigen (nur lesbar)"},
         {"type": "Label", "caption": "Shield-Flow an die zentrale Hausstatus-Instanz senden. Statusvariablen werden automatisch angelegt; Timeout nach 60 Sekunden."},
         {
+          "type": "Label",
+          "caption": "Wohnzimmer · Gerätestatus (nur Anzeige)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingRearHeight",
+          "caption": "Rear Height – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingSubwoofer",
+          "caption": "Subwoofer Cinema 40 – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingSpeakers",
+          "caption": "Surround + Front Lautsprecher – Status"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingFan",
+          "caption": "Ventilator Cinema 40 – Status"
+        },
+        {
           "type": "SelectVariable",
           "name": "CinemaState",
           "caption": "Ein/Aus – Statusvariable"
@@ -589,7 +613,7 @@
         {
           "type": "CheckBox",
           "name": "BedroomMediaEnabled",
-          "caption": "AVR und Subwoofer im Schlafzimmer bedienen"
+          "caption": "AVR im Schlafzimmer bedienen"
         },
         {
           "type": "SelectVariable",
@@ -619,7 +643,7 @@
         {
           "type": "SelectVariable",
           "name": "BedroomSubwoofer",
-          "caption": "Subwoofer Ein/Aus"
+          "caption": "Subwoofer – nur Status"
         }
       ]
     },

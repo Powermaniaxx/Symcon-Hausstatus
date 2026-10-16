@@ -680,7 +680,7 @@ function render(){
  if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
- const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
+ const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
  const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
  const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
  const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
@@ -1099,9 +1099,21 @@ function renderBedroomMedia(box,items){
   box.append(field);
  }
 }
-function renderMediaLiving(cinema,shield){
+function renderLivingMediaStatus(box,items){
+ if(!items?.length)return;
+ const section=document.createElement('div');section.className='livingMediaStatus';
+ const heading=document.createElement('h3');text(heading,'Gerätestatus');section.append(heading);
+ for(const item of items){
+  const row=document.createElement('div');row.className='row';const label=document.createElement('span'),value=document.createElement('span');text(label,item.name);
+  const entry=item.value; text(value,typeof entry?.raw==='boolean'?(entry.raw?'Ein':'Aus'):(entry?.text??'Unbekannt'));
+  row.append(label,value);section.append(row);
+ }
+ box.append(section);
+}
+function renderMediaLiving(cinema,shield,status=[]){
  const receiver=document.createElement('div');receiver.className='card';
  receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
+ renderLivingMediaStatus(receiver,status);
  const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
  const content=document.createElement('div');content.className='mediaLivingContent'+(shield?'':' single');content.append(receiver);
  cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);

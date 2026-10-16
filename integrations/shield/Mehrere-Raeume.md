@@ -13,8 +13,7 @@ Im Modulordner `HausstatusBedienung` diese vollständigen Dateien zusammen aktua
 Danach im Master 52627 Änderungen übernehmen. Neue Variablen entstehen automatisch.
 Die vorhandenen Wohnzimmer-Variablen und der Aufruf ohne Raumargument bleiben kompatibel.
 Susis eigene Ansicht mit `ShieldCompact=true` zeigt bei allen drei Shields nur Online
-und Diagnose. Master und Sven behalten die ausführliche Darstellung. AVR/Subwoofer
-sind in allen Ansichten bedienbar, wenn die vorhandenen Symcon-Aktionen verfügbar sind.
+und Diagnose. Master und Sven behalten die ausführliche Darstellung. Der AVR ist in allen Ansichten bedienbar; der Subwoofer zeigt nur seinen Status,, wenn die vorhandenen Symcon-Aktionen verfügbar sind.
 
 ## Node-RED ergänzen
 
@@ -48,7 +47,7 @@ im Abschnitt „Medien Schlafzimmer · Marantz SR-5010 und Subwoofer“ angepass
 | Quelle | 33178 |
 | Lautstärke | 18046 |
 | Stumm | 41849 |
-| Subwoofer Ein/Aus | 20175 |
+| Subwoofer Status (nur Anzeige) | 20175 |
 
 Bedienung verwendet ausschließlich vorhandene `RequestAction`-Aktionen. Quellenoptionen,
 Lautstärkegrenzen und Schrittweite stammen aus der jeweiligen Symcon-Variable.
@@ -61,3 +60,7 @@ JavaScript-Syntax, Raumgruppen und unveränderte vorhandene Heizprofil-Tests.
 Der bestehende Laundry-Test hat eine unabhängige unvollständige Fixture
 (`IPS_GetInstanceListByModuleID` fehlt); die Laundry-Implementierung wurde nicht verändert.
 Die neuen Geräte und Bedienaktionen müssen nach Installation am realen System geprüft werden.
+
+## Wohnzimmer · zusätzliche Statusanzeigen
+
+Rear Height 13241, Subwoofer Cinema 40 50165, Surround + Front Lautsprecher 40994 und Ventilator Cinema 40 17569 erscheinen als reine Statuszeilen in Medien Wohnzimmer. Die Zuordnung ist im Master unter Mediengeräte/HEOS einstellbar. Keine Bedienaktionen werden dafür angeboten.
