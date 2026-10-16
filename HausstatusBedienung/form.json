@@ -16,6 +16,11 @@
           "caption": "Diese Kachel aktivieren"
         },
         {
+          "type": "CheckBox",
+          "name": "ShieldCompact",
+          "caption": "Shield kompakt anzeigen – nur Online und Diagnose (nur diese Ansicht)"
+        },
+        {
           "type": "Select",
           "name": "View",
           "caption": "Welche Kachel möchtest du anzeigen?",
