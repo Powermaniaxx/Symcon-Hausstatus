@@ -356,6 +356,16 @@ body.presenceHistoryView main{padding-top:56px}
 a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line-height:1.4;color:inherit;text-decoration:underline;cursor:pointer}a.pvDetailLink[aria-disabled=true]{opacity:.45;cursor:default}.tvHdmiButton{margin-top:8px;min-height:32px;padding:5px 10px;font-size:12px}
 .homepagePart #cards{grid-template-columns:minmax(0,1fr)}
 .homepagePart #cards>*,.homepagePart #weatherRoomsRow>*{grid-column:1/-1}
+/* Stretch the INNER content to the height of each native Symcon homepage tile.
+   Native tile widths/heights remain controlled by Symcon's grid settings. */
+body.homepagePart main{min-height:100vh;display:flex;flex-direction:column}
+body.homepagePart #cards{flex:1 0 auto;grid-auto-rows:minmax(min-content,1fr)}
+body.homepagePart #cards>.overview-group,
+body.homepagePart #cards>.card{min-height:100%;align-self:stretch}
+body.homepagePart .mediaLivingContent{flex:1 1 auto;align-items:stretch}
+body.homepagePart .mediaLivingContent>.card,
+body.homepagePart .mediaLivingContent>.mediaDeviceColumn{height:100%}
+body.homepagePart .laundryDevices{flex:1 1 auto}
 /* Split homepage tiles already show their title in the native Symcon tile header. */
 .homepagePart #card-laundry > h2,
 .homepagePart #card-light > .dashboardCardHeading,
