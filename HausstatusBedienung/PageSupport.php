@@ -74,7 +74,7 @@ trait HausstatusPageSupport
     private function UsesInlinePages(): bool
     {
         return $this->ReadPropertyInteger('View') === 12 || (in_array($this->ReadPropertyInteger('View'), [0, 15, 29], true)
-            && (in_array($this->ReadPropertyInteger('View'), [15, 29], true) || $this->ReadPropertyInteger('ConfigSource') === 0) && !$this->SupportsHtmlFullscreen());
+            && (in_array($this->ReadPropertyInteger('View'), [15, 29], true) || $this->ReadPropertyInteger('ConfigSource') === 0 || $this->ReadPropertyInteger('HomepagePart') > 0) && !$this->SupportsHtmlFullscreen());
     }
 
     private function NavigationRooms(): array

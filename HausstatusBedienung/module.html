@@ -354,6 +354,8 @@ body.presenceHistoryView main{padding-top:56px}
 #weatherRoomsRow.homeInfoRow{display:block}.homeEnvironmentPair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;margin-top:12px}.homeEnvironmentPair.single{grid-template-columns:1fr}.homeEnvironmentPair>.section{margin-top:0;min-width:0}.homeEnvironmentPair>.overview-outdoor{grid-column:auto}.homeEnvironmentPair>.card{padding:12px;border:1px solid #8883;border-radius:12px;background:#8881;min-width:0}.compactHeatingProfile{position:relative;display:table;margin:6px 0 10px}.compactHeatingProfile>summary{cursor:pointer;list-style:none;display:inline-block;padding:5px 9px;border:1px solid #8885;border-radius:7px;background:#8881;font-size:11px;line-height:1.4}.compactHeatingProfile>summary::-webkit-details-marker{display:none}.compactHeatingProfile>summary:focus-visible{outline:2px solid #3c78d2}.profileChoices{display:flex;gap:5px;flex-wrap:wrap;padding-top:7px}.profileChoices button{min-height:32px;padding:5px 8px;font-size:11px}@media(max-width:600px){.homeEnvironmentPair{grid-template-columns:1fr}}
 .mediaDeviceColumn{min-width:0;border-left:1px solid #8883;padding-left:12px}.mediaDeviceColumn>.shieldStatus+.shieldStatus{margin-top:18px;padding-top:14px;border-top:1px solid #8883}
 a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line-height:1.4;color:inherit;text-decoration:underline;cursor:pointer}a.pvDetailLink[aria-disabled=true]{opacity:.45;cursor:default}.tvHdmiButton{margin-top:8px;min-height:32px;padding:5px 10px;font-size:12px}
+.homepagePart #cards{grid-template-columns:minmax(0,1fr)}
+.homepagePart #cards>*,.homepagePart #weatherRoomsRow>*{grid-column:1/-1}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -723,6 +725,24 @@ function render(){
  renderRoomSections(s.RoomSections??[],s.View===12?s.TemperatureRows??[]:[]);
  applyView(s.View??0);
  renderPageNavigation();
+ applyHomepagePart(s);
+}
+function applyHomepagePart(s){
+ const part=Number(s.HomepagePart)||0;
+ document.body.classList.toggle('homepagePart',part>0&&s.View===0);
+ if(!part||s.View!==0)return;
+ const cards={1:'card-entry',2:'card-energy',3:'card-laundry',4:'card-light',5:'card-cinema',6:'card-shield-schlafzimmer',7:'card-shield-ankleidezimmer'};
+ for(const node of el('cards').children)node.hidden=node.hidden||node.id!==cards[part];
+ el('cards').hidden=!cards[part];
+ el('weatherRoomsRow').hidden=![8,9].includes(part);
+ const weather=el('weatherOutdoorPair'),rooms=el('roomsHeaterPair');
+ if(weather)weather.hidden=weather.hidden||part!==8;
+ if(rooms)rooms.hidden=rooms.hidden||part!==9;
+ for(const [id,owner] of [['motionSection',10],['roomDeviceSections',11],['extraTileSection',12]]){
+  const node=el(id);node.hidden=node.hidden||part!==owner;
+ }
+ for(const id of ['heatingProfileSection','networkSection','dockerSection','presenceHistorySection'])el(id).hidden=true;
+ if(part!==11){el('roomNavigation').hidden=true;el('inlineRooms').hidden=true;}
 }
 // Built-in illustrated avatars. These are used only when no own media image is selected.
 function defaultPresenceAvatar(name){
@@ -1044,6 +1064,7 @@ function renderNetwork(data){
  }
 }
 function applyView(view){
+ el('weatherRoomsRow').hidden=false;
  el('weatherRoomsRow').classList.toggle('homeInfoRow',view===0);
  const keys={1:['presence','alarm'],2:['lock','contact','permission'],26:['lock','alarm','permission'],27:['laundry'],28:['presence','alarm','lock','contact','permission'],29:['pv','battery'],4:['battery'],5:['light'],6:['cinema','shield-ankleidezimmer','shield-schlafzimmer'],7:['pv'],8:[],9:[],10:[],11:['outdoor'],14:['heater'],15:['pv'],16:[],17:['dining']};
  for(const n of el('cards').children)n.hidden=view!==0&&!(keys[view]??[]).includes(n.id.replace('card-',''));

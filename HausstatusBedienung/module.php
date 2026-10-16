@@ -66,6 +66,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('DockerTileCategory', 0);
         $this->RegisterPropertyBoolean('DockerAllowSymconRestart', false);
         $this->RegisterPropertyBoolean('SeparateHomepageTiles', false);
+        $this->RegisterPropertyBoolean('PreserveHomepageStyle', true);
+        $this->RegisterPropertyInteger('HomepagePart', 0);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
         $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
@@ -1142,6 +1144,9 @@ class HausstatusBedienung extends IPSModuleStrict
             ];
         }
         $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
+        $state['HomepagePart'] = $this->ReadPropertyInteger('HomepagePart');
+        $part = $state['View'] === 0 ? $state['HomepagePart'] : 0;
+        $shows = static fn(array $parts): bool => $part === 0 || in_array($part, $parts, true);
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
         $detailsID = $this->BatteryWarningDetailsID();
         $state['BatteryWarningDetails'] = $detailsID > 0 ? (string)GetValueString($detailsID) : '';
@@ -1151,12 +1156,12 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DisplaySettings'] = $this->DisplaySettings();
         $state['Network'] = $this->NetworkState();
         $state['Docker'] = $this->DockerState();
-        $state['Laundry'] = $this->LaundryState();
-        $state['HeatingProfileItem'] = $this->HeatingProfileItem();
+        $state['Laundry'] = $shows([3]) ? $this->LaundryState() : null;
+        $state['HeatingProfileItem'] = $shows([9]) ? $this->HeatingProfileItem() : null;
         $state['DoorReason'] = $this->DoorReason();
-        $state['Motion'] = $this->HasMotionView() ? $this->MotionState() : null;
-        $state['RainHistory'] = $this->HasRainView() ? $this->RainHistoryState() : null;
-        $state['WetterComForecast'] = in_array($this->CurrentView(), [0, 10, 16], true) ? $this->WetterComForecastState() : null;
+        $state['Motion'] = $shows([10]) && $this->HasMotionView() ? $this->MotionState() : null;
+        $state['RainHistory'] = $shows([8]) && $this->HasRainView() ? $this->RainHistoryState() : null;
+        $state['WetterComForecast'] = $shows([8]) && in_array($this->CurrentView(), [0, 10, 16], true) ? $this->WetterComForecastState() : null;
         $state['WeatherAvailable'] = [];
         foreach (['OutdoorTemperature', 'FeelsLikeTemperature', 'TodayLowTemperature', 'TodayHighTemperature', 'RainProbability', 'OutdoorHumidity'] as $weatherName) {
             $weatherID = $this->ConfigInteger($weatherName);
@@ -1164,11 +1169,11 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $state['PresenceHistory'] = $this->CurrentView() === 18 ? $this->PresenceHistoryState() : null;
         $state['ExtraTileVariables'] = $this->ExtraTileVariables();
-        $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
-        $state['Shield'] = $this->ShieldState();
-        $state['PhilipsTv'] = in_array($this->CurrentView(), [0, 6], true) ? $this->ShieldState('PhilipsTv') : null;
-        $state['BedroomMedia'] = in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
-        $state['LivingMediaStatus'] = in_array($this->CurrentView(), [0, 6], true) ? $this->LivingMediaStatus() : [];
+        $state['Outdoor'] = $shows([8]) && in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
+        $state['Shield'] = $shows([5,6,7]) ? $this->ShieldState() : null;
+        $state['PhilipsTv'] = $shows([5]) && in_array($this->CurrentView(), [0, 6], true) ? $this->ShieldState('PhilipsTv') : null;
+        $state['BedroomMedia'] = $shows([6]) && in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
+        $state['LivingMediaStatus'] = $shows([5]) && in_array($this->CurrentView(), [0, 6], true) ? $this->LivingMediaStatus() : [];
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
         $state['HeosRadioItem'] = $this->HeosSplitItem('HeosRadio');
@@ -1179,18 +1184,18 @@ class HausstatusBedienung extends IPSModuleStrict
         try { $state['VolumeControl'] = $this->CinemaVolumePlan(); }
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
-        $state['RoomSections'] = $this->RoomSections();
-        $state['TemperatureRows'] = $this->TemperatureRows();
+        $state['RoomSections'] = $shows([11]) ? $this->RoomSections() : [];
+        $state['TemperatureRows'] = $shows([11]) ? $this->TemperatureRows() : [];
         $state['RoomSummary'] = [];
         if ($state['View'] === 12 && $state['PageRoom'] === '') {
             $state['RoomSummary'] = $this->RoomSummary($state['RoomSections'], $state['TemperatureRows']);
             $state['RoomSections'] = []; $state['TemperatureRows'] = [];
         }
         $state['SeparateHomepageTiles'] = $this->ConfigBoolean('SeparateHomepageTiles');
-        $state['Heater'] = in_array($this->CurrentView(), [0, 14], true) ? $this->HeaterState() : null;
-        $state['Dining'] = in_array($this->CurrentView(), [0, 5, 17], true)
+        $state['Heater'] = $shows([9]) && in_array($this->CurrentView(), [0, 14], true) ? $this->HeaterState() : null;
+        $state['Dining'] = $shows([4]) && in_array($this->CurrentView(), [0, 5, 17], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
-        $state['PVInverters'] = $this->PVInverters();
+        $state['PVInverters'] = $shows([2]) ? $this->PVInverters() : [];
         $state['PVDetailsTarget'] = in_array($this->CurrentView(), [0, 15, 29], true) ? $this->PVDetailsTarget() : 0;
         $state['RoomNavigationTarget'] = $this->CurrentView() === 0 ? $this->RoomNavigationTarget() : 0;
         if ($this->HasTemperatureView()) {

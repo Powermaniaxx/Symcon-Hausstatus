@@ -15,7 +15,12 @@ trait HausstatusHomepageSupport
     {
         $result = [];
         foreach (IPS_GetObjectList() as $id) {
-            if (!preg_match('/^SVHSHome(?:Instance|Tile)_([0-9]+)$/D', IPS_GetObject($id)['ObjectIdent'] ?? '', $match)) { continue; }
+            $ident = IPS_GetObject($id)['ObjectIdent'] ?? '';
+            if (preg_match('/^SVHSHomePart_([0-9]+)$/D', $ident)) {
+                if ($this->OwnedHomepageTile($id, 0)) { $result[] = $id; }
+                continue;
+            }
+            if (!preg_match('/^SVHSHome(?:Instance|Tile)_([0-9]+)$/D', $ident, $match)) { continue; }
             $target = IPS_LinkExists($id) ? (int)IPS_GetLink($id)['TargetID'] : $id;
             if ($this->OwnedHomepageTile($target, (int)$match[1])) { $result[] = $id; }
         }
@@ -116,6 +121,7 @@ trait HausstatusHomepageSupport
 
     private function BuildSeparateHomepage(): void
     {
+        if ($this->ReadPropertyBoolean('PreserveHomepageStyle')) { $this->BuildPreservedHomepage(); return; }
         $root = $this->HomepageCategory();
         $this->RegisterReference($root);
         $has = function (array $names): bool { foreach ($names as $name) { if ($this->ConfigInteger($name) > 0) { return true; } } return false; };
@@ -188,7 +194,69 @@ trait HausstatusHomepageSupport
         }
         foreach ($objects as $id) {
             $view = (int)IPS_GetProperty(IPS_LinkExists($id) ? IPS_GetLink($id)['TargetID'] : $id, 'View');
-            if (IPS_LinkExists($id) || !isset($plan[$view])) { IPS_SetHidden($id, true); }
+            if (IPS_LinkExists($id) || !isset($plan[$view]) || preg_match('/^SVHSHomePart_/', IPS_GetObject($id)['ObjectIdent'] ?? '')) { IPS_SetHidden($id, true); }
+        }
+        foreach ($hide as $id) { IPS_SetHidden($id, true); }
+    }
+
+    private function BuildPreservedHomepage(): void
+    {
+        $root = $this->HomepageCategory();
+        $this->RegisterReference($root);
+        $tiles = [1 => 'Anwesenheit, Alarm und Haustür', 2 => 'PV und Batteriewarnung',
+            3 => 'Waschmaschine und Trockner', 4 => 'Wohnzimmerlicht',
+            5 => 'Medien Wohnzimmer', 6 => 'Medien Schlafzimmer', 7 => 'Medien Ankleidezimmer',
+            8 => 'Wetter, Markise und Dachfenster', 9 => 'Räume und Zusatzheizung',
+            10 => 'Bewegung', 11 => 'Raumgeräte', 12 => 'Zusätzliche Variablen'];
+        $plan = [];
+        // Preflight every identifier before hiding or moving an existing presentation.
+        foreach ($tiles as $part => $title) {
+            $id = @IPS_GetObjectIDByIdent('SVHSHomePart_' . $part, $root);
+            if ($id !== false && (!$this->OwnedHomepageTile($id, 0)
+                || IPS_GetProperty($id, 'HomepagePart') !== $part)) {
+                throw new RuntimeException('Kennung für Hausstatus-Bereich ' . $part . ' ist bereits belegt.');
+            }
+            $plan[$part] = ['id' => $id === false ? 0 : $id, 'title' => $title];
+        }
+        $saved = $this->HomepageSavedLayout();
+        $previous = $saved['visibility'] ?? [];
+        $hide = [$this->InstanceID];
+        // Only replace the selected start page; other visualizations keep their master links.
+        foreach (IPS_GetChildrenIDs($root) as $id) {
+            if (IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID) { $hide[] = $id; }
+        }
+        foreach ($hide as $id) {
+            if (!array_key_exists((string)$id, $previous)) { $previous[(string)$id] = (bool)IPS_GetObject($id)['ObjectIsHidden']; }
+        }
+        $this->WriteAttributeString('HomepageLayout', json_encode(['active' => true, 'root' => $root, 'visibility' => $previous], JSON_THROW_ON_ERROR));
+        $enabled = function (int $part): bool {
+            return match ($part) {
+                3 => $this->ConfigInteger('WasherPower') > 0 || $this->ConfigInteger('DryerPower') > 0,
+                6, 7 => $this->ConfigBoolean('ShieldEnabled'),
+                10 => !$this->ConfigBoolean('SeparateDetails') && count($this->MotionSensors()) > 0,
+                11 => count($this->RoomSections()) > 0,
+                12 => count($this->ExtraTileVariables()) > 0,
+                default => true
+            };
+        };
+        $active = [];
+        foreach ($plan as $part => $entry) {
+            if (!$enabled($part)) { continue; }
+            $id = $entry['id'];
+            if ($id === 0) {
+                $id = IPS_CreateInstance('{9E33E109-4881-4E78-9906-38CAC2F1E210}');
+                IPS_SetParent($id, $root); IPS_SetIdent($id, 'SVHSHomePart_' . $part);
+                IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
+                IPS_SetProperty($id, 'View', 0); IPS_SetProperty($id, 'HomepagePart', $part);
+            }
+            IPS_SetName($id, $entry['title']); IPS_SetPosition($id, $part * 10);
+            IPS_SetProperty($id, 'ActiveView', true);
+            IPS_SetProperty($id, 'ShieldCompact', $this->ReadPropertyBoolean('ShieldCompact'));
+            if ($part === 12) { IPS_SetProperty($id, 'ExtraTileVariables', $this->ReadPropertyString('ExtraTileVariables')); }
+            IPS_ApplyChanges($id); IPS_SetHidden($id, false); $active[] = $id;
+        }
+        foreach ($this->HomepageObjects() as $id) {
+            if (!in_array($id, $active, true)) { IPS_SetHidden($id, true); }
         }
         foreach ($hide as $id) { IPS_SetHidden($id, true); }
     }
