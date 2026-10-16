@@ -1085,8 +1085,12 @@ function renderOtherShields(devices,bedroom=[]){
   const status=devices[room];if(!status)continue;
   const box=card('shield-'+room,'','', '');box.replaceChildren();box.className='overview-group';
   const title=document.createElement('h2');text(title,'Medien '+name);box.append(title);
-  if(room==='schlafzimmer')renderBedroomMedia(box,bedroom);
-  renderShield(box,status);
+  if(room==='schlafzimmer'){
+   box.className+=' mediaLivingGroup';
+   const content=document.createElement('div');content.className='mediaLivingContent';
+   const receiver=document.createElement('div');receiver.className='card';renderBedroomMedia(receiver,bedroom);content.append(receiver);
+   renderShield(content,status);box.append(content);
+  }else{renderShield(box,status);}
  }
 }
 function renderBedroomMedia(box,items){
