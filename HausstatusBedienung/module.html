@@ -356,10 +356,11 @@ body.presenceHistoryView main{padding-top:56px}
 a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line-height:1.4;color:inherit;text-decoration:underline;cursor:pointer}a.pvDetailLink[aria-disabled=true]{opacity:.45;cursor:default}.tvHdmiButton{margin-top:8px;min-height:32px;padding:5px 10px;font-size:12px}
 .homepagePart #cards{grid-template-columns:minmax(0,1fr)}
 .homepagePart #cards>*,.homepagePart #weatherRoomsRow>*{grid-column:1/-1}
-/* Stretch the INNER content to the height of each native Symcon homepage tile.
-   Native tile widths/heights remain controlled by Symcon's grid settings. */
-body.homepagePart main{min-height:100vh;display:flex;flex-direction:column}
-body.homepagePart #cards{flex:1 0 auto;grid-auto-rows:minmax(min-content,1fr)}
+/* Fill the Symcon HTML tile viewport, not just the content height. */
+html{height:100%}
+body.homepagePart{height:100%;min-height:100%;display:flex;flex-direction:column}
+body.homepagePart main{flex:1 0 auto;min-height:100%;width:100%;display:flex;flex-direction:column}
+body.homepagePart #cards{flex:1 1 auto;grid-auto-rows:minmax(min-content,1fr);align-content:stretch}
 body.homepagePart #cards>.overview-group,
 body.homepagePart #cards>.card{min-height:100%;align-self:stretch}
 body.homepagePart .mediaLivingContent{flex:1 1 auto;align-items:stretch}
@@ -390,6 +391,7 @@ body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden])>.card{
 }
 /* Symcon 9.0 supplies the outer title in split homepage tiles.
    Keep only informative secondary headings inside their content. */
+.homepagePart #card-entry > .overview-status > h2,
 .homepagePart #card-laundry > h2,
 .homepagePart #card-light > .dashboardCardHeading,
 .homepagePart #card-cinema > h2,
