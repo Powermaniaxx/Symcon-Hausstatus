@@ -582,6 +582,49 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "BedroomMediaSettings",
+      "caption": "Medien Schlafzimmer · Marantz SR-5010 und Subwoofer",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "BedroomMediaEnabled",
+          "caption": "AVR und Subwoofer im Schlafzimmer bedienen"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrPower",
+          "caption": "AVR Power"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrZone",
+          "caption": "MainZone Power"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrSource",
+          "caption": "Quelle"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrVolume",
+          "caption": "Lautstärke"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomAvrMute",
+          "caption": "Stumm"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomSubwoofer",
+          "caption": "Subwoofer Ein/Aus"
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "DeviceSettings",
       "caption": "10 · Gerätewarnungen",
       "expanded": false,

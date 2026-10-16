@@ -3,7 +3,9 @@ const {execFile} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const TARGET = '192.168.178.107:5555';
+const DEVICES = {wohnzimmer:'192.168.178.107:5555',ankleidezimmer:'192.168.178.106:5555',schlafzimmer:'192.168.178.108:5555'};
+const device = process.argv[2] || 'wohnzimmer';
+const TARGET = DEVICES[device];
 const blank = error => ({online:false,power:'unknown',app:'',playback:'unknown',title:'',error});
 
 function parse(power, activity, media) {
@@ -77,7 +79,8 @@ async function send(status) {
 }
 
 async function main() {
-    const lock = '/data/shield/poll.lock';
+    if(!TARGET) throw new Error('Unbekannte Shield: '+device);
+    const lock = '/data/shield/poll-'+device+'.lock';
     try { fs.mkdirSync(lock); }
     catch(error) {
         if(error.code !== 'EEXIST') throw error;
@@ -85,9 +88,9 @@ async function main() {
         fs.rmdirSync(lock); fs.mkdirSync(lock);
     }
     try {
-        const status = await collect();
+        const status = {...await collect(),device};
         await send(status);
-        console.log(JSON.stringify({ok:true,online:status.online,power:status.power,error:status.error}));
+        console.log(JSON.stringify({ok:true,device,online:status.online,power:status.power,error:status.error}));
     } finally { fs.rmdirSync(lock); }
 }
 module.exports = {parse,blank,collect,send};

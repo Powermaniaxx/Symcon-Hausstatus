@@ -12,6 +12,7 @@ require_once __DIR__ . '/PresenceHistorySupport.php';
 require_once __DIR__ . '/DockerSupport.php';
 require_once __DIR__ . '/LaundrySupport.php';
 require_once __DIR__ . '/ShieldSupport.php';
+require_once __DIR__ . '/BedroomMediaSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -27,6 +28,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusDockerSupport;
     use HausstatusLaundrySupport;
     use HausstatusShieldSupport;
+    use HausstatusBedroomMediaSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -53,6 +55,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         parent::Create();
         $this->CreateShield();
+        $this->CreateBedroomMedia();
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
@@ -169,6 +172,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) { foreach ($this->HeaterIDs() as $id) { if ($id > 0) { $ids[] = $id; } } }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
+        foreach ($this->BedroomMediaIDs() as $id) { $ids[] = $id; }
         foreach ($this->ShieldIDs() as $id) { $ids[] = $id; }
         foreach ($this->LaundrySourceIDs() as $id) { $ids[] = $id; }
         if ($this->ReadPropertyInteger('View') === 25) {
@@ -321,7 +325,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $own = $source === 0;
         $fields = [];
-        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'HeaterSettings' => 14,
+        foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'BedroomMediaSettings' => 6, 'HeaterSettings' => 14,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
             'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13,
             'PresenceHistorySettings' => 18, 'LaundrySettings' => 27] as $name => $sectionView) {
@@ -429,7 +433,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'DockerControl'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -445,7 +449,9 @@ class HausstatusBedienung extends IPSModuleStrict
                 if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
                 $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
             }
-            if ($Ident === 'DockerControl') {
+            if (isset(self::BEDROOM_DEFAULTS[$Ident])) {
+                $this->SetBedroomMedia($Ident, $Value);
+            } elseif ($Ident === 'DockerControl') {
                 $this->SetDockerControl($Value);
             } elseif (in_array($Ident, ['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
                 $this->SetHeater($Ident, $Value);
@@ -1156,6 +1162,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['ExtraTileVariables'] = $this->ExtraTileVariables();
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['Shield'] = $this->ShieldState();
+        $state['BedroomMedia'] = in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
         $state['HeosItem'] = $this->HeosItem();
         $state['HeosRadioItem'] = $this->HeosSplitItem('HeosRadio');

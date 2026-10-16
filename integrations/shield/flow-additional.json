@@ -1,0 +1,151 @@
+[
+  {
+    "id": "shield_extra_rooms_15s",
+    "type": "tab",
+    "label": "Shield Ankleidezimmer + Schlafzimmer",
+    "disabled": false,
+    "info": "Zusätzliche Geräte; bestehenden Wohnzimmer-Flow unverändert lassen."
+  },
+  {
+    "id": "shield_ankleidezimmer_inject",
+    "type": "inject",
+    "z": "shield_extra_rooms_15s",
+    "name": "ankleidezimmer · alle 15 Sekunden",
+    "props": [],
+    "repeat": "15",
+    "once": true,
+    "onceDelay": "7",
+    "x": 170,
+    "y": 100,
+    "wires": [
+      [
+        "shield_ankleidezimmer_exec"
+      ]
+    ]
+  },
+  {
+    "id": "shield_ankleidezimmer_exec",
+    "type": "exec",
+    "z": "shield_extra_rooms_15s",
+    "command": "node /data/shield/poll.js ankleidezimmer",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "name": "ankleidezimmer → Symcon",
+    "x": 420,
+    "y": 100,
+    "wires": [
+      [
+        "shield_ankleidezimmer_ok"
+      ],
+      [
+        "shield_ankleidezimmer_error"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "shield_ankleidezimmer_ok",
+    "type": "debug",
+    "z": "shield_extra_rooms_15s",
+    "name": "ankleidezimmer Shield Übertragung",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 680,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "shield_ankleidezimmer_error",
+    "type": "debug",
+    "z": "shield_extra_rooms_15s",
+    "name": "ankleidezimmer Shield Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 670,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "shield_schlafzimmer_inject",
+    "type": "inject",
+    "z": "shield_extra_rooms_15s",
+    "name": "schlafzimmer · alle 15 Sekunden",
+    "props": [],
+    "repeat": "15",
+    "once": true,
+    "onceDelay": "11",
+    "x": 170,
+    "y": 240,
+    "wires": [
+      [
+        "shield_schlafzimmer_exec"
+      ]
+    ]
+  },
+  {
+    "id": "shield_schlafzimmer_exec",
+    "type": "exec",
+    "z": "shield_extra_rooms_15s",
+    "command": "node /data/shield/poll.js schlafzimmer",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "name": "schlafzimmer → Symcon",
+    "x": 420,
+    "y": 240,
+    "wires": [
+      [
+        "shield_schlafzimmer_ok"
+      ],
+      [
+        "shield_schlafzimmer_error"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "shield_schlafzimmer_ok",
+    "type": "debug",
+    "z": "shield_extra_rooms_15s",
+    "name": "schlafzimmer Shield Übertragung",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 680,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "shield_schlafzimmer_error",
+    "type": "debug",
+    "z": "shield_extra_rooms_15s",
+    "name": "schlafzimmer Shield Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 670,
+    "y": 280,
+    "wires": []
+  }
+]
