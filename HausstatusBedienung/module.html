@@ -388,12 +388,19 @@ body.homepagePart #weatherRoomsRow>.homeEnvironmentPair:not([hidden])>.card{
  min-height:0;
  align-self:stretch;
 }
-/* Split homepage tiles already show their title in the native Symcon tile header. */
+/* Symcon 9.0 supplies the outer title in split homepage tiles.
+   Keep only informative secondary headings inside their content. */
 .homepagePart #card-laundry > h2,
 .homepagePart #card-light > .dashboardCardHeading,
 .homepagePart #card-cinema > h2,
 .homepagePart #card-shield-schlafzimmer > h2,
-.homepagePart #card-shield-ankleidezimmer > h2{display:none}
+.homepagePart #card-shield-ankleidezimmer > h2,
+.homepagePart #weatherSection > h2,
+.homepagePart #roomsSection > h2,
+.homepagePart #card-outdoor > h2,
+.homepagePart #card-heater > .dashboardCardHeading,
+.homepagePart #motionSection > h2,
+.homepagePart #extraTileSection > h2{display:none}
 /* Mobile Medienansicht: zwei Spalten behalten, Text ohne Silbensalat. */
 @media(max-width:600px){
  .mediaLivingContent{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
