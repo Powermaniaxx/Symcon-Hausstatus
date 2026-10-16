@@ -356,6 +356,51 @@ body.presenceHistoryView main{padding-top:56px}
 a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line-height:1.4;color:inherit;text-decoration:underline;cursor:pointer}a.pvDetailLink[aria-disabled=true]{opacity:.45;cursor:default}.tvHdmiButton{margin-top:8px;min-height:32px;padding:5px 10px;font-size:12px}
 .homepagePart #cards{grid-template-columns:minmax(0,1fr)}
 .homepagePart #cards>*,.homepagePart #weatherRoomsRow>*{grid-column:1/-1}
+/* Mobile Medienansicht: zwei Spalten behalten, Text ohne Silbensalat. */
+@media(max-width:600px){
+ .mediaLivingContent{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .mediaLivingContent.single{grid-template-columns:1fr}
+ .mediaLivingContent>.card,.mediaLivingContent>.mediaDeviceColumn{min-width:0}
+ .mediaDeviceColumn{padding-left:7px}
+ .mediaLivingContent .dashboardCardHeading{gap:4px}
+ .mediaLivingContent .dashboardCardHeading>.label{font-size:12px}
+ .mediaLivingContent .cinemaFields{min-width:0}
+ .mediaLivingContent .cinemaFields label{font-size:12px;line-height:1.35}
+ .mediaLivingContent .cinemaFields select{font-size:12px;padding:7px 5px;min-width:0;min-height:44px}
+ .mediaLivingContent .heosStatus{font-size:12px;line-height:1.4;overflow-wrap:normal;word-break:normal}
+ .mediaLivingContent .livingMediaStatus h3,.mediaLivingContent .shieldStatus h3{font-size:13px;line-height:1.3}
+ .mediaLivingContent .livingMediaStatus .row,.mediaLivingContent .shieldStatus .row{
+  display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:4px;
+  align-items:start;font-size:11px;line-height:1.35;padding:5px 0;min-width:0;
+ }
+ .mediaLivingContent .livingMediaStatus .row span,.mediaLivingContent .shieldStatus .row span{min-width:0}
+ .mediaLivingContent .livingMediaStatus .row span:first-child,.mediaLivingContent .shieldStatus .row span:first-child{
+  overflow-wrap:normal;word-break:normal;hyphens:none;
+ }
+ .mediaLivingContent .livingMediaStatus .row span:last-child,.mediaLivingContent .shieldStatus .row span:last-child{
+  max-width:100%;overflow-wrap:normal;word-break:normal;hyphens:none;white-space:nowrap;text-align:right;
+ }
+ .mediaLivingContent .shieldStatus .row.isLongValue{grid-template-columns:minmax(0,1fr);gap:2px}
+ .mediaLivingContent .shieldStatus .row.isLongValue span:last-child{
+  white-space:normal;text-align:left;overflow-wrap:break-word;word-break:normal;max-width:100%;
+ }
+ .mediaLivingContent .shieldStatus>.buttons{margin-top:12px;gap:5px}
+ .mediaLivingContent .shieldStatus>.buttons button{
+  min-width:0;min-height:44px;padding:7px 2px;font-size:12px;white-space:nowrap;
+ }
+ .mediaLivingContent .tvHdmiButton{min-height:44px;font-size:12px}
+ .mediaLivingContent .shieldStatus .small{font-size:11px;line-height:1.4;overflow-wrap:break-word;word-break:normal}
+}
+@media(orientation:landscape) and (min-width:601px){
+ .mediaLivingContent{gap:16px}
+ .mediaDeviceColumn{padding-left:14px}
+ .mediaLivingContent .shieldStatus .row.isLongValue{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:3px;
+ }
+ .mediaLivingContent .shieldStatus .row.isLongValue span:last-child{
+  max-width:100%;text-align:left;overflow-wrap:break-word;word-break:normal;
+ }
+}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1211,7 +1256,9 @@ function renderShield(cinema,shield){
   if(shield.subtitle)rows.splice(rows.length-1,0,['Details',shield.subtitle]);
  }
  for(const [name,value] of rows){
-  const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
+  const row=document.createElement('div');row.className='row';
+  if(['Diagnose','Medientitel','Sendung','Details','Aktive App','Sender'].includes(name)||String(value).length>17){row.classList.add('isLongValue');}
+  const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
  }
  if(shield.device){
   buttons(box,'ShieldPower_'+shield.device,shield.kind==='tv'||(shield.online===true&&!shield.stale),shield.power==='awake'?true:shield.power==='standby'?false:null);
