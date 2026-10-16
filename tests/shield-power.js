@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 process.env.SHIELD_ADB_HOME=require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(),'shield-power-test-'));
-const {executePower}=require('../integrations/shield/poll.js');
+const {executePower}=require('../docs/integrations/shield/poll.js');
 (async()=>{
  const calls=[];const run=async args=>calls.push(args);
  const command={id:'a'.repeat(24),action:'wake',expires:Math.floor(Date.now()/1000)+40};

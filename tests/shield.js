@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const {parse} = require('../integrations/shield/poll.js');
+const {parse} = require('../docs/integrations/shield/poll.js');
 const power = 'mWakefulness=Awake';
 const activity = 'mResumedActivity: ActivityRecord{123 u0 org.smarttube.stable/Main t1}';
 const session = (pkg,active,state,title,updated=12) => `\n package=${pkg}\n active=${active}\n state=PlaybackState {state=${state}, updated=${updated}}\n metadata: size=6, description=${title}, Author • views, null\n`;

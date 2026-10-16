@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const {send,blank} = require('../integrations/shield/poll.js');
+const {send,blank} = require('../docs/integrations/shield/poll.js');
 let reply = {jsonrpc:'2.0',id:1,result:null};
 let received;
 const server = http.createServer((req,res) => {

@@ -249,4 +249,4 @@ Zur aktuellen Version über dasselbe Zahnrad wieder **main** wählen. Die Quelle
 
 ## Nvidia Shield Status
 
-Separate, nur lesbare Shield-Kachel innerhalb Cinema/HEOS; eigenständiger Node-RED-Flow mit 15-Sekunden-Poll und automatischem Timeout. Vollständige Einrichtung einschließlich dauerhaftem ADB: [integrations/shield/README.md](integrations/shield/README.md).
+Separate, nur lesbare Shield-Kachel innerhalb Cinema/HEOS; eigenständiger Node-RED-Flow mit 15-Sekunden-Poll und automatischem Timeout. Vollständige Einrichtung einschließlich dauerhaftem ADB: [docs/integrations/shield/README.md](docs/integrations/shield/README.md).
