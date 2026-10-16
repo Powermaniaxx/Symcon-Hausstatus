@@ -251,6 +251,31 @@ class HausstatusBedienung extends IPSModuleStrict
     // Ein Browser sendet alle 30 Sekunden ein Lebenszeichen.
     // Ohne Browser kommen nach spaetestens 75 Sekunden keine Neuberechnungen mehr.
     // Ein gemeinsamer Zeitstempel funktioniert auch mit mehreren geoeffneten Tabs.
+    // Temporäre Diagnose: aggregierte Aufrufzahlen, maximal eine Meldung pro 5 Minuten.
+    // Keine Werte/Personendaten im Log. Nur für den Testzweig vorgesehen.
+    private function DiagnosticTick(string $event): void
+    {
+        $now = time();
+        $raw = $this->GetBuffer('RefreshDiagnostic');
+        $data = json_decode($raw, true);
+        if (!is_array($data) || !isset($data['since'], $data['counts'])) {
+            $data = ['since' => $now, 'counts' => []];
+        }
+        $data['counts'][$event] = ($data['counts'][$event] ?? 0) + 1;
+        if ($now - (int)$data['since'] >= 300) {
+            $lastViewer = (int)$this->GetBuffer('LastViewerSeen');
+            $viewerAge = $lastViewer > 0 ? ($now - $lastViewer) . 's' : 'nie';
+            $parts = [];
+            foreach (['MessageSink', 'MessageSinkOhneViewer', 'Refresh', 'BaseState', 'VisualizationUpdate', 'GetVisualizationTile', 'ViewerPing'] as $key) {
+                $parts[] = $key . '=' . ($data['counts'][$key] ?? 0);
+            }
+            IPS_LogMessage('Hausstatus Diagnose #' . $this->InstanceID,
+                '5min: ' . implode(', ', $parts) . '; Viewer vor ' . $viewerAge);
+            $data = ['since' => $now, 'counts' => []];
+        }
+        $this->SetBuffer('RefreshDiagnostic', json_encode($data));
+    }
+
     private function HasLiveViewers(): bool
     {
         $last = (int)$this->GetBuffer('LastViewerSeen');
@@ -260,7 +285,8 @@ class HausstatusBedienung extends IPSModuleStrict
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
-            if (!$this->HasLiveViewers()) { return; }
+            $this->DiagnosticTick('MessageSink');
+            if (!$this->HasLiveViewers()) { $this->DiagnosticTick('MessageSinkOhneViewer'); return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
             if ($this->ReadPropertyInteger('View') === 18) {
                 $historySourceIDs = array_column($this->PresenceHistorySources(), 'id');
@@ -277,11 +303,14 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function Refresh(): void
     {
+        $this->DiagnosticTick('Refresh');
         if (!$this->HasLiveViewers()) { return; }
+        $this->DiagnosticTick('BaseState');
         $state = $this->BaseState();
         $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
         if ($this->GetBuffer('LastState') !== $encoded) {
             $this->SetBuffer('LastState', $encoded);
+            $this->DiagnosticTick('VisualizationUpdate');
             $this->UpdateVisualizationValue($encoded);
         }
     }
@@ -378,6 +407,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
+        $this->DiagnosticTick('GetVisualizationTile');
         try {
             $html = file_get_contents(__DIR__ . '/module.html');
             if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
@@ -409,6 +439,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if ($Ident === 'ViewerPing') {
+            $this->DiagnosticTick('ViewerPing');
             $this->SetBuffer('LastViewerSeen', (string)time());
             return;
         }
