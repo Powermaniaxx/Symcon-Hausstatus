@@ -1,0 +1,37 @@
+'use strict';
+const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const directory=fs.mkdtempSync(path.join(os.tmpdir(),'philips-tv-fixture-'));
+process.env.PHILIPS_TV_CONFIG=path.join(directory,'credentials.json');
+const config={host:'192.168.178.190',user:'fixture',password:'not-a-real-password',mac:'02:11:22:33:44:55',broadcast:'192.168.178.255'};
+fs.writeFileSync(process.env.PHILIPS_TV_CONFIG,JSON.stringify(config));
+const {digest,api,wakePacket,execute}=require('../docs/integrations/shield/philips-tv.js');
+const challenge='Digest realm="XTV", nonce="fixture-nonce", algorithm=MD5, qop="auth"';
+const md5=s=>crypto.createHash('md5').update(s).digest('hex');
+const header=digest(challenge,'POST','/6/powerstate',config);
+const cnonce=header.match(/cnonce="([^"]+)"/)[1];
+assert.ok(header.includes(md5([md5(config.user+':XTV:'+config.password),'fixture-nonce','00000001',cnonce,'auth',md5('POST:/6/powerstate')].join(':'))));
+const packet=wakePacket(config.mac);assert.equal(packet.length,102);assert.equal(packet.subarray(0,6).toString('hex'),'ffffffffffff');
+assert.equal(packet.subarray(6,12).toString('hex'),'021122334455');
+assert.throws(()=>wakePacket('bad'),/MAC/);
+(async()=>{
+ let requests=0;
+ const result=await api('GET','powerstate',undefined,config,async(method,uri,body,auth)=>{
+  requests++;assert.equal(uri,'/6/powerstate');
+  return auth?{status:200,text:'{"powerstate":"On"}'}:{status:401,challenge,text:''};
+ });
+ assert.equal(requests,2);assert.equal(result.powerstate,'On');
+ await assert.rejects(api('GET','powerstate',undefined,config,async()=>({status:401,challenge,text:''})),/gekoppelt/);
+ const command={id:'a'.repeat(24),action:'wake',expires:Math.floor(Date.now()/1000)+40};
+ let bodies=[];await execute(command,async(method,uri,body)=>bodies.push(body));
+ assert.deepEqual(bodies,[{powerstate:'On'}]);
+ await execute({...command,action:'sleep'},async(method,uri,body)=>bodies.push(body));
+ assert.deepEqual(bodies[1],{powerstate:'Standby'});
+ let wakeCount=0;
+ await execute(command,async()=>{throw new Error('Philips TV nicht erreichbar (Timeout).');},async mac=>{assert.equal(mac,config.mac);wakeCount++;});
+ assert.equal(wakeCount,1);
+ await assert.rejects(execute(command,async()=>{throw new Error('Philips TV muss per PIN gekoppelt werden.');},async()=>wakeCount++),/PIN/);
+ assert.equal(wakeCount,1);
+ assert.equal(await execute({...command,expires:1}),false);
+ await assert.rejects(execute({...command,action:'toggle'}),/Ungültiger/);
+ console.log('Philips digest authentication, explicit power and WLAN wake fallback: passed');
+})().catch(error=>{console.error(error);process.exitCode=1;});

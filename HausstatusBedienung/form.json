@@ -527,6 +527,7 @@
       "caption": "09 · Mediengeräte und HEOS",
       "expanded": false,
       "items": [
+        {"type": "CheckBox", "name": "PhilipsTvEnabled", "caption": "Philips TV Wohnzimmer anzeigen und bedienen (192.168.178.190)"},
         {"type": "CheckBox", "name": "ShieldEnabled", "caption": "Nvidia Shield Status anzeigen (nur lesbar)"},
         {"type": "Label", "caption": "Shield-Flow an die zentrale Hausstatus-Instanz senden. Statusvariablen werden automatisch angelegt; Timeout nach 60 Sekunden."},
         {

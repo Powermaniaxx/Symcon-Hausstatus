@@ -3,7 +3,7 @@ const {execFile} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEVICES = {wohnzimmer:'192.168.178.107:5555',ankleidezimmer:'192.168.178.106:5555',schlafzimmer:'192.168.178.108:5555'};
+const DEVICES = {wohnzimmer:'192.168.178.107:5555',ankleidezimmer:'192.168.178.106:5555',schlafzimmer:'192.168.178.108:5555',philips:'192.168.178.190'};
 const device = process.argv[2] || 'wohnzimmer';
 const TARGET = DEVICES[device];
 const blank = error => ({online:false,power:'unknown',app:'',playback:'unknown',title:'',error});
@@ -115,9 +115,10 @@ async function main() {
     try {
         const ackFile = '/data/shield/power-ack-'+device;
         const powerAck = fs.existsSync(ackFile) ? fs.readFileSync(ackFile,'utf8').trim() : '';
-        const status = {...await collect(),device,powerAck};
+        const driver = device === 'philips' ? require('./philips-tv.js') : null;
+        const status = {...await (driver ? driver.collect() : collect()),device,powerAck};
         const command = await send(status);
-        if(command && status.online && await executePower(command)) fs.writeFileSync(ackFile,command.id,{mode:0o600});
+        if(command && (driver || status.online) && await (driver ? driver.execute(command) : executePower(command))) fs.writeFileSync(ackFile,command.id,{mode:0o600});
         console.log(JSON.stringify({ok:true,device,online:status.online,power:status.power,error:status.error}));
     } finally { fs.rmdirSync(lock); }
 }

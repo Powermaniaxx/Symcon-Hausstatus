@@ -5,21 +5,23 @@ trait HausstatusShieldSupport
 {
     private const SHIELD_FIELDS = ['ShieldOnline', 'ShieldPower', 'ShieldApp', 'ShieldPlayback', 'ShieldTitle', 'ShieldError', 'ShieldUpdated'];
 
-    private const SHIELD_DEVICES = ['wohnzimmer' => 'Shield', 'ankleidezimmer' => 'ShieldDressing', 'schlafzimmer' => 'ShieldBedroom'];
+    private const SHIELD_DEVICES = ['wohnzimmer' => 'Shield', 'ankleidezimmer' => 'ShieldDressing', 'schlafzimmer' => 'ShieldBedroom', 'philips' => 'PhilipsTv'];
 
     private function CreateShield(): void
     {
         $this->RegisterPropertyBoolean('ShieldEnabled', false);
+        $this->RegisterPropertyBoolean('PhilipsTvEnabled', true);
         $this->RegisterAttributeString('ShieldPowerQueue', '{}');
         // Presentation belongs to this view, independently of ConfigSource.
         $this->RegisterPropertyBoolean('ShieldCompact', false);
         foreach (self::SHIELD_DEVICES as $room => $prefix) {
-            $this->RegisterVariableBoolean($prefix . 'Online', 'Shield ' . $room . ' online', '', 80);
+            $label = $room === 'philips' ? 'Philips TV Wohnzimmer' : 'Shield ' . $room;
+            $this->RegisterVariableBoolean($prefix . 'Online', $label . ' online', '', 80);
             foreach (['Power' => 'awake/standby', 'App' => 'aktive App', 'Playback' => 'Playback',
                 'Title' => 'Medientitel', 'Error' => 'Diagnose'] as $field => $name) {
-                $this->RegisterVariableString($prefix . $field, 'Shield ' . $room . ' ' . $name, '', 81);
+                $this->RegisterVariableString($prefix . $field, $label . ' ' . $name, '', 81);
             }
-            $this->RegisterVariableInteger($prefix . 'Updated', 'Shield ' . $room . ' letzte Abfrage', '', 87);
+            $this->RegisterVariableInteger($prefix . 'Updated', $label . ' letzte Abfrage', '', 87);
         }
         $this->RegisterTimer('ShieldWatchdog', 0, 'SVHS_ExpireShield($_IPS["TARGET"]);');
     }
@@ -33,9 +35,10 @@ trait HausstatusShieldSupport
 
     private function ShieldIDs(): array
     {
-        if (!$this->ConfigBoolean('ShieldEnabled') || !in_array($this->CurrentView(), [0, 6], true)) { return []; }
+        if (!in_array($this->CurrentView(), [0, 6], true)) { return []; }
         $ids = [];
-        foreach (self::SHIELD_DEVICES as $prefix) {
+        foreach (self::SHIELD_DEVICES as $device => $prefix) {
+            if (!$this->ConfigBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { continue; }
             foreach (self::SHIELD_FIELDS as $field) {
                 $id = @IPS_GetObjectIDByIdent($prefix . substr($field, 6), $this->ShieldOwner());
                 if ($id !== false) { $ids[] = $id; }
@@ -64,7 +67,7 @@ trait HausstatusShieldSupport
     private function SetShieldPower(string $device, mixed $on): void
     {
         if (!isset(self::SHIELD_DEVICES[$device]) || !is_bool($on)) { throw new InvalidArgumentException('Ungültiger Shield-Befehl.'); }
-        if (!$this->ConfigBoolean('ShieldEnabled')) { throw new RuntimeException('Shield ist deaktiviert.'); }
+        if (!$this->ConfigBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { throw new RuntimeException('Gerät ist deaktiviert.'); }
         $owner = $this->ShieldOwner();
         if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'ShieldPower_' . $device, $on); return; }
         $this->ShieldPowerQueue($device, $on);
@@ -72,13 +75,13 @@ trait HausstatusShieldSupport
 
     public function UpdateShield(string $JSON): string
     {
-        if (!$this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyInteger('ConfigSource') !== 0) {
-            throw new RuntimeException('Shield in der zentralen Hausstatus-Instanz aktivieren.');
-        }
         if (strlen($JSON) > 16384) { throw new InvalidArgumentException('Shield-Nachricht zu groß.'); }
         $data = json_decode($JSON, true, 16, JSON_THROW_ON_ERROR);
         $device = is_array($data) ? ($data['device'] ?? 'wohnzimmer') : '';
         if (!is_string($device) || !isset(self::SHIELD_DEVICES[$device])) { throw new InvalidArgumentException('Unbekannte Shield.'); }
+        if (!$this->ReadPropertyBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled') || $this->ReadPropertyInteger('ConfigSource') !== 0) {
+            throw new RuntimeException('Gerät in der zentralen Hausstatus-Instanz aktivieren.');
+        }
         $prefix = self::SHIELD_DEVICES[$device];
         if (!is_array($data) || !isset($data['online']) || !is_bool($data['online'])
             || !in_array($data['power'] ?? null, ['awake', 'standby', 'unknown'], true)
@@ -107,8 +110,9 @@ trait HausstatusShieldSupport
 
     public function ExpireShield(): void
     {
-        if (!$this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyInteger('ConfigSource') !== 0) { return; }
-        foreach (self::SHIELD_DEVICES as $prefix) {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0) { return; }
+        foreach (self::SHIELD_DEVICES as $device => $prefix) {
+            if (!$this->ReadPropertyBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { continue; }
             $updated = $this->GetValue($prefix . 'Updated');
             if ($updated > 0 && time() - $updated > 60) {
                 $this->SetValue($prefix . 'Online', false);
@@ -121,7 +125,7 @@ trait HausstatusShieldSupport
 
     private function ShieldState(string $prefix = 'Shield'): ?array
     {
-        if (!$this->ConfigBoolean('ShieldEnabled')) { return null; }
+        if (!$this->ConfigBoolean($prefix === 'PhilipsTv' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { return null; }
         $data = [];
         foreach (self::SHIELD_FIELDS as $ident) {
             $id = @IPS_GetObjectIDByIdent($prefix . substr($ident, 6), $this->ShieldOwner());
@@ -131,7 +135,7 @@ trait HausstatusShieldSupport
         if ($data['stale']) {
             $data['online'] = false; $data['power'] = 'unknown'; $data['playback'] = 'unknown';
             $data['app'] = ''; $data['title'] = '';
-            $data['error'] = 'Keine aktuellen Shield-Daten.';
+            $data['error'] = $prefix === 'PhilipsTv' ? 'Keine aktuellen TV-Daten.' : 'Keine aktuellen Shield-Daten.';
         }
         $data['compact'] = $this->ReadPropertyBoolean('ShieldCompact');
         if ($data['compact']) {
@@ -139,6 +143,7 @@ trait HausstatusShieldSupport
                 'stale' => $data['stale'], 'compact' => true];
         }
         $data['device'] = array_search($prefix, self::SHIELD_DEVICES, true);
+        $data['kind'] = $prefix === 'PhilipsTv' ? 'tv' : 'shield';
         if ($prefix === 'Shield') {
             $data['devices'] = ['ankleidezimmer' => $this->ShieldState('ShieldDressing'),
                 'schlafzimmer' => $this->ShieldState('ShieldBedroom')];

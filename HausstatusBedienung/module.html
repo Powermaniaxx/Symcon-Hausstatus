@@ -683,7 +683,7 @@ function render(){
  if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
- const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
+ const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus,s.PhilipsTv);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
  const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
  const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
  const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
@@ -1155,10 +1155,11 @@ function renderLivingMediaStatus(box,items){
  }
  box.append(section);
 }
-function renderMediaLiving(cinema,shield,status=[]){
+function renderMediaLiving(cinema,shield,status=[],tv=null){
  const receiver=document.createElement('div');receiver.className='card';
  receiver.append(...Array.from(cinema.childNodes));dashboardHeading(receiver);
  renderLivingMediaStatus(receiver,status);
+ if(tv)renderShield(receiver,tv);
  const heading=document.createElement('h2');text(heading,'Medien Wohnzimmer');
  const content=document.createElement('div');content.className='mediaLivingContent'+(shield?'':' single');content.append(receiver);
  cinema.className='overview-group mediaLivingGroup';cinema.setAttribute('aria-label','Medien Wohnzimmer');cinema.append(heading,content);
@@ -1172,16 +1173,18 @@ function comfortLivingRow(items){
 function renderShield(cinema,shield){
  if(!shield)return;
  const box=document.createElement('section');box.className='card shieldStatus';box.setAttribute('aria-label','Nvidia Shield Status');
- const title=document.createElement('h3');text(title,'Nvidia Shield');box.append(title);
+ const title=document.createElement('h3');text(title,shield.kind==='tv'?'Philips TV':'Nvidia Shield');box.append(title);
  const playback={playing:'Läuft',paused:'Pausiert',stopped:'Gestoppt',unknown:'Unbekannt'};
- const rows=shield.compact
+ const rows=shield.kind==='tv'
+  ? [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Nicht erreichbar'],['Betrieb',shield.power==='awake'?'Ein':shield.power==='standby'?'Standby':'Unbekannt'],['Diagnose',shield.error||'OK']]
+  : shield.compact
   ? [['Online',shield.stale?'Unbekannt – Daten veraltet':shield.online?'Online':'Offline'],['Diagnose',shield.error||'OK']]
   : [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']];
  for(const [name,value] of rows){
   const row=document.createElement('div');row.className='row';const label=document.createElement('span'),content=document.createElement('span');text(label,name);text(content,value);row.append(label,content);box.append(row);
  }
  if(shield.device){
-  buttons(box,'ShieldPower_'+shield.device,shield.online===true&&!shield.stale,shield.power==='awake'?true:shield.power==='standby'?false:null);
+  buttons(box,'ShieldPower_'+shield.device,shield.kind==='tv'||(shield.online===true&&!shield.stale),shield.power==='awake'?true:shield.power==='standby'?false:null);
   const hint=document.createElement('div');hint.className='small';text(hint,'Aus = Standby · Ausführung innerhalb von 15 Sekunden');box.append(hint);
  }
  if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
@@ -1675,4 +1678,3 @@ handleMessage=function(data){
 const renderContents=render;render=function(){try{renderContents();}catch(e){showStatus('Darstellung konnte nicht geladen werden: '+String(e?.message??e));}};
 render();
 </script></body></html>
-

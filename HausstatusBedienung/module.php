@@ -108,7 +108,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
-        $this->SetTimerInterval('ShieldWatchdog', $this->ReadPropertyBoolean('ShieldEnabled') && $this->ReadPropertyInteger('ConfigSource') === 0 ? 15000 : 0);
+        $this->SetTimerInterval('ShieldWatchdog', ($this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyBoolean('PhilipsTvEnabled')) && $this->ReadPropertyInteger('ConfigSource') === 0 ? 15000 : 0);
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
             $this->SetBuffer('DoorChallenges', '{}');
@@ -432,7 +432,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
             'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
@@ -1164,6 +1164,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['ExtraTileVariables'] = $this->ExtraTileVariables();
         $state['Outdoor'] = in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['Shield'] = $this->ShieldState();
+        $state['PhilipsTv'] = in_array($this->CurrentView(), [0, 6], true) ? $this->ShieldState('PhilipsTv') : null;
         $state['BedroomMedia'] = in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
         $state['LivingMediaStatus'] = in_array($this->CurrentView(), [0, 6], true) ? $this->LivingMediaStatus() : [];
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;

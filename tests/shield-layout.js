@@ -33,3 +33,9 @@ assert.doesNotMatch(flatten(root),/Video title|Aktive App|Wiedergabe|Letzte Abfr
 assert.match(flatten(root),/Online.*Diagnose/);
 assert.deepEqual(controls,bedroom.filter(item=>item.command!=='BedroomAvrZone').map(item=>item.command));
 console.log('Shield room layout and compact rendering: passed');
+const tvParent=new Element();
+context.renderShield(tvParent,{kind:'tv',device:'philips',online:false,power:'unknown',error:'Timeout',stale:false});
+assert.equal(powerButtons.at(-1).command,'ShieldPower_philips');
+assert.equal(powerButtons.at(-1).enabled,true); // WLAN wake must remain possible when API is asleep.
+assert.match(flatten(tvParent),/Philips TV/);
+assert.doesNotMatch(flatten(tvParent),/Aktive App|Wiedergabe|Medientitel/);
