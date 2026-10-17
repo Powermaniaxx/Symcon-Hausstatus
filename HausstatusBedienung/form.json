@@ -13,7 +13,7 @@
     {
       "type": "ExpansionPanel",
       "name": "TileSettings",
-      "caption": "01 · Kacheltyp und Datenquelle",
+      "caption": "Kacheltyp und Datenquelle",
       "expanded": true,
       "items": [
         {
@@ -162,7 +162,7 @@
         },
         {
           "type": "Label",
-          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „03 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
+          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „Zusätzliche Variablen dieser Kachel“ für genau diese Kachel ergänzt werden."
         },
         {
           "type": "SelectInstance",
@@ -175,7 +175,7 @@
         },
         {
           "type": "Label",
-          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „03“ gelten immer nur für diese Kachel."
+          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „Zusätzliche Variablen dieser Kachel“ gelten immer nur für diese Kachel."
         },
         {
           "type": "Button",
@@ -192,7 +192,7 @@
     {
       "type": "ExpansionPanel",
       "name": "OverviewSettings",
-      "caption": "02 · Startseite und Navigation",
+      "caption": "Startseite und Navigation",
       "expanded": true,
       "items": [
         {
@@ -232,7 +232,7 @@
     {
       "type": "ExpansionPanel",
       "name": "ExtraTileSettings",
-      "caption": "03 · Zusätzliche Variablen dieser Kachel",
+      "caption": "Zusätzliche Variablen dieser Kachel",
       "expanded": false,
       "items": [
         {
@@ -278,7 +278,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceSettings",
-      "caption": "04 · Anwesenheit und Alarm",
+      "caption": "Anwesenheit und Alarm",
       "expanded": false,
       "items": [
         {
@@ -296,7 +296,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PresenceHistorySettings",
-      "caption": "05 · Bewohner und Statusverlauf",
+      "caption": "Bewohner und Statusverlauf",
       "expanded": false,
       "items": [
         {
@@ -365,7 +365,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DoorSettings",
-      "caption": "06 · Haustür",
+      "caption": "Haustür",
       "expanded": false,
       "items": [
         {
@@ -412,7 +412,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DeviceSettings",
-      "caption": "07 · Gerätewarnungen",
+      "caption": "Gerätewarnungen",
       "expanded": false,
       "items": [
         {
@@ -435,7 +435,7 @@
     {
       "type": "ExpansionPanel",
       "name": "RoomDeviceSettings",
-      "caption": "08 · Räume und weitere Geräte",
+      "caption": "Räume und weitere Geräte",
       "expanded": false,
       "items": [
         {
@@ -511,7 +511,7 @@
     {
       "type": "ExpansionPanel",
       "name": "LightSettings",
-      "caption": "09 · Licht und Esstisch",
+      "caption": "Licht und Esstisch",
       "expanded": false,
       "items": [
         {
@@ -576,7 +576,7 @@
     {
       "type": "ExpansionPanel",
       "name": "HeaterSettings",
-      "caption": "10 · Zusatzheizung",
+      "caption": "Zusatzheizung",
       "items": [
         {
           "type": "ValidationTextBox",
@@ -627,7 +627,7 @@
     {
       "type": "ExpansionPanel",
       "name": "TemperatureSettings",
-      "caption": "11 · Temperaturen",
+      "caption": "Temperaturen",
       "expanded": false,
       "items": [
         {
@@ -687,7 +687,7 @@
     {
       "type": "ExpansionPanel",
       "name": "CinemaSettings",
-      "caption": "12 · Wohnzimmer: Cinema 40, HEOS, Shield und Philips-TV",
+      "caption": "Wohnzimmer: Cinema 40, HEOS, Shield und Philips-TV",
       "expanded": false,
       "items": [
         {
@@ -782,7 +782,7 @@
     {
       "type": "ExpansionPanel",
       "name": "BedroomMediaSettings",
-      "caption": "13 · Schlafzimmer: Marantz und Subwoofer",
+      "caption": "Schlafzimmer: Marantz und Subwoofer",
       "expanded": false,
       "items": [
         {
@@ -831,7 +831,7 @@
     {
       "type": "ExpansionPanel",
       "name": "LaundrySettings",
-      "caption": "14 · Waschmaschine und Trockner",
+      "caption": "Waschmaschine und Trockner",
       "expanded": false,
       "items": [
         {
@@ -867,7 +867,7 @@
     {
       "type": "ExpansionPanel",
       "name": "PVSettings",
-      "caption": "15 · PV-Anlage",
+      "caption": "PV-Anlage",
       "expanded": false,
       "items": [
         {
@@ -890,7 +890,7 @@
     {
       "type": "ExpansionPanel",
       "name": "OutdoorSettings",
-      "caption": "16 · Markise und Dachfenster",
+      "caption": "Markise und Dachfenster",
       "expanded": false,
       "items": [
         {
@@ -956,7 +956,7 @@
     {
       "type": "ExpansionPanel",
       "name": "WeatherSettings",
-      "caption": "17 · Wetter",
+      "caption": "Wetter",
       "expanded": false,
       "items": [
         {
@@ -1038,7 +1038,7 @@
     {
       "type": "ExpansionPanel",
       "name": "MotionSettings",
-      "caption": "18 · Bewegung und Verlauf",
+      "caption": "Bewegung und Verlauf",
       "expanded": false,
       "items": [
         {
@@ -1094,7 +1094,7 @@
     {
       "type": "ExpansionPanel",
       "name": "NetworkSettings",
-      "caption": "19 · FritzBox und Netzwerk",
+      "caption": "FritzBox und Netzwerk",
       "expanded": false,
       "items": [
         {
@@ -1289,7 +1289,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DockerSettings",
-      "caption": "20 · NAS-Docker-Container",
+      "caption": "NAS-Docker-Container",
       "expanded": false,
       "items": [
         {
@@ -1335,7 +1335,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DisplaySettings",
-      "caption": "21 · Texte und Beschreibungen",
+      "caption": "Texte und Beschreibungen",
       "expanded": false,
       "items": [
         {
@@ -1487,7 +1487,7 @@
     {
       "type": "ExpansionPanel",
       "name": "NodeRedViewerSettings",
-      "caption": "22 · Node-RED nur bei offenem WebFront",
+      "caption": "Node-RED nur bei offenem WebFront",
       "expanded": false,
       "items": [
         {
@@ -1509,7 +1509,7 @@
     {
       "type": "ExpansionPanel",
       "name": "ModuleUpdateSettings",
-      "caption": "23 · Hausstatus-Modulupdate",
+      "caption": "Hausstatus-Modulupdate",
       "expanded": false,
       "visible": false,
       "items": [
