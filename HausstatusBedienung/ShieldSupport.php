@@ -14,16 +14,39 @@ trait HausstatusShieldSupport
         $this->RegisterAttributeString('ShieldPowerQueue', '{}');
         // Presentation belongs to this view, independently of ConfigSource.
         $this->RegisterPropertyBoolean('ShieldCompact', false);
-        foreach (self::SHIELD_DEVICES as $room => $prefix) {
-            $label = $room === 'philips' ? 'Philips TV Wohnzimmer' : 'Shield ' . $room;
-            $this->RegisterVariableBoolean($prefix . 'Online', $label . ' online', '', 80);
-            foreach (['Power' => 'awake/standby', 'App' => 'aktive App', 'Playback' => 'Playback',
-                'Title' => 'Medientitel', 'Channel' => 'Sender', 'Subtitle' => 'Sendungsdetails', 'Error' => 'Diagnose'] as $field => $name) {
-                $this->RegisterVariableString($prefix . $field, $label . ' ' . $name, '', 81);
-            }
-            $this->RegisterVariableInteger($prefix . 'Updated', $label . ' letzte Abfrage', '', 87);
-        }
+        // Do not register status variables here: Create() also runs for EVERY
+        // presentation tile (and can run before ConfigSource is configured).
+        // Only the actual data receiver may own Philips/Shield statuses.
         $this->RegisterTimer('ShieldWatchdog', 0, 'SVHS_ExpireShield($_IPS["TARGET"]);');
+    }
+
+    /**
+     * Lazily register one device's status variables on its real data receiver.
+     * Child tiles never receive UpdateShield; they read their source instead.
+     */
+    private function EnsureShieldDeviceVariables(string $device): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0) {
+            throw new RuntimeException('Shield-Variablen duerfen nur auf der Datenquelle angelegt werden.');
+        }
+        if (!isset(self::SHIELD_DEVICES[$device])) {
+            throw new InvalidArgumentException('Unbekanntes Shield-Geraet.');
+        }
+        $prefix = self::SHIELD_DEVICES[$device];
+        // Avoid re-registering variables on every status poll.
+        $missing = false;
+        foreach (self::SHIELD_FIELDS as $field) {
+            $id = @IPS_GetObjectIDByIdent($prefix . substr($field, 6), $this->InstanceID);
+            if ($id === false || !IPS_VariableExists($id)) { $missing = true; break; }
+        }
+        if (!$missing) { return; }
+        $label = $device === 'philips' ? 'Philips TV Wohnzimmer' : 'Shield ' . $device;
+        $this->RegisterVariableBoolean($prefix . 'Online', $label . ' online', '', 80);
+        foreach (['Power' => 'awake/standby', 'App' => 'aktive App', 'Playback' => 'Playback',
+            'Title' => 'Medientitel', 'Channel' => 'Sender', 'Subtitle' => 'Sendungsdetails', 'Error' => 'Diagnose'] as $field => $name) {
+            $this->RegisterVariableString($prefix . $field, $label . ' ' . $name, '', 81);
+        }
+        $this->RegisterVariableInteger($prefix . 'Updated', $label . ' letzte Abfrage', '', 87);
     }
 
     private function ShieldOwner(): int
@@ -128,6 +151,7 @@ trait HausstatusShieldSupport
             $data['app'] = ''; $data['title'] = ''; $data['playback'] = 'unknown';
             $data['channel'] = ''; $data['subtitle'] = '';
         }
+        $this->EnsureShieldDeviceVariables($device);
         $this->SetValue($prefix . 'Online', $data['online']);
         $this->SetValue($prefix . 'Power', $data['online'] ? $data['power'] : 'unknown');
         foreach (['App' => 'app', 'Playback' => 'playback', 'Title' => 'title', 'Channel' => 'channel', 'Subtitle' => 'subtitle', 'Error' => 'error'] as $ident => $key) {
@@ -145,7 +169,9 @@ trait HausstatusShieldSupport
         if ($this->ReadPropertyInteger('ConfigSource') !== 0) { return; }
         foreach (self::SHIELD_DEVICES as $device => $prefix) {
             if (!$this->ReadPropertyBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { continue; }
-            $updated = $this->GetValue($prefix . 'Updated');
+            $updatedID = @IPS_GetObjectIDByIdent($prefix . 'Updated', $this->InstanceID);
+            if ($updatedID === false || !IPS_VariableExists($updatedID)) { continue; }
+            $updated = (int)GetValue($updatedID);
             if ($updated > 0 && time() - $updated > 60) {
                 $this->SetValue($prefix . 'Online', false);
                 foreach (['Power', 'Playback'] as $name) { $this->SetValue($prefix . $name, 'unknown'); }
