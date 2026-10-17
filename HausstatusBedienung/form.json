@@ -170,6 +170,11 @@
         {
           "type": "Label",
           "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „02“ gelten immer nur für diese Kachel."
+        },
+        {
+          "type": "Button",
+          "caption": "Lichtdiagnose dieser Kachel anzeigen (ohne Schalten)",
+          "onClick": "echo SVHS_GetLightControlDiagnostics($id);"
         }
       ]
     },
