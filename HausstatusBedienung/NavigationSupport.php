@@ -116,7 +116,9 @@ trait HausstatusNavigationSupport
 
     public function GetVisualizationDiagnostics(): string
     {
+        $started = microtime(true);
         $html = $this->GetVisualizationTile();
+        $renderMs = round((microtime(true) - $started) * 1000, 1);
         $library = json_decode((string)@file_get_contents(__DIR__ . '/../library.json'), true);
         $data = ['moduleVersion' => $library['version'] ?? 'unbekannt', 'instance' => $this->InstanceID, 'kernel' => IPS_GetKernelVersion(),
             'view' => $this->ReadPropertyInteger('View'), 'room' => $this->ReadPropertyString('RoomFilter'),
@@ -124,7 +126,7 @@ trait HausstatusNavigationSupport
             'inlinePages' => $this->UsesInlinePages(),
             'fullscreenSupported' => $this->SupportsHtmlFullscreen(), 'expectedType' => $this->HtmlVisualizationType(),
             'actualType' => IPS_GetInstance($this->InstanceID)['InstanceVisualizationType'],
-            'htmlBytes' => strlen($html), 'initialStateInserted' => str_contains($html, 'let state=') && !str_contains($html, '/*INITIAL_STATE*/null'),
+            'htmlBytes' => strlen($html), 'renderMs' => $renderMs, 'initialStateInserted' => str_contains($html, 'let state=') && !str_contains($html, '/*INITIAL_STATE*/null'),
             'htmlError' => str_contains($html, 'data-svhs-error="true"')];
         if ($data['htmlError']) { $data['error'] = trim(strip_tags($html)); }
         return json_encode($data, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
