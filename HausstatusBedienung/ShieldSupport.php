@@ -69,6 +69,149 @@ trait HausstatusShieldSupport
         }
     }
 
+    /**
+     * Presentation-only structure in the existing System category:
+     * System / Medienstatus / four devices / links to the source variables.
+     * The original variables MUST remain direct children of this module,
+     * because RegisterVariable* and SetValue use their original idents.
+     */
+    private function OrganizeShieldStatusLinks(): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0
+            || $this->ReadPropertyInteger('View') !== 0) { return; }
+
+        $roots = array_unique(array_filter([
+            $this->ReadPropertyInteger('HomepageCategory'),
+            IPS_GetParent($this->InstanceID)
+        ], static fn(int $id): bool => $id > 0));
+        $system = 0;
+        foreach ($roots as $root) {
+            if (!IPS_ObjectExists($root) || (int)IPS_GetObject($root)['ObjectType'] !== 0) { continue; }
+            $possible = [];
+            foreach (IPS_GetChildrenIDs($root) as $id) {
+                $obj = IPS_GetObject($id);
+                if ((int)$obj['ObjectType'] !== 0) { continue; }
+                if ((string)$obj['ObjectIdent'] === 'SVHSSystemPage'
+                    || $this->PresentationBaseName(IPS_GetName($id)) === 'System') { $possible[] = $id; }
+            }
+            if (count($possible) === 1) { $system = $possible[0]; break; }
+            if (count($possible) > 1) {
+                throw new RuntimeException('Mehrere System-Kategorien unter ' . $root
+                    . ': Kein automatisches Anlegen von Medien-Verknuepfungen.');
+            }
+        }
+        if ($system === 0) {
+            $this->SendDebug('Medienstatus', 'Keine eindeutige System-Kategorie gefunden. Keine Medienlinks angelegt.', 0);
+            return;
+        }
+
+        $status = $this->ShieldStatusLinkCategory($system, 'SVHSMediaStatus', 'Medienstatus', 80);
+        $devices = [
+            'Shield'         => ['Shield Wohnzimmer', 10],
+            'ShieldBedroom'  => ['Shield Schlafzimmer', 20],
+            'ShieldDressing' => ['Shield Ankleidezimmer', 30],
+            'PhilipsTv'      => ['Philips-TV Wohnzimmer', 40]
+        ];
+        $fieldNames = [
+            'Online'   => 'Online',
+            'Power'    => 'Betriebszustand',
+            'App'      => 'Aktive App',
+            'Playback' => 'Wiedergabe',
+            'Title'    => 'Medientitel',
+            'Channel'  => 'Sender',
+            'Subtitle' => 'Sendungsdetails',
+            'Error'    => 'Diagnose',
+            'Updated'  => 'Letzte Abfrage'
+        ];
+        foreach ($devices as $prefix => [$label, $position]) {
+            $group = $this->ShieldStatusLinkCategory(
+                $status, 'SVHSMedia_' . $prefix, $label, $position
+            );
+            $i = 0;
+            foreach ($fieldNames as $field => $name) {
+                $original = @IPS_GetObjectIDByIdent($prefix . $field, $this->InstanceID);
+                if ($original === false || !IPS_VariableExists($original)) { continue; }
+                $ident = 'SVHSMediaLink_' . $prefix . $field;
+                $link = @IPS_GetObjectIDByIdent($ident, $group);
+                if ($link === false) {
+                    $candidates = [];
+                    foreach (IPS_GetChildrenIDs($group) as $child) {
+                        if (IPS_LinkExists($child)
+                            && (int)IPS_GetLink($child)['TargetID'] === (int)$original) { $candidates[] = $child; }
+                    }
+                    if (count($candidates) > 1) {
+                        $this->SendDebug('Medienstatus', 'Mehrere Verknuepfungen auf ' . $original . '; unveraendert.', 0);
+                        continue;
+                    }
+                    if ($candidates) {
+                        $link = $candidates[0];
+                        $oldIdent = (string)IPS_GetObject($link)['ObjectIdent'];
+                        if ($oldIdent !== '' && $oldIdent !== $ident) {
+                            $this->SendDebug('Medienstatus', 'Fremde Verknuepfung ' . $link . ' wird nicht uebernommen.', 0);
+                            continue;
+                        }
+                        IPS_SetIdent($link, $ident);
+                    } else {
+                        $link = IPS_CreateLink();
+                        IPS_SetParent($link, $group);
+                        IPS_SetIdent($link, $ident);
+                    }
+                }
+                if (!IPS_LinkExists($link)) {
+                    $this->SendDebug('Medienstatus', 'Kennung ' . $ident . ' durch Fremdobjekt belegt.', 0);
+                    continue;
+                }
+                if ((int)IPS_GetLink($link)['TargetID'] !== (int)$original) {
+                    // Do not silently repoint a link somebody has modified.
+                    $this->SendDebug('Medienstatus', 'Link ' . $link . ' hat ein anderes Ziel; nicht ueberschrieben.', 0);
+                    continue;
+                }
+                if (IPS_GetName($link) !== $name) { IPS_SetName($link, $name); }
+                IPS_SetPosition($link, (++$i) * 10);
+                if (IPS_GetObject($link)['ObjectIsHidden']) { IPS_SetHidden($link, false); }
+                // Keep the originals addressable by the module but hide the
+                // clutter in the master. The visible link shows the same value.
+                if (!IPS_GetObject($original)['ObjectIsHidden']) { IPS_SetHidden($original, true); }
+            }
+        }
+    }
+
+    private function ShieldStatusLinkCategory(int $parent, string $ident, string $name, int $position): int
+    {
+        $id = @IPS_GetObjectIDByIdent($ident, $parent);
+        if ($id === false) {
+            $matches = [];
+            foreach (IPS_GetChildrenIDs($parent) as $child) {
+                $obj = IPS_GetObject($child);
+                if ((int)$obj['ObjectType'] === 0
+                    && $this->PresentationBaseName(IPS_GetName($child)) === $name) { $matches[] = $child; }
+            }
+            if (count($matches) > 1) {
+                throw new RuntimeException('Mehrere Kategorien namens ' . $name . ': Kein doppelter Medienordner.');
+            }
+            if ($matches) {
+                $id = $matches[0];
+                $oldIdent = (string)IPS_GetObject($id)['ObjectIdent'];
+                if ($oldIdent !== '' && $oldIdent !== $ident) {
+                    throw new RuntimeException('Medienordner ' . $id . ' hat eine fremde Kennung.');
+                }
+                IPS_SetIdent($id, $ident);
+            } else {
+                $id = IPS_CreateCategory();
+                IPS_SetParent($id, $parent);
+                IPS_SetIdent($id, $ident);
+            }
+        }
+        if ((int)IPS_GetObject($id)['ObjectType'] !== 0) {
+            throw new RuntimeException('Medienordner-Kennung ' . $ident . ' ist durch ein Fremdobjekt belegt.');
+        }
+        $versioned = $this->VersionedPresentationName($name);
+        if (IPS_GetName($id) !== $versioned) { IPS_SetName($id, $versioned); }
+        IPS_SetPosition($id, $position);
+        if (IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, false); }
+        return $id;
+    }
+
     private function ShieldIDs(): array
     {
         if (!in_array($this->CurrentView(), [0, 6], true)) { return []; }
