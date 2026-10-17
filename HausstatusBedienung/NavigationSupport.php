@@ -23,6 +23,68 @@ trait HausstatusNavigationSupport
     {
         return $this->PresentationBaseName($name) . ' · v' . $this->HausstatusReleaseVersion();
     }
+    /**
+     * Tag existing links to this Hausstatus source in all three visualization
+     * trees. Categories and module instances never receive version suffixes.
+     *
+     * This intentionally renames links IN PLACE and neither creates nor moves
+     * objects. Ident, target, visibility and layout stay unchanged.
+     */
+    private function VersionHausstatusPresentationLinks(): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0
+            || $this->ReadPropertyInteger('View') !== 0) { return; }
+
+        $roots = array_values(array_unique(array_filter([
+            $this->ReadPropertyInteger('HomepageCategory'),
+            13714, // Sven: independent visualization category
+            23271  // Susi: independent visualization category
+        ], static fn(int $id): bool => $id > 0)));
+
+        $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        $belongs = function (int $target) use ($module): bool {
+            if (IPS_VariableExists($target)) { $target = IPS_GetParent($target); }
+            if (!IPS_InstanceExists($target)) { return false; }
+            if (IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== $module) { return false; }
+            return $target === $this->InstanceID
+                || (int)IPS_GetProperty($target, 'ConfigSource') === $this->InstanceID;
+        };
+
+        foreach ($roots as $root) {
+            if (!IPS_ObjectExists($root)
+                || (int)IPS_GetObject($root)['ObjectType'] !== 0) { continue; }
+
+            $queue = [[$root, 0]];
+            while ($queue) {
+                [$parent, $depth] = array_shift($queue);
+                foreach (IPS_GetChildrenIDs($parent) as $id) {
+                    $object = IPS_GetObject($id);
+                    if ((int)$object['ObjectType'] === 0) {
+                        if ($depth < 6 && !($object['ObjectIsHidden'] ?? false)) {
+                            $queue[] = [$id, $depth + 1];
+                        }
+                        continue;
+                    }
+                    if (!IPS_LinkExists($id) || ($object['ObjectIsHidden'] ?? false)) { continue; }
+                    $target = (int)IPS_GetLink($id)['TargetID'];
+                    // Link-to-link chains occasionally occur after old mirrors.
+                    // Unwrap at most three steps and ignore broken/recursive links.
+                    $visited = [$id => true];
+                    for ($hops = 0; $hops < 3 && IPS_LinkExists($target); $hops++) {
+                        if (isset($visited[$target])) { $target = 0; break; }
+                        $visited[$target] = true;
+                        $target = (int)IPS_GetLink($target)['TargetID'];
+                    }
+                    if (!$belongs($target)) { continue; }
+
+                    $existing = IPS_GetName($id);
+                    $versioned = $this->VersionedPresentationName($existing);
+                    if ($existing !== $versioned) { IPS_SetName($id, $versioned); }
+                }
+            }
+        }
+    }
+
     private function HideTileMaximize(): void
     {
         // The native tile header is outside the HTML frame. This API exists from 9.1.
