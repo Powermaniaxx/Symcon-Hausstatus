@@ -143,7 +143,7 @@ trait HausstatusNavigationSupport
         $rooms = $this->RoomNavigationTarget();
         if ($rooms > 0) { $this->OrganizeRoomSelector($rooms); }
         if ($rooms > 0 && in_array($this->PresentationBaseName(IPS_GetName($rooms)), ['Räume und Geräte', 'Raumsteuerung', 'Räume'], true)) {
-            $name = $this->VersionedPresentationName('Räume');
+            $name = 'Räume';
             if (IPS_GetName($rooms) !== $name) { IPS_SetName($rooms, $name); }
         }
     }
@@ -174,7 +174,8 @@ trait HausstatusNavigationSupport
             $id = $candidate['object']; $hidden = $id !== $keeper;
             if ((IPS_GetObject($id)['ObjectIsHidden'] ?? false) !== $hidden) { IPS_SetHidden($id, $hidden); }
         }
-        $roomName = $this->VersionedPresentationName('Räume');
+        $roomName = (IPS_LinkExists($keeper) || IPS_VariableExists($keeper))
+            ? $this->VersionedPresentationName('Räume') : 'Räume';
         if (IPS_GetName($keeper) !== $roomName) { IPS_SetName($keeper, $roomName); }
     }
 
