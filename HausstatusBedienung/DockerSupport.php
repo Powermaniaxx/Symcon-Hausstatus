@@ -91,7 +91,7 @@ trait HausstatusDockerSupport
 
     private function DockerState(): ?array
     {
-        if ($this->CurrentView() !== 25) { return null; }
+        if (!in_array($this->CurrentView(), [25, 31], true)) { return null; }
         $ids = $this->DockerContainerIDs();
         $containers = [];
         foreach ($ids as $id) {
@@ -142,8 +142,8 @@ trait HausstatusDockerSupport
 
     private function SetDockerControl(mixed $value): void
     {
-        if ($this->CurrentView() !== 25) {
-            throw new RuntimeException('Die Docker-Steuerung ist nur in der NAS-Container-Kachel verfügbar.');
+        if (!in_array($this->CurrentView(), [25, 31], true)) {
+            throw new RuntimeException('Die Docker-Steuerung ist nur in der NAS-Container- oder System-Kachel verfügbar.');
         }
         if (!is_array($value) || count($value) !== 2) {
             throw new InvalidArgumentException('Ungültiger Containerbefehl.');
