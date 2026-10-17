@@ -231,6 +231,10 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->SendDebug('Medienstatus-Navigation', $e->getMessage(), 0);
             IPS_LogMessage('Hausstatus', 'Medienstatus-Verknuepfungen: ' . $e->getMessage());
         }
+        // Version all existing Hausstatus presentation links without touching
+        // folder names, instances, IDs, target mappings, or grid layouts.
+        try { $this->VersionHausstatusPresentationLinks(); }
+        catch (Throwable $e) { $this->SendDebug('Hausstatus-Verknuepfungen', $e->getMessage(), 0); }
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
