@@ -570,6 +570,28 @@ class HausstatusBedienung extends IPSModuleStrict
             if ($this->HasTemperatureView() && count($this->HeatingCenterIDs())===1) { $this->Refresh(); }
             return;
         }
+        // A remote weather fetch must never delay loading the HTML tile.
+        if ($Ident === 'WetterComRefresh') {
+            $view = $this->ReadPropertyInteger('View');
+            $part = $this->ReadPropertyInteger('HomepagePart');
+            if ($view === 0 && preg_match('/^SVHSHomePart_([1-9][0-9]*)$/D',
+                (string)(IPS_GetObject($this->InstanceID)['ObjectIdent'] ?? ''), $matches) === 1) {
+                $part = (int)$matches[1];
+            }
+            if (!in_array($view, [10, 16], true)
+                && !($view === 0 && ($part === 0 || $part === 8))) { return; }
+            try {
+                $previous = $this->WetterComForecastState();
+                $updated = $this->WetterComForecastState(true);
+                if ($previous !== $updated) {
+                    $this->UpdateVisualizationValue(json_encode(['wetterComUpdate' => $updated],
+                        JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+                }
+            } catch (Throwable $e) {
+                $this->SendDebug('WetterCom', $e->getMessage(), 0);
+            }
+            return;
+        }
         if (in_array($Ident, ['PageRead', 'PageValue'], true)) {
             $this->HandlePageRequest($Ident, $Value); return;
         }
@@ -1188,16 +1210,20 @@ class HausstatusBedienung extends IPSModuleStrict
 
     // Testversion: öffentliche wetter.com-Tagesprognose, ohne API.
     // Nicht garantiert: wetter.com kann Seitenstruktur oder Zugriffsregeln ändern.
-    private function WetterComForecastState(): array
+    private function WetterComForecastState(bool $refresh = false): array
     {
         $now = time();
         $stored = json_decode($this->GetBuffer('WetterComForecastCache'), true);
         if (!is_array($stored)) { $stored = []; }
         $lastTry = (int) ($stored['lastTry'] ?? 0);
-        if ($lastTry > 0 && $now - $lastTry < (empty($stored['days']) ? 600 : 3600)) {
+        // Initial rendering and variable updates only read the cached forecast.
+        if (!$refresh || ($lastTry > 0 && $now - $lastTry < (empty($stored['days']) ? 600 : 3600))) {
             return $this->WetterComVisibleCache($stored, $now);
         }
+        // Reserve this retry period before contacting wetter.com to limit
+        // duplicate fetches across concurrent requests to this instance.
         $stored['lastTry'] = $now;
+        $this->SetBuffer('WetterComForecastCache', json_encode($stored, JSON_THROW_ON_ERROR));
         $url = 'https://www.wetter.com/wetter_aktuell/wettervorhersage/16_tagesvorhersage/deutschland/leipzig/moelkau/DE0006194064.html';
         $html = false;
         try {
