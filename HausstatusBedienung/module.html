@@ -1251,7 +1251,7 @@ function renderHeatingProfile(s){
  if(!item)return;
  if(![0,9].includes(s.View)){root.append(roomItemBox(item));displayDescription(root,'HeatingProfile');return;}
  const panel=document.createElement('details');panel.id='roomsHeatingProfile';panel.className='compactHeatingProfile';
- const summary=document.createElement('summary');text(summary,'Heizungsprofil: '+(item.value?.text??'Unbekannt'));panel.append(summary);
+ const summary=document.createElement('summary');text(summary,(item.heatingCenter?'Heizung: ':'Heizungsprofil: ')+(item.value?.text??'Unbekannt'));panel.append(summary);
  if(item.control?.kind==='enum'){
   const options=document.createElement('div');options.className='profileChoices';
   for(const option of item.control.options??[]){
@@ -1260,6 +1260,15 @@ function renderHeatingProfile(s){
    button.addEventListener('click',()=>{panel.open=false;send(item.command||'RoomValue',item.command?option.value:{id:item.id,value:option.value});});options.append(button);
   }
   panel.append(options);
+  if(item.heatingCenter&&item.center?.mode!=='auto'){
+   const seasons=document.createElement('div');seasons.className='profileChoices';seasons.setAttribute('aria-label','Manueller Heizplan');
+   for(const [value,label] of Object.entries({spring:'Frühjahr',summer:'Sommer',autumn:'Herbst',winter:'Winter'})){
+    const button=document.createElement('button');button.type='button';text(button,label);button.disabled=busy||item.center?.manualSeason===value;
+    button.setAttribute('aria-pressed',String(item.center?.manualSeason===value));button.addEventListener('click',()=>send('HeatingCenterMode',value));seasons.append(button);
+   }
+   panel.append(seasons);
+  }
+  if(item.heatingCenter&&item.note){const note=document.createElement('p');note.className='small';text(note,item.note);panel.append(note);}
  }else{const note=document.createElement('div');note.className='small';text(note,item.note||'Nur Statusanzeige.');panel.append(note);}
  el('roomsSection').insertBefore(panel,el('rooms'));
 }

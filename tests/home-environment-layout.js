@@ -42,5 +42,14 @@ assert.notEqual(el('roomsHeatingProfile'),panel);
 assert.equal(el('heatingProfileSection').hidden,true);
 context.renderHeatingProfile({View:12,HeatingProfileItem:item});
 assert.equal(el('roomsHeatingProfile'),undefined);assert.equal(el('heatingProfileSection').hidden,false);
-console.log('Weather/outdoor, rooms/heater and compact heating profile: passed');
+const centerItem={id:123,heatingCenter:true,command:'HeatingCenterMode',value:{raw:'auto',text:'Automatik · Regelung aktiv · Herbst'},
+ center:{mode:'auto',manualSeason:'winter'},note:'Jahreszeit aus Zentrale',control:{kind:'enum',options:[{value:'auto',name:'Automatik'},{value:'manual',name:'Manuell'}]}};
+context.renderHeatingProfile({View:0,HeatingProfileItem:centerItem});
+panel=el('roomsHeatingProfile');assert.equal(panel.children[0].textContent,'Heizung: Automatik · Regelung aktiv · Herbst');
+panel.children[1].children[1].events.click();assert.deepEqual(sent.at(-1),['HeatingCenterMode','manual']);
+centerItem.value.raw='manual';centerItem.center.mode='winter';
+context.renderHeatingProfile({View:0,HeatingProfileItem:centerItem});panel=el('roomsHeatingProfile');
+assert.equal(panel.children[2].children.length,4);assert.equal(panel.children[2].children[3].disabled,true);
+panel.children[2].children[2].events.click();assert.deepEqual(sent.at(-1),['HeatingCenterMode','autumn']);
+console.log('Weather/outdoor, rooms/heater, legacy profile and heating-center mode controls: passed');
 
