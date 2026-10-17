@@ -114,7 +114,8 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
-        $this->SetTimerInterval('ShieldWatchdog', ($this->ReadPropertyBoolean('ShieldEnabled') || $this->ReadPropertyBoolean('PhilipsTvEnabled')) && $this->ReadPropertyInteger('ConfigSource') === 0 ? 15000 : 0);
+        // Keine zyklischen Hintergrundchecks: Shield-Ablauf nur bei sichtbarer Medienkachel.
+        $this->SetTimerInterval('ShieldWatchdog', 0);
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
             $this->SetBuffer('DoorChallenges', '{}');
@@ -553,6 +554,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($Ident === 'ViewerPing') {
             $this->SetBuffer('LastViewerSeen', (string)time());
             $this->ForwardViewerPingToNodeRed();
+            $this->ExpireShieldOnViewerPing();
             if ($this->HasTemperatureView() && count($this->HeatingCenterIDs())===1) { $this->Refresh(); }
             return;
         }
