@@ -376,6 +376,45 @@ function ksLinkZiel(int $quelle): int
     return $quelle;
 }
 
+// Die fruehere Gesamtansicht darf neben Susis Einzelkacheln nicht erscheinen.
+function ksSusiIstGesamtansicht(int $ziel): bool
+{
+    $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+    return IPS_InstanceExists($ziel)
+        && IPS_GetInstance($ziel)['ModuleInfo']['ModuleID'] === $module
+        && (int)IPS_GetProperty($ziel, 'View') === 0
+        && (int)IPS_GetProperty($ziel, 'HomepagePart') === 0;
+}
+
+// Eigene Spiegel-Links und alte Fremdlinks: nur in Susis Root ausblenden.
+// Keine Objekte loeschen, keine anderen Visualisierungen bearbeiten.
+function ksSusiAlteGesamtansichtenAusblenden(int $root): int
+{
+    $queue = [[$root, 0]];
+    $combined = [];
+    $individual = 0;
+    while ($queue) {
+        [$category, $depth] = array_shift($queue);
+        foreach (IPS_GetChildrenIDs($category) as $id) {
+            $object = IPS_GetObject($id);
+            if ((int)$object['ObjectType'] === 0) {
+                if ($depth < 3 && !($object['ObjectIsHidden'] ?? false)) { $queue[] = [$id, $depth + 1]; }
+                continue;
+            }
+            if ($object['ObjectIsHidden'] ?? false) { continue; }
+            $target = ksLinkZiel($id);
+            if (ksSusiIstGesamtansicht($target)) { $combined[] = $id; }
+            elseif (IPS_InstanceExists($target)
+                && IPS_GetInstance($target)['ModuleInfo']['ModuleID'] === '{9E33E109-4881-4E78-9906-38CAC2F1E210}') {
+                $individual++;
+            }
+        }
+    }
+    if ($individual === 0) { return 0; }
+    foreach ($combined as $id) { IPS_SetHidden($id, true); }
+    return count($combined);
+}
+
 // Susi erhält eigene HTML-Instanzen. Ein Link auf Svens/Masters Instanz
 // könnte keine andere Darstellung liefern. Die Statusquelle bleibt der Master.
 function ksSusiZiel(int $ziel): int
@@ -599,6 +638,11 @@ function ksSpiegeln(
 
         if (in_array($typ, [1, 2, 5, 6], true)) {
 
+            // Auf Susi nicht erneut eine kombinierte Hausstatus-Kachel spiegeln.
+            if ($benutzer === 'Susi' && ksSusiIstGesamtansicht(ksLinkZiel($id))) {
+                continue;
+            }
+
             ksLink(
                 $ziel,
                 $id,
@@ -757,6 +801,10 @@ try {
             $statistik,
             $name
         );
+
+        if ($name === 'Susi') {
+            $statistik['alteGesamtansichtenAusgeblendet'] = ksSusiAlteGesamtansichtenAusblenden($root);
+        }
 
         // Status nur bei manueller Ausfuehrung.
 
