@@ -5,6 +5,7 @@ require_once __DIR__ . '/ComfortSupport.php';
 require_once __DIR__ . '/RainSupport.php';
 require_once __DIR__ . '/NavigationSupport.php';
 require_once __DIR__ . '/DisplaySupport.php';
+require_once __DIR__ . '/HeatingCenterSupport.php';
 require_once __DIR__ . '/NetworkSupport.php';
 require_once __DIR__ . '/PageSupport.php';
 require_once __DIR__ . '/HomepageSupport.php';
@@ -21,6 +22,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusRainSupport;
     use HausstatusNavigationSupport;
     use HausstatusDisplaySupport;
+    use HausstatusHeatingCenterSupport;
     use HausstatusNetworkSupport;
     use HausstatusPageSupport;
     use HausstatusHomepageSupport;
@@ -218,6 +220,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $script = $this->ConfigInteger('LightCommandScript');
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
         $this->HideTileMaximize();
+        $this->HideUnusedShieldVariables();
         $this->OrganizeHomepageDetails();
         $this->OrganizeSeparateHomepage();
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
@@ -503,6 +506,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if ($Ident === 'ViewerPing') {
             $this->SetBuffer('LastViewerSeen', (string)time());
+            if ($this->HasTemperatureView() && count($this->HeatingCenterIDs())===1) { $this->Refresh(); }
             return;
         }
         if (in_array($Ident, ['PageRead', 'PageValue'], true)) {
@@ -526,7 +530,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -542,7 +546,9 @@ class HausstatusBedienung extends IPSModuleStrict
                 if (strlen($Value) > 32768) { throw new InvalidArgumentException('Bedienbefehl ist zu groß.'); }
                 $Value = json_decode($Value, true, 32, JSON_THROW_ON_ERROR);
             }
-            if ($Ident === 'PhilipsHdmi3') {
+            if ($Ident === 'HeatingCenterMode') {
+                $this->SetHeatingCenterMode($Value);
+            } elseif ($Ident === 'PhilipsHdmi3') {
                 $this->SetPhilipsHdmi3($Value);
             } elseif (str_starts_with($Ident, 'ShieldPower_')) {
                 $this->SetShieldPower(substr($Ident, 12), $Value);

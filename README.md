@@ -1,5 +1,12 @@
 # Hausstatus 0.63 für IP-Symcon
 
+## Heizungszentrale in der Raumübersicht (ab 0.80)
+
+Mit Heizungszentrale ab Version 1.8.2 zeigt die Raumübersicht Betriebsart, tatsächliche Regelungsaktivität beziehungsweise Testmodus und die aktuelle Saison. Aufgeklappt lassen sich Automatik oder Manuell und der manuelle Saisonplan wählen. Eine angehaltene Regelung wird dadurch nicht gestartet; hierzu die Heizungszentrale öffnen.
+
+Der Hausstatus sendet nur eine Moduswahl an die eindeutig erkannte Zentrale und bedient dabei nicht den alten Profilverteiler. Ohne installierte Zentrale bleibt die bisherige Anzeige bestehen. Bei mehreren Zentralen, deaktivierter Raumbedienung oder veralteter Schnittstelle bleibt die direkte Bedienung gesperrt. Zuerst die Heizungszentrale, anschließend den Hausstatus aktualisieren.
+
+
 ## 0.63 / Build 64: Markise/Dachfenster mit zweistufigem Tipp-Schutz
 
 Der Positionsschieber von Markise und Dachfenster sendet jetzt niemals direkt einen Fahrbefehl. Die Bedienung erfolgt in drei Schritten: Sollposition am Schieber waehlen, die separate Schaltflaeche `Position übernehmen` antippen und die Sicherheitsabfrage mit `Jetzt ausführen` bestaetigen. Abbrechen oder ein unveraenderter Sollwert loest keine Bewegung aus. Auch Automatik und „Ueber Nacht“ erfordern weiterhin die bestaetigende Sicherheitsabfrage.

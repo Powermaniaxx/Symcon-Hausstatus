@@ -66,6 +66,7 @@ trait HausstatusDisplaySupport
 
     private function HeatingProfileEntry(): ?array
     {
+        if ($this->HeatingCenterIDs()) { return null; }
         $id = $this->ConfigInteger('HeatingProfile');
         if ($id <= 0) { return null; }
         return ['room' => '', 'group' => 'Heizung', 'name' => $this->DisplayText('HeatingProfile'),
@@ -75,6 +76,8 @@ trait HausstatusDisplaySupport
     private function HeatingProfileItem(): ?array
     {
         if (!$this->HasTemperatureView() && $this->CurrentView() !== 12) { return null; }
+        $center=$this->HeatingCenterItem();
+        if ($center!==null) { return $center; }
         $entry = $this->HeatingProfileEntry();
         if ($entry === null) { return null; }
         $item = $this->RoomItem($entry);

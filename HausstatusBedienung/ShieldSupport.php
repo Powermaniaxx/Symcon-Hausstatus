@@ -33,6 +33,19 @@ trait HausstatusShieldSupport
         return $this->ReadPropertyInteger('ConfigSource') ?: $this->InstanceID;
     }
 
+    private function HideUnusedShieldVariables(): void
+    {
+        // Only the central/media owner uses these generated status variables.
+        // Detail views read their configured owner and do not need visible copies.
+        if ($this->ReadPropertyInteger('ConfigSource')===0 && in_array($this->ReadPropertyInteger('View'),[0,6],true)) { return; }
+        foreach(self::SHIELD_DEVICES as $prefix) {
+            foreach(self::SHIELD_FIELDS as $field) {
+                $id=@IPS_GetObjectIDByIdent($prefix.substr($field,6),$this->InstanceID);
+                if ($id!==false && $id>0 && IPS_VariableExists($id)) { IPS_SetHidden($id,true); }
+            }
+        }
+    }
+
     private function ShieldIDs(): array
     {
         if (!in_array($this->CurrentView(), [0, 6], true)) { return []; }
