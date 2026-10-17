@@ -88,6 +88,8 @@ trait HausstatusNavigationSupport
         $root = IPS_GetParent($this->NavigationOwner());
         $category = @IPS_GetObjectIDByIdent('SVHSPVPage', $root);
         if ($category === false || IPS_GetObject($category)['ObjectType'] !== 0) { return $pv; }
+        // A single PV detail view inside the PV category needs no duplicate link.
+        if (IPS_GetParent($pv) === $category) { return $category; }
         $link = @IPS_GetObjectIDByIdent('SVHSPVPageLink', $category);
         return $link !== false && IPS_LinkExists($link) && IPS_GetLink($link)['TargetID'] === $pv ? $category : $pv;
     }
@@ -98,12 +100,24 @@ trait HausstatusNavigationSupport
         if (!IPS_InstanceExists($owner)) { return 0; }
         $root = IPS_GetParent($owner);
         if ($root <= 0) { return 0; }
-        $id = @IPS_GetObjectIDByIdent('SVHSTile_7', $root);
-        if ($id === false || !IPS_InstanceExists($id)
-            || IPS_GetInstance($id)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
-            || IPS_GetProperty($id, 'ConfigSource') !== $owner || IPS_GetProperty($id, 'View') !== 7
-            || !IPS_GetProperty($id, 'ActiveView')) { return 0; }
-        return $id;
+        $pvCategory = @IPS_GetObjectIDByIdent('SVHSPVPage', $root);
+        // New layout: the detail instance belongs INSIDE the PV category.
+        // Legacy installs may still keep SVHSTile_7 directly under the root.
+        $parents = [];
+        if ($pvCategory !== false && (int)IPS_GetObject($pvCategory)['ObjectType'] === 0) {
+            $parents[] = (int)$pvCategory;
+        }
+        $parents[] = $root;
+        foreach ($parents as $parent) {
+            $id = @IPS_GetObjectIDByIdent('SVHSTile_7', $parent);
+            if ($id === false || !IPS_InstanceExists($id)
+                || IPS_GetInstance($id)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}'
+                || (int)IPS_GetProperty($id, 'ConfigSource') !== $owner
+                || (int)IPS_GetProperty($id, 'View') !== 7
+                || !IPS_GetProperty($id, 'ActiveView')) { continue; }
+            return (int)$id;
+        }
+        return 0;
     }
 
     private function RoomNavigationTarget(): int
@@ -172,6 +186,13 @@ trait HausstatusNavigationSupport
             $this->SendDebug('PV-Navigation', 'SVHSPVPage ist anders belegt; nichts verändert.', 0); return;
         }
         $link = $category !== false ? @IPS_GetObjectIDByIdent('SVHSPVPageLink', $category) : false;
+        if ($category !== false && IPS_GetParent($pv) === $category) {
+            // The direct detail tile replaces the old presentation link.
+            if ($link !== false && IPS_LinkExists($link) && IPS_GetLink($link)['TargetID'] === $pv) {
+                IPS_SetHidden($link, true);
+            }
+            return;
+        }
         if ($link !== false && (!IPS_LinkExists($link) || IPS_GetLink($link)['TargetID'] !== $pv)) {
             $this->SendDebug('PV-Navigation', 'SVHSPVPageLink ist anders belegt; nichts verändert.', 0); return;
         }
