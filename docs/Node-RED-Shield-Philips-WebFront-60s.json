@@ -1,0 +1,546 @@
+[
+  {
+    "id": "svhs_webfront_poll_tab",
+    "type": "tab",
+    "label": "Shield + Philips nur bei WebFront",
+    "disabled": false,
+    "info": "Vier bestehende poll.js Aufrufe. Diese Version ersetzt beide alten Poll-Tabs: alte Tabs nach Umstellung deaktivieren. Abfragen alle 60 Sekunden nur bei sichtbarer Hausstatus-Kachel; nach 75s ohne Ping gestoppt. Anwesenheit, Alarm und Ansagen sind nicht betroffen."
+  },
+  {
+    "id": "svhs_poll_http_in",
+    "type": "http in",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Hausstatus ViewerPing (POST)",
+    "url": "/symcon/visu-ping",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 155,
+    "y": 80,
+    "wires": [
+      [
+        "svhs_poll_receive"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_receive",
+    "type": "function",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Ping merken · Erstaufruf sofort",
+    "func": "// Heartbeat aus der Symcon-Kachel, ohne Endgeraetebefehle.\nconst now = Date.now();\nconst prev = Number(global.get('svhsViewerPingMs') || 0);\nconst newlyOnline = prev === 0 || now - prev > 75000;\nglobal.set('svhsViewerPingMs', now);\nmsg.statusCode = 200;\nmsg.headers = {'Content-Type':'application/json'};\nmsg.payload = {ok:true,active:true};\nreturn [msg, newlyOnline ? {payload:'webfront-open'} : null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "svhs_poll_response"
+      ],
+      [
+        "svhs_poll_wohn_start",
+        "svhs_poll_ank_start",
+        "svhs_poll_schlaf_start",
+        "svhs_poll_tv_start"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_response",
+    "type": "http response",
+    "z": "svhs_webfront_poll_tab",
+    "name": "HTTP 200",
+    "statusCode": "",
+    "headers": {},
+    "x": 630,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_wohn_inject",
+    "type": "inject",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Wohnzimmer · alle 60 s",
+    "props": [],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "3",
+    "topic": "",
+    "x": 145,
+    "y": 220,
+    "wires": [
+      [
+        "svhs_poll_wohn_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_wohn_start",
+    "type": "delay",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Start nach 0.1 s",
+    "pauseType": "delay",
+    "timeout": "0.1",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 415,
+    "y": 275,
+    "wires": [
+      [
+        "svhs_poll_wohn_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_wohn_gate",
+    "type": "function",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Wohnzimmer freigeben?",
+    "func": "// Keine Abfragen ohne sichtbare Hausstatus-Visualisierung.\nconst last = Number(global.get('svhsViewerPingMs') || 0);\nconst age = Date.now() - last;\nreturn last > 0 && age >= 0 && age <= 75000 ? msg : null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 415,
+    "y": 220,
+    "wires": [
+      [
+        "svhs_poll_wohn_exec"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_wohn_exec",
+    "type": "exec",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Wohnzimmer → Symcon",
+    "command": "node /data/shield/poll.js",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "x": 640,
+    "y": 220,
+    "wires": [
+      [
+        "svhs_poll_wohn_ok"
+      ],
+      [
+        "svhs_poll_wohn_err"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "svhs_poll_wohn_ok",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Wohnzimmer OK",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 865,
+    "y": 198,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_wohn_err",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Wohnzimmer Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 870,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_ank_inject",
+    "type": "inject",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Ankleidezimmer · alle 60 s",
+    "props": [],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "7",
+    "topic": "",
+    "x": 145,
+    "y": 340,
+    "wires": [
+      [
+        "svhs_poll_ank_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_ank_start",
+    "type": "delay",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Start nach 4 s",
+    "pauseType": "delay",
+    "timeout": "4",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 415,
+    "y": 395,
+    "wires": [
+      [
+        "svhs_poll_ank_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_ank_gate",
+    "type": "function",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Ankleidezimmer freigeben?",
+    "func": "// Keine Abfragen ohne sichtbare Hausstatus-Visualisierung.\nconst last = Number(global.get('svhsViewerPingMs') || 0);\nconst age = Date.now() - last;\nreturn last > 0 && age >= 0 && age <= 75000 ? msg : null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 415,
+    "y": 340,
+    "wires": [
+      [
+        "svhs_poll_ank_exec"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_ank_exec",
+    "type": "exec",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Ankleidezimmer → Symcon",
+    "command": "node /data/shield/poll.js ankleidezimmer",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "x": 640,
+    "y": 340,
+    "wires": [
+      [
+        "svhs_poll_ank_ok"
+      ],
+      [
+        "svhs_poll_ank_err"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "svhs_poll_ank_ok",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Ankleidezimmer OK",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 865,
+    "y": 318,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_ank_err",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Ankleidezimmer Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 870,
+    "y": 360,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_schlaf_inject",
+    "type": "inject",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Schlafzimmer · alle 60 s",
+    "props": [],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "11",
+    "topic": "",
+    "x": 145,
+    "y": 460,
+    "wires": [
+      [
+        "svhs_poll_schlaf_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_schlaf_start",
+    "type": "delay",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Start nach 8 s",
+    "pauseType": "delay",
+    "timeout": "8",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 415,
+    "y": 515,
+    "wires": [
+      [
+        "svhs_poll_schlaf_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_schlaf_gate",
+    "type": "function",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Schlafzimmer freigeben?",
+    "func": "// Keine Abfragen ohne sichtbare Hausstatus-Visualisierung.\nconst last = Number(global.get('svhsViewerPingMs') || 0);\nconst age = Date.now() - last;\nreturn last > 0 && age >= 0 && age <= 75000 ? msg : null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 415,
+    "y": 460,
+    "wires": [
+      [
+        "svhs_poll_schlaf_exec"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_schlaf_exec",
+    "type": "exec",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Schlafzimmer → Symcon",
+    "command": "node /data/shield/poll.js schlafzimmer",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "14",
+    "winHide": true,
+    "oldrc": false,
+    "x": 640,
+    "y": 460,
+    "wires": [
+      [
+        "svhs_poll_schlaf_ok"
+      ],
+      [
+        "svhs_poll_schlaf_err"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "svhs_poll_schlaf_ok",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Schlafzimmer OK",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 865,
+    "y": 438,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_schlaf_err",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Shield Schlafzimmer Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 870,
+    "y": 480,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_tv_inject",
+    "type": "inject",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Philips TV · alle 60 s",
+    "props": [],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "13",
+    "topic": "",
+    "x": 145,
+    "y": 580,
+    "wires": [
+      [
+        "svhs_poll_tv_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_tv_start",
+    "type": "delay",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Start nach 12 s",
+    "pauseType": "delay",
+    "timeout": "12",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 415,
+    "y": 635,
+    "wires": [
+      [
+        "svhs_poll_tv_gate"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_tv_gate",
+    "type": "function",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Philips TV freigeben?",
+    "func": "// Keine Abfragen ohne sichtbare Hausstatus-Visualisierung.\nconst last = Number(global.get('svhsViewerPingMs') || 0);\nconst age = Date.now() - last;\nreturn last > 0 && age >= 0 && age <= 75000 ? msg : null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 415,
+    "y": 580,
+    "wires": [
+      [
+        "svhs_poll_tv_exec"
+      ]
+    ]
+  },
+  {
+    "id": "svhs_poll_tv_exec",
+    "type": "exec",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Philips TV → Symcon",
+    "command": "node /data/shield/poll.js philips",
+    "addpay": false,
+    "append": "",
+    "useSpawn": "false",
+    "timer": "22",
+    "winHide": true,
+    "oldrc": false,
+    "x": 640,
+    "y": 580,
+    "wires": [
+      [
+        "svhs_poll_tv_ok"
+      ],
+      [
+        "svhs_poll_tv_err"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "svhs_poll_tv_ok",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Philips TV OK",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 865,
+    "y": 558,
+    "wires": []
+  },
+  {
+    "id": "svhs_poll_tv_err",
+    "type": "debug",
+    "z": "svhs_webfront_poll_tab",
+    "name": "Philips TV Fehler",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 870,
+    "y": 600,
+    "wires": []
+  }
+]
