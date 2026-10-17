@@ -41,12 +41,31 @@ trait HausstatusShieldSupport
         }
         if (!$missing) { return; }
         $label = $device === 'philips' ? 'Philips TV Wohnzimmer' : 'Shield ' . $device;
-        $this->RegisterVariableBoolean($prefix . 'Online', $label . ' online', '', 80);
+        $this->RegisterVariableBoolean($prefix . 'Online', $this->VersionedPresentationName($label . ' online'), '', 80);
         foreach (['Power' => 'awake/standby', 'App' => 'aktive App', 'Playback' => 'Playback',
             'Title' => 'Medientitel', 'Channel' => 'Sender', 'Subtitle' => 'Sendungsdetails', 'Error' => 'Diagnose'] as $field => $name) {
-            $this->RegisterVariableString($prefix . $field, $label . ' ' . $name, '', 81);
+            $this->RegisterVariableString($prefix . $field, $this->VersionedPresentationName($label . ' ' . $name), '', 81);
         }
-        $this->RegisterVariableInteger($prefix . 'Updated', $label . ' letzte Abfrage', '', 87);
+        $this->RegisterVariableInteger($prefix . 'Updated', $this->VersionedPresentationName($label . ' letzte Abfrage'), '', 87);
+    }
+
+    /**
+     * Keep existing owner-side status variables labelled with the installed
+     * release. Names are presentation only: IDs/idents remain unchanged.
+     * Never create variables on child presentation instances.
+     */
+    private function VersionShieldStatusVariables(): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0) { return; }
+        foreach (self::SHIELD_DEVICES as $prefix) {
+            foreach (self::SHIELD_FIELDS as $field) {
+                $id = @IPS_GetObjectIDByIdent($prefix . substr($field, 6), $this->InstanceID);
+                if ($id === false || !IPS_VariableExists($id)) { continue; }
+                $current = IPS_GetName($id);
+                $newName = $this->VersionedPresentationName($current);
+                if ($current !== $newName) { IPS_SetName($id, $newName); }
+            }
+        }
     }
 
     private function ShieldOwner(): int
@@ -207,8 +226,9 @@ trait HausstatusShieldSupport
         if ((int)IPS_GetObject($id)['ObjectType'] !== 0) {
             throw new RuntimeException('Medienordner-Kennung ' . $ident . ' ist durch ein Fremdobjekt belegt.');
         }
-        $versioned = $this->VersionedPresentationName($name);
-        if (IPS_GetName($id) !== $versioned) { IPS_SetName($id, $versioned); }
+        // Categories never carry a release label. Existing v0.xx folders
+        // are normalized in place; the category object ID stays unchanged.
+        if (IPS_GetName($id) !== $name) { IPS_SetName($id, $name); }
         IPS_SetPosition($id, $position);
         if (IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, false); }
         return $id;
