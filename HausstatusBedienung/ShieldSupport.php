@@ -337,11 +337,15 @@ trait HausstatusShieldSupport
             $updatedID = @IPS_GetObjectIDByIdent($prefix . 'Updated', $this->InstanceID);
             if ($updatedID === false || !IPS_VariableExists($updatedID)) { continue; }
             $updated = (int)GetValue($updatedID);
-            if ($updated > 0 && time() - $updated > 60) {
+            if ($updated > 0 && time() - $updated > 150) {
+                // When paused by an inactive WebFront, expire each device once.
+                $errorID = @IPS_GetObjectIDByIdent($prefix . 'Error', $this->InstanceID);
+                if ($errorID !== false && IPS_VariableExists($errorID)
+                    && GetValueString($errorID) === 'Seit über 150 Sekunden keine Abfrage empfangen.') { continue; }
                 $this->SetValue($prefix . 'Online', false);
                 foreach (['Power', 'Playback'] as $name) { $this->SetValue($prefix . $name, 'unknown'); }
                 foreach (['App', 'Title', 'Channel', 'Subtitle'] as $name) { $this->SetValue($prefix . $name, ''); }
-                $this->SetValue($prefix . 'Error', 'Seit über 60 Sekunden keine Abfrage empfangen.');
+                $this->SetValue($prefix . 'Error', 'Seit über 150 Sekunden keine Abfrage empfangen.');
             }
         }
     }
@@ -354,7 +358,7 @@ trait HausstatusShieldSupport
             $id = @IPS_GetObjectIDByIdent($prefix . substr($ident, 6), $this->ShieldOwner());
             $data[lcfirst(substr($ident, 6))] = $id !== false && IPS_VariableExists($id) ? GetValue($id) : null;
         }
-        $data['stale'] = !$data['updated'] || time() - (int)$data['updated'] > 60;
+        $data['stale'] = !$data['updated'] || time() - (int)$data['updated'] > 150;
         if ($data['stale']) {
             $data['online'] = false; $data['power'] = 'unknown'; $data['playback'] = 'unknown';
             $data['app'] = ''; $data['title'] = ''; $data['channel'] = ''; $data['subtitle'] = '';
