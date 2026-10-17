@@ -155,6 +155,7 @@ trait HausstatusShieldSupport
                         $link = IPS_CreateLink();
                         IPS_SetParent($link, $group);
                         IPS_SetIdent($link, $ident);
+                        IPS_SetLinkTargetID($link, (int)$original);
                     }
                 }
                 if (!IPS_LinkExists($link)) {
