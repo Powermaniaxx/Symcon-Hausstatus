@@ -291,6 +291,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function GetConfigurationForm(): string
     {
         $form = json_decode((string)file_get_contents(__DIR__ . '/form.json'), true, 512, JSON_THROW_ON_ERROR);
+        $form['elements'][0]['caption'] = 'Hausstatus v' . $this->HausstatusReleaseVersion() . ' – Einstellungen';
         $fields = $this->SettingsFormFields($this->ReadPropertyInteger('ConfigSource'), $this->ReadPropertyInteger('View'));
         if ($this->ReadPropertyInteger('ConfigSource') === 0) {
             // Reconstruct read-only captions; only editable texts and their stable keys are saved.
