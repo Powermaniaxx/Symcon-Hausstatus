@@ -253,7 +253,7 @@ trait HausstatusHomepageSupport
             // Keep existing split tiles in the configured order as well. Older versions
             // only assigned a position when a tile was first created, so later ordering
             // changes did not affect already existing homepage tiles.
-            IPS_SetName($id, $this->VersionedPresentationName($entry['title']));
+            IPS_SetName($id, $entry['title']);
             IPS_SetPosition($id, $position);
             if (!IPS_GetProperty($id, 'ActiveView')) { IPS_SetProperty($id, 'ActiveView', true); }
             IPS_ApplyChanges($id);
@@ -319,7 +319,7 @@ trait HausstatusHomepageSupport
             IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
             IPS_SetProperty($id, 'View', 0);
             IPS_SetProperty($id, 'HomepagePart', $part);
-            IPS_SetName($id, $this->VersionedPresentationName($entry['title'])); IPS_SetPosition($id, $part * 10);
+            IPS_SetName($id, $entry['title']); IPS_SetPosition($id, $part * 10);
             IPS_SetProperty($id, 'ActiveView', true);
             IPS_SetProperty($id, 'ShieldCompact', $this->ReadPropertyBoolean('ShieldCompact'));
             if ($part === 12) { IPS_SetProperty($id, 'ExtraTileVariables', $this->ReadPropertyString('ExtraTileVariables')); }
