@@ -132,6 +132,10 @@
               "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
             },
             {
+              "value": 31,
+              "caption": "Systeme: FritzBox und Docker gemeinsam"
+            },
+            {
               "value": 19,
               "caption": "Eigene Kachel: frei ausgewählte Variablen"
             },
@@ -347,6 +351,10 @@
             {
               "value": 25,
               "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
+            },
+            {
+              "value": 31,
+              "caption": "Systeme: FritzBox und Docker gemeinsam"
             },
             {
               "value": 19,
