@@ -379,6 +379,94 @@ class HausstatusBedienung extends IPSModuleStrict
         }
     }
 
+    /**
+     * Read-only diagnostics for the living room and dining controls.
+     * Use after pressing each problematic button. No RequestAction calls.
+     */
+    public function GetLightControlDiagnostics(): string
+    {
+        $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        $source = $this->ReadPropertyInteger('ConfigSource');
+        $owner = $source > 0 ? $source : $this->InstanceID;
+        if (!IPS_InstanceExists($owner) || IPS_GetInstance($owner)['ModuleInfo']['ModuleID'] !== $module) {
+            throw new RuntimeException('Hausstatus-Datenquelle nicht gefunden.');
+        }
+
+        $variableInfo = function (int $id): array {
+            if ($id <= 0 || !IPS_VariableExists($id)) {
+                return ['id' => $id, 'valid' => false, 'note' => 'Keine gueltige Variable'];
+            }
+            $variable = IPS_GetVariable($id);
+            $type = (int)$variable['VariableType'];
+            $action = (int)$variable['VariableAction'];
+            $custom = (int)$variable['VariableCustomAction'];
+            return [
+                'id' => $id,
+                'valid' => true,
+                'name' => IPS_GetName($id),
+                'parent' => IPS_GetParent($id),
+                'type' => $type,
+                'value' => GetValue($id),
+                'standardAction' => $action,
+                'customAction' => $custom,
+                'effectiveAction' => $custom === 1 ? 0 : ($custom > 0 ? $custom : $action),
+                'canToggle' => $type === 0 && $custom !== 1 && ($custom > 0 || $action > 0)
+            ];
+        };
+
+        $diningIDs = ['state' => 0, 'brightness' => 0];
+        $diningProblem = '';
+        try {
+            $diningIDs = $this->DiningSources();
+        } catch (Throwable $e) {
+            $diningProblem = $e->getMessage();
+        }
+
+        $scriptID = $this->ConfigInteger('LightCommandScript');
+        $instances = [];
+        foreach (IPS_GetInstanceListByModuleID($module) as $id) {
+            if ($id !== $owner && (int)IPS_GetProperty($id, 'ConfigSource') !== $owner) {
+                continue;
+            }
+            $view = (int)IPS_GetProperty($id, 'View');
+            $part = (int)IPS_GetProperty($id, 'HomepagePart');
+            if (!in_array($view, [0, 5, 17], true) || ($view === 0 && !in_array($part, [0, 4], true))) {
+                continue;
+            }
+            $instances[] = [
+                'id' => $id,
+                'name' => IPS_GetName($id),
+                'view' => $view,
+                'homepagePart' => $part,
+                'active' => (bool)IPS_GetProperty($id, 'ActiveView'),
+                'hidden' => (bool)IPS_GetObject($id)['ObjectIsHidden'],
+                'lastCommand' => IPS_GetBuffer($id, 'LastCommandReceipt'),
+                'lastError' => IPS_GetBuffer($id, 'LastCommandError')
+            ];
+        }
+
+        return json_encode([
+            'moduleVersion' => $this->HausstatusReleaseVersion(),
+            'sourceInstance' => $owner,
+            'lightEnabled' => $this->ConfigBoolean('LightEnabled'),
+            'livingRoom' => [
+                'switch' => $variableInfo($this->ConfigInteger('LightState')),
+                'brightness' => $variableInfo($this->ConfigInteger('Brightness')),
+                'commandScript' => $scriptID,
+                'scriptExists' => $scriptID > 0 && IPS_ScriptExists($scriptID),
+                'mode' => $scriptID > 0 ? 'Bedienskript' : 'Variablenaktion'
+            ],
+            'diningEnabled' => $this->ConfigBoolean('DiningEnabled'),
+            'dining' => [
+                'switch' => $variableInfo((int)$diningIDs['state']),
+                'brightness' => $variableInfo((int)$diningIDs['brightness']),
+                'sourceProblem' => $diningProblem
+            ],
+            'instances' => $instances,
+            'info' => 'Nur Bestandsaufnahme. Keine Schaltaktion ausgefuehrt.'
+        ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
     public function GetVisualizationTile(): string
     {
         try {
@@ -401,7 +489,9 @@ class HausstatusBedienung extends IPSModuleStrict
     public function RequestAction(string $Ident, mixed $Value): void
     {
         if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing'], true)) {
-            $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value));
+            $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value)
+                . (in_array($Ident, ['Light', 'Dining', 'Brightness', 'DiningBrightness'], true)
+                    ? ' | value=' . json_encode($Value, JSON_INVALID_UTF8_SUBSTITUTE) : ''));
         }
         if (preg_match('/^RoomValue:([1-9][0-9]{0,9})$/D', $Ident, $match) === 1) {
             $Value = ['id' => (int)$match[1], 'value' => $Value]; $Ident = 'RoomValue';
