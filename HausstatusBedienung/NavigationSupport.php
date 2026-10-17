@@ -3,6 +3,26 @@ declare(strict_types=1);
 
 trait HausstatusNavigationSupport
 {
+    // Keep the version shown in Symcon tied to library.json, never to a
+    // hardcoded caption. Version labels do not change object IDs or idents.
+    private function HausstatusReleaseVersion(): string
+    {
+        $json = @file_get_contents(__DIR__ . '/../library.json');
+        $library = is_string($json) ? json_decode($json, true) : null;
+        $version = is_array($library) ? (string)($library['version'] ?? '') : '';
+        return preg_match('/^[0-9]+\\.[0-9]+(?:\\.[0-9]+)?$/D', $version) ? $version : 'unbekannt';
+    }
+
+    private function PresentationBaseName(string $name): string
+    {
+        $name = trim($name);
+        return preg_replace('/\\s*·\\s*v[0-9]+\\.[0-9]+(?:\\.[0-9]+)?$/u', '', $name) ?? $name;
+    }
+
+    private function VersionedPresentationName(string $name): string
+    {
+        return $this->PresentationBaseName($name) . ' · v' . $this->HausstatusReleaseVersion();
+    }
     private function HideTileMaximize(): void
     {
         // The native tile header is outside the HTML frame. This API exists from 9.1.
@@ -108,8 +128,9 @@ trait HausstatusNavigationSupport
         }
         $rooms = $this->RoomNavigationTarget();
         if ($rooms > 0) { $this->OrganizeRoomSelector($rooms); }
-        if ($rooms > 0 && in_array(IPS_GetName($rooms), ['Räume und Geräte', 'Raumsteuerung'], true)) {
-            IPS_SetName($rooms, 'Räume');
+        if ($rooms > 0 && in_array($this->PresentationBaseName(IPS_GetName($rooms)), ['Räume und Geräte', 'Raumsteuerung', 'Räume'], true)) {
+            $name = $this->VersionedPresentationName('Räume');
+            if (IPS_GetName($rooms) !== $name) { IPS_SetName($rooms, $name); }
         }
     }
 
@@ -131,7 +152,7 @@ trait HausstatusNavigationSupport
         $pool = $visible ?: $candidates;
         $keeper = $pool[0]['object'];
         foreach ($pool as $candidate) {
-            if (IPS_GetName($candidate['object']) === 'Räume' || IPS_GetProperty($candidate['target'], 'RoomFilter') === '') {
+            if ($this->PresentationBaseName(IPS_GetName($candidate['object'])) === 'Räume' || IPS_GetProperty($candidate['target'], 'RoomFilter') === '') {
                 $keeper = $candidate['object']; break;
             }
         }
@@ -139,7 +160,8 @@ trait HausstatusNavigationSupport
             $id = $candidate['object']; $hidden = $id !== $keeper;
             if ((IPS_GetObject($id)['ObjectIsHidden'] ?? false) !== $hidden) { IPS_SetHidden($id, $hidden); }
         }
-        if (IPS_GetName($keeper) !== 'Räume') { IPS_SetName($keeper, 'Räume'); }
+        $roomName = $this->VersionedPresentationName('Räume');
+        if (IPS_GetName($keeper) !== $roomName) { IPS_SetName($keeper, $roomName); }
     }
 
     private function EnsureLegacyPVPage(int $pv): void
@@ -159,7 +181,9 @@ trait HausstatusNavigationSupport
         }
         if ($link === false) {
             $link = IPS_CreateLink(); IPS_SetParent($link, $category); IPS_SetIdent($link, 'SVHSPVPageLink');
-            IPS_SetName($link, 'PV-Details'); IPS_SetLinkTargetID($link, $pv); IPS_SetHidden($link, false);
+            IPS_SetName($link, $this->VersionedPresentationName('PV-Details')); IPS_SetLinkTargetID($link, $pv); IPS_SetHidden($link, false);
+        } elseif (IPS_GetName($link) !== $this->VersionedPresentationName('PV-Details')) {
+            IPS_SetName($link, $this->VersionedPresentationName('PV-Details'));
         }
     }
 }
