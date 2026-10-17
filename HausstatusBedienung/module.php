@@ -223,6 +223,13 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->HideUnusedShieldVariables();
         $this->OrganizeHomepageDetails();
         $this->OrganizeSeparateHomepage();
+        // Safe presentation only: status variables stay at the data receiver;
+        // stable links group them below the visualization's System category.
+        try { $this->OrganizeShieldStatusLinks(); }
+        catch (Throwable $e) {
+            $this->SendDebug('Medienstatus-Navigation', $e->getMessage(), 0);
+            IPS_LogMessage('Hausstatus', 'Medienstatus-Verknuepfungen: ' . $e->getMessage());
+        }
         foreach ([$this->PVDetailsTarget(), $this->RoomNavigationTarget()] as $target) {
             if ($target > 0) { $this->RegisterReference($target); }
         }
