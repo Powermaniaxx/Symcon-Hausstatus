@@ -120,7 +120,7 @@ trait HausstatusNetworkSupport
             21 => $internet,
             22 => $router,
             23 => $devices,
-            24 => array_values(array_unique(array_merge($internet, $router, $devices))),
+            24, 31 => array_values(array_unique(array_merge($internet, $router, $devices))),
             default => []
         };
     }
@@ -128,7 +128,7 @@ trait HausstatusNetworkSupport
     private function NetworkState(): ?array
     {
         $view = $this->CurrentView();
-        if (!in_array($view, [13, 20, 21, 22, 23, 24], true)) { return null; }
+        if (!in_array($view, [13, 20, 21, 22, 23, 24, 31], true)) { return null; }
 
         $values = [];
         foreach ($this->NetworkViewFields($view) as $key) {
