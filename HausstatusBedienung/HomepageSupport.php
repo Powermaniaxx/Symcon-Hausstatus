@@ -114,6 +114,9 @@ trait HausstatusHomepageSupport
         try {
             $this->BuildSeparateHomepage();
             $this->HideHomepageQuickLinks();
+            // Cleanup only Susi's mirrored overview if individual tiles exist.
+            try { $this->HideSusiMirroredCombinedHomepage(); }
+            catch (Throwable $e) { $this->SendDebug('Susi-Startseite', $e->getMessage(), 0); }
         }
         catch (Throwable $e) {
             $this->RestoreCombinedHomepage();
@@ -140,6 +143,48 @@ trait HausstatusHomepageSupport
             $hidden[] = $id;
         }
         $this->SetBuffer('HiddenHomepageQuickLinks', json_encode($hidden, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * The mirroring script used to copy the combined View=0/HomepagePart=0
+     * alongside Susi's individual tiles. Hide only this duplicate in Susi's
+     * mirrored category, leaving the shared master, Sven and Sophie intact.
+     * Preserve all objects for a deliberate later cleanup.
+     */
+    private function HideSusiMirroredCombinedHomepage(): void
+    {
+        $masterCategory = 55503;
+        if (!IPS_ObjectExists($masterCategory) || (int)IPS_GetObject($masterCategory)['ObjectType'] !== 0) { return; }
+        $parent = IPS_GetParent($masterCategory);
+        if ($parent <= 0) { return; }
+        $root = @IPS_GetObjectIDByIdent('MirrorVisualisierungSusi', $parent);
+        if ($root === false || (int)IPS_GetObject($root)['ObjectType'] !== 0) { return; }
+
+        $queue = [[$root, 0]];
+        $combined = [];
+        $individual = 0;
+        while ($queue) {
+            [$category, $depth] = array_shift($queue);
+            foreach (IPS_GetChildrenIDs($category) as $id) {
+                $object = IPS_GetObject($id);
+                if ((int)$object['ObjectType'] === 0) {
+                    if ($depth < 3 && !($object['ObjectIsHidden'] ?? false)) { $queue[] = [$id, $depth + 1]; }
+                    continue;
+                }
+                $target = IPS_LinkExists($id) ? (int)IPS_GetLink($id)['TargetID'] : $id;
+                if (!IPS_InstanceExists($target)
+                    || IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}') { continue; }
+                if ($target !== $this->InstanceID && (int)IPS_GetProperty($target, 'ConfigSource') !== $this->InstanceID) { continue; }
+                if ($object['ObjectIsHidden'] ?? false) { continue; }
+                $view = (int)IPS_GetProperty($target, 'View');
+                $part = (int)IPS_GetProperty($target, 'HomepagePart');
+                if ($view === 0 && $part === 0) { $combined[] = $id; }
+                else { $individual++; }
+            }
+        }
+        // Never hide the only working tile in Susi's visualization.
+        if ($individual === 0) { return; }
+        foreach ($combined as $id) { IPS_SetHidden($id, true); }
     }
 
     private function BuildSeparateHomepage(): void
