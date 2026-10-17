@@ -329,9 +329,44 @@ trait HausstatusShieldSupport
         return json_encode(['command' => $this->ShieldPowerQueue($device, null, $ack)], JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * Der Watchdog wird nur von einer sichtbaren Medienkachel angestossen.
+     * Auch Kacheln mit gemeinsamer Master-Konfiguration koennen ihn ausloesen.
+     * Reine Statusanzeige, ohne periodischen Server-Timer.
+     */
+    private function ExpireShieldOnViewerPing(): void
+    {
+        $view = $this->ReadPropertyInteger('View');
+        if (!in_array($view, [0, 6], true)) { return; }
+        if ($view === 0) {
+            $part = $this->ReadPropertyInteger('HomepagePart');
+            $ident = (string)(IPS_GetObject($this->InstanceID)['ObjectIdent'] ?? '');
+            if (preg_match('/^SVHSHomePart_([1-9][0-9]*)$/D', $ident, $match) === 1) {
+                $part = (int)$match[1];
+            }
+            if ($part !== 0 && !in_array($part, [5, 6, 7], true)) { return; }
+        }
+        $source = $this->ReadPropertyInteger('ConfigSource');
+        $owner = $source > 0 ? $source : $this->InstanceID;
+        if (!IPS_InstanceExists($owner)) { return; }
+        try {
+            if ($owner === $this->InstanceID) {
+                $this->ExpireShield();
+            } else {
+                SVHS_ExpireShield($owner);
+            }
+        } catch (Throwable $e) {
+            $this->SendDebug('ShieldWatchdog', $e->getMessage(), 0);
+        }
+    }
+
     public function ExpireShield(): void
     {
         if ($this->ReadPropertyInteger('ConfigSource') !== 0) { return; }
+        $now = time();
+        $last = (int)$this->GetBuffer('ShieldExpireLastScan');
+        if ($last > 0 && $now - $last < 60) { return; }
+        $this->SetBuffer('ShieldExpireLastScan', (string)$now);
         foreach (self::SHIELD_DEVICES as $device => $prefix) {
             if (!$this->ReadPropertyBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { continue; }
             $updatedID = @IPS_GetObjectIDByIdent($prefix . 'Updated', $this->InstanceID);
