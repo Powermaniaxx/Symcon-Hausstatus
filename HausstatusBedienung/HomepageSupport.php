@@ -280,8 +280,7 @@ trait HausstatusHomepageSupport
         // Preflight every identifier before hiding or moving an existing presentation.
         foreach ($tiles as $part => $title) {
             $id = @IPS_GetObjectIDByIdent('SVHSHomePart_' . $part, $root);
-            if ($id !== false && (!$this->OwnedHomepageTile($id, 0)
-                || IPS_GetProperty($id, 'HomepagePart') !== $part)) {
+            if ($id !== false && !$this->OwnedHomepageTile($id, 0)) {
                 throw new RuntimeException('Kennung für Hausstatus-Bereich ' . $part . ' ist bereits belegt.');
             }
             $plan[$part] = ['id' => $id === false ? 0 : $id, 'title' => $title];
@@ -315,8 +314,11 @@ trait HausstatusHomepageSupport
                 $id = IPS_CreateInstance('{9E33E109-4881-4E78-9906-38CAC2F1E210}');
                 IPS_SetParent($id, $root); IPS_SetIdent($id, 'SVHSHomePart_' . $part);
                 IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
-                IPS_SetProperty($id, 'View', 0); IPS_SetProperty($id, 'HomepagePart', $part);
             }
+            // Also repair reused tiles: the stable SVHSHomePart_N ident defines the part.
+            IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
+            IPS_SetProperty($id, 'View', 0);
+            IPS_SetProperty($id, 'HomepagePart', $part);
             IPS_SetName($id, $entry['title']); IPS_SetPosition($id, $part * 10);
             IPS_SetProperty($id, 'ActiveView', true);
             IPS_SetProperty($id, 'ShieldCompact', $this->ReadPropertyBoolean('ShieldCompact'));
