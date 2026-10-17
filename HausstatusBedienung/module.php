@@ -440,8 +440,8 @@ class HausstatusBedienung extends IPSModuleStrict
                 'homepagePart' => $part,
                 'active' => (bool)IPS_GetProperty($id, 'ActiveView'),
                 'hidden' => (bool)IPS_GetObject($id)['ObjectIsHidden'],
-                'lastCommand' => IPS_GetBuffer($id, 'LastCommandReceipt'),
-                'lastError' => IPS_GetBuffer($id, 'LastCommandError')
+                'lastCommand' => $id === $this->InstanceID ? $this->GetBuffer('LastCommandReceipt') : '(Diagnose auf dieser Kachel aufrufen)',
+                'lastError' => $id === $this->InstanceID ? $this->GetBuffer('LastCommandError') : '(Diagnose auf dieser Kachel aufrufen)'
             ];
         }
 
