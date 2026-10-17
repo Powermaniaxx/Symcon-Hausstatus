@@ -231,6 +231,169 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "TileCreationSettings",
+      "caption": "Kachel hinzufügen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Neue Hausstatus-Kachel hinzufügen: Kacheltyp und Zielkategorie auswählen, Änderungen übernehmen und anschließend auf „Kachel erstellen“ klicken. Die bestehende Visualisierung und ihre Kachelreihenfolge bleiben unverändert."
+        },
+        {
+          "type": "Select",
+          "name": "NewTileView",
+          "caption": "Welche Kachel hinzufügen?",
+          "options": [
+            {
+              "value": -1,
+              "caption": "Bitte zuerst den Kacheltyp auswählen"
+            },
+            {
+              "value": 0,
+              "caption": "Hausstatus – gemeinsame Übersicht"
+            },
+            {
+              "value": 1,
+              "caption": "Einzeln: Anwesenheit und Alarm"
+            },
+            {
+              "value": 18,
+              "caption": "Detail: Hausstatus, Sven, Susi und Alarme mit 24h-Verlauf"
+            },
+            {
+              "value": 2,
+              "caption": "Einzeln: Haustür"
+            },
+            {
+              "value": 26,
+              "caption": "Einzeln: Sophie – Haustür und Alarm mit Türöffnung"
+            },
+            {
+              "value": 5,
+              "caption": "Einzeln: Wohnzimmerlicht"
+            },
+            {
+              "value": 17,
+              "caption": "Einzeln: zusätzliche Lampe / Esstisch"
+            },
+            {
+              "value": 14,
+              "caption": "Einzeln: Zusatzheizung"
+            },
+            {
+              "value": 6,
+              "caption": "Einzeln: Cinema 40"
+            },
+            {
+              "value": 4,
+              "caption": "Einzeln: Gerätewarnungen"
+            },
+            {
+              "value": 7,
+              "caption": "Einzeln: PV-Anlage"
+            },
+            {
+              "value": 15,
+              "caption": "Einzeln: PV kompakt"
+            },
+            {
+              "value": 11,
+              "caption": "Einzeln: Markise und Dachfenster"
+            },
+            {
+              "value": 8,
+              "caption": "Detail: Bewegung"
+            },
+            {
+              "value": 9,
+              "caption": "Detail: Temperaturen"
+            },
+            {
+              "value": 10,
+              "caption": "Detail: Wetter"
+            },
+            {
+              "value": 16,
+              "caption": "Einzeln: Wetter kompakt"
+            },
+            {
+              "value": 12,
+              "caption": "Raum: Geräte und Bedienung"
+            },
+            {
+              "value": 13,
+              "caption": "Detail: Netzwerk / FritzBox"
+            },
+            {
+              "value": 20,
+              "caption": "FritzBox: kompakte Übersicht"
+            },
+            {
+              "value": 21,
+              "caption": "FritzBox: Internet und Datenraten"
+            },
+            {
+              "value": 22,
+              "caption": "FritzBox: Routerinformationen"
+            },
+            {
+              "value": 23,
+              "caption": "FritzBox: Netzwerkgeräte"
+            },
+            {
+              "value": 24,
+              "caption": "FritzBox: gesamte Übersicht"
+            },
+            {
+              "value": 25,
+              "caption": "NAS: Meine Docker-Container mit Start / Stop / Neustart"
+            },
+            {
+              "value": 19,
+              "caption": "Eigene Kachel: frei ausgewählte Variablen"
+            },
+            {
+              "value": 27,
+              "caption": "Einzeln: Waschmaschine und Trockner"
+            },
+            {
+              "value": 28,
+              "caption": "Gemeinsam: Anwesenheit, Alarm und Haustür"
+            },
+            {
+              "value": 29,
+              "caption": "Gemeinsam: PV-Anlage und Batteriewarnung"
+            }
+          ]
+        },
+        {
+          "type": "SelectCategory",
+          "name": "NewTileCategory",
+          "caption": "Wohin? Zielkategorie in der gewünschten Visualisierung auswählen"
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "NewTileTitle",
+          "caption": "Name der neuen Kachel (optional, sonst Standardname)"
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "NewTileRoomFilter",
+          "caption": "Nur bei Raumkachel: Raumname (optional, leer = Raumübersicht)"
+        },
+        {
+          "type": "Button",
+          "caption": "Kachel in ausgewählter Kategorie erstellen",
+          "onClick": "echo SVHS_CreateTileInCategory($id);"
+        },
+        {
+          "type": "Label",
+          "caption": "Es werden keine vorhandenen Kacheln verschoben, gelöscht oder neu konfiguriert. Bei identischer Kachel in derselben Kategorie wird stattdessen deren ID gemeldet."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "ExtraTileSettings",
       "caption": "Zusätzliche Variablen dieser Kachel",
       "expanded": false,
