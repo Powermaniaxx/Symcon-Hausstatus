@@ -359,7 +359,7 @@ a.pvDetailLink{display:inline-block;margin-top:6px;padding:0;font-size:11px;line
 /* Fill the Symcon HTML tile viewport, not just the content height. */
 html{height:100%}
 body.homepagePart{height:100%;min-height:100%;display:flex;flex-direction:column}
-body.homepagePart main{flex:1 0 auto;min-height:100%;width:100%;display:flex;flex-direction:column}
+body.homepagePart main{flex:1 1 auto;min-height:0;width:100%;display:flex;flex-direction:column;padding:8px;overflow-y:auto;overflow-x:hidden}
 body.homepagePart #cards{flex:1 1 auto;grid-auto-rows:minmax(min-content,1fr);align-content:stretch}
 body.homepagePart #cards>.overview-group,
 body.homepagePart #cards>.card{min-height:100%;align-self:stretch}
@@ -497,6 +497,15 @@ textarea{
 .overview-energy>.card{
  border-radius:0;
 }
+/* Heater tiles use a solid light surface like the other homepage cards.
+   This overrides transparent dark-looking backgrounds in standalone views. */
+body.hausstatusHeaterTile{background:#f8f8f8;color:#202124;color-scheme:light}
+body.hausstatusHeaterTile main{padding-top:8px}
+#card-heater{background:#fff;color:#202124;color-scheme:light;border:1px solid #8883}
+#card-heater select{background:#fff;color:#202124}
+#card-heater .roomDetails,.homeEnvironmentPair #card-heater{background:#fff}
+/* Remove the old 56px headroom when Symcon already displays its own tile title. */
+body.hausstatusSingleTile main{padding-top:8px}
 /* Switch knobs and circular indicators retain their original geometry. */
 /* Separate Hausstatus tiles use automatic loading; the repeated manual-refresh footer wastes space. */
 body.hausstatusSingleTile .head{display:none}
@@ -875,6 +884,7 @@ function applyHomepagePart(s){
  const part=Number(s.HomepagePart)||0;
  document.body.classList.toggle('homepagePart',part>0&&s.View===0);
   document.body.classList.toggle('hausstatusSingleTile',s.View!==0||part>0);
+ document.body.classList.toggle('hausstatusHeaterTile',s.View===14||(s.View===0&&part===9));
  if(!part||s.View!==0)return;
  const cards={1:'card-entry',2:'card-energy',3:'card-laundry',4:'card-light',5:'card-cinema',6:'card-shield-schlafzimmer',7:'card-shield-ankleidezimmer'};
  for(const node of el('cards').children)node.hidden=node.hidden||node.id!==cards[part];
