@@ -342,7 +342,10 @@ trait HausstatusHomepageSupport
         foreach ($hide as $id) {
             if (!array_key_exists((string)$id, $previous)) { $previous[(string)$id] = (bool)IPS_GetObject($id)['ObjectIsHidden']; }
         }
-        $this->WriteAttributeString('HomepageLayout', json_encode(['active' => true, 'root' => $root, 'visibility' => $previous], JSON_THROW_ON_ERROR));
+        $layout = json_encode(['active' => true, 'root' => $root, 'visibility' => $previous], JSON_THROW_ON_ERROR);
+        if ($this->ReadAttributeString('HomepageLayout') !== $layout) {
+            $this->WriteAttributeString('HomepageLayout', $layout);
+        }
         $enabled = function (int $part): bool {
             return match ($part) {
                 3 => $this->ConfigInteger('WasherPower') > 0 || $this->ConfigInteger('DryerPower') > 0,
@@ -393,9 +396,13 @@ trait HausstatusHomepageSupport
             $active[] = $id;
         }
         foreach ($this->HomepageObjects() as $id) {
-            if (!in_array($id, $active, true)) { IPS_SetHidden($id, true); }
+            if (!in_array($id, $active, true) && !IPS_GetObject($id)['ObjectIsHidden']) {
+                IPS_SetHidden($id, true);
+            }
         }
-        foreach ($hide as $id) { IPS_SetHidden($id, true); }
+        foreach ($hide as $id) {
+            if (!IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, true); }
+        }
     }
 
     /**
