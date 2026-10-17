@@ -77,6 +77,8 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
         $this->RegisterPropertyInteger('ConfigSource', 0);
         $this->RegisterPropertyString('RoomFilter', '');
+        // Optional: forward visible WebFront heartbeat to the local Node-RED flow.
+        $this->RegisterPropertyString('NodeRedViewerPingURL', '');
         $this->RegisterPropertyString('DiningRoom', 'Wohnzimmer');
         $this->RegisterPropertyString('PVRoom', 'PV-Anlage');
         $this->RegisterPropertyString('DisplayTexts', $this->DefaultDisplayTexts());
@@ -274,6 +276,37 @@ class HausstatusBedienung extends IPSModuleStrict
         return $last > 0 && (time() - $last) <= 75;
     }
 
+    /**
+     * Forward a lightweight alive signal only while an HTML tile is visible.
+     * Disabled by default: entering a local URL in the master settings opts in.
+     * The receiving Node-RED flow must itself stop polling after 75s silence.
+     */
+    private function ForwardViewerPingToNodeRed(): void
+    {
+        $url = trim($this->ConfigString('NodeRedViewerPingURL'));
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)
+            || !preg_match('~^https?://~i', $url)) { return; }
+        // Many tile instances may be open. Throttle per instance.
+        $now = time();
+        $last = (int)$this->GetBuffer('NodeRedViewerPingLastSent');
+        if ($last > 0 && $now - $last < 25) { return; }
+        $this->SetBuffer('NodeRedViewerPingLastSent', (string)$now);
+        try {
+            $payload = json_encode(['instance' => $this->InstanceID], JSON_THROW_ON_ERROR);
+            $context = stream_context_create(['http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\nConnection: close\r\n",
+                'content' => $payload,
+                'timeout' => 0.5,
+                'ignore_errors' => true
+            ]]);
+            // Fail open: if Node-RED is offline the normal WebFront works unchanged.
+            @file_get_contents($url, false, $context);
+        } catch (Throwable $e) {
+            $this->SendDebug('Node-RED-Sichtbarkeit', $e->getMessage(), 0);
+        }
+    }
+
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
@@ -351,6 +384,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
         $fields['DisplaySettings'] = ['visible' => $own];
+        $fields['NodeRedViewerSettings'] = ['visible' => $own, 'expanded' => false];
         $fields['RoomFilter'] = ['visible' => $view === 12];
         $fields['NetworkSettings'] = ['visible' => $own,
             'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
@@ -518,6 +552,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if ($Ident === 'ViewerPing') {
             $this->SetBuffer('LastViewerSeen', (string)time());
+            $this->ForwardViewerPingToNodeRed();
             if ($this->HasTemperatureView() && count($this->HeatingCenterIDs())===1) { $this->Refresh(); }
             return;
         }
