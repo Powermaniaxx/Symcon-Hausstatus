@@ -575,9 +575,21 @@ let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTime
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
 const openPanels=new Set();
+let firstRenderComplete=false,lastForecastRequest=0;
+function requestForecastAfterLoad(){
+ if(document.visibilityState!=='visible'||typeof requestAction!=='function')return;
+ const view=Number(homeState?.View??state?.View??-1);
+ const part=Number(homeState?.HomepagePart??state?.HomepagePart??0);
+ if(![10,16].includes(view)&&!(view===0&&(part===0||part===8)))return;
+ const now=Date.now();
+ if(lastForecastRequest>0&&now-lastForecastRequest<600000)return;
+ lastForecastRequest=now;
+ try{requestAction('WetterComRefresh',true);}catch(e){}
+}
 function viewerPing(){
  if(document.visibilityState!=='visible'||typeof requestAction!=='function')return;
  try{requestAction('ViewerPing',true);}catch(e){}
+ if(firstRenderComplete)requestForecastAfterLoad();
 }
 viewerPing();
 setInterval(viewerPing,30000);
@@ -1866,6 +1878,12 @@ el('refresh').addEventListener('click',requestRefresh);
 const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
+ if(message&&Object.prototype.hasOwnProperty.call(message,'wetterComUpdate')){
+  if(homeState)homeState.WetterComForecast=message.wetterComUpdate;
+  if(state)state.WetterComForecast=message.wetterComUpdate;
+  if(!busy&&!editing)render();
+  return;
+ }
  if(message&&Object.prototype.hasOwnProperty.call(message,'pageReply')){receivePageReply(message);return;}
  if(message&&Object.prototype.hasOwnProperty.call(message,'refreshDone')){
   if(message.state?.Controls){
@@ -1902,4 +1920,8 @@ handleMessage=function(data){
 };
 const renderContents=render;render=function(){try{renderContents();}catch(e){showStatus('Darstellung konnte nicht geladen werden: '+String(e?.message??e));}};
 render();
+firstRenderComplete=true;
+// The remote forecast is requested after the first paint, not while building
+// the initial HTML. No browser activity means no remote weather work.
+setTimeout(requestForecastAfterLoad,350);
 </script></body></html>
