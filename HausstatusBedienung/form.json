@@ -265,6 +265,28 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "NodeRedViewerSettings",
+      "caption": "Performance · Node-RED nur bei offenem WebFront",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Die Hausstatus-Kacheln melden ihre Sichtbarkeit alle 30 Sekunden. Wenn Node-RED die passenden, WebFront-gesteuerten Flows verwendet, stoppen die reinen Shield-/Philips-Abfragen nach 75 Sekunden ohne Signal. Anwesenheit, Alarm und Ansagen bleiben unabhängig."
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "NodeRedViewerPingURL",
+          "caption": "Node-RED Lebenszeichen-URL (leer = deaktiviert)",
+          "placeholder": "http://192.168.178.140:1880/symcon/visu-ping"
+        },
+        {
+          "type": "Label",
+          "caption": "Erst den neuen Node-RED-Flow importieren und aktivieren, dann hier die lokale URL eintragen und Änderungen übernehmen. Die URL wird nur bei geöffneten Hausstatus-Kacheln angesprochen."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "ModuleUpdateSettings",
       "caption": "System · Hausstatus-Modulupdate",
       "expanded": false,
