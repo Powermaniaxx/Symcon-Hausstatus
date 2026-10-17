@@ -167,7 +167,8 @@ trait HausstatusShieldSupport
                     $this->SendDebug('Medienstatus', 'Link ' . $link . ' hat ein anderes Ziel; nicht ueberschrieben.', 0);
                     continue;
                 }
-                if (IPS_GetName($link) !== $name) { IPS_SetName($link, $name); }
+                $linkName = $this->VersionedPresentationName($name);
+                if (IPS_GetName($link) !== $linkName) { IPS_SetName($link, $linkName); }
                 IPS_SetPosition($link, (++$i) * 10);
                 if (IPS_GetObject($link)['ObjectIsHidden']) { IPS_SetHidden($link, false); }
                 // Keep the originals addressable by the module but hide the
