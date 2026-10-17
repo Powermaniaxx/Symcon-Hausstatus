@@ -331,6 +331,93 @@ trait HausstatusHomepageSupport
         foreach ($hide as $id) { IPS_SetHidden($id, true); }
     }
 
+    /**
+     * Create one additional Hausstatus visualization tile at an explicit
+     * destination. Never touch the existing homepage layout or tile links.
+     */
+    public function CreateTileInCategory(): string
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0) {
+            return 'Bitte diesen Bereich in der zentralen Hausstatus-Instanz öffnen.';
+        }
+
+        $view = $this->ReadPropertyInteger('NewTileView');
+        $category = $this->ReadPropertyInteger('NewTileCategory');
+        if ($view < 0) { return 'Bitte zuerst den Kacheltyp auswählen und Änderungen übernehmen.'; }
+        if ($category <= 0 || !IPS_CategoryExists($category)) {
+            return 'Bitte eine gültige Zielkategorie in der gewünschten Visualisierung auswählen und Änderungen übernehmen.';
+        }
+
+        // Accept only public view types actually offered in the configuration.
+        // Never expose the privileged System/ModuleUpdate view via this shortcut.
+        $configFile = @file_get_contents(__DIR__ . '/form.json');
+        $config = is_string($configFile) ? json_decode($configFile, true) : null;
+        $views = [];
+        if (is_array($config)) {
+            foreach ($config['elements'] ?? [] as $section) {
+                if (($section['name'] ?? '') !== 'TileSettings') { continue; }
+                foreach ($section['items'] ?? [] as $entry) {
+                    if (($entry['name'] ?? '') !== 'View') { continue; }
+                    foreach ($entry['options'] ?? [] as $option) {
+                        if (is_int($option['value'] ?? null) && $option['value'] !== 30
+                            && is_string($option['caption'] ?? null)) {
+                            $views[$option['value']] = $option['caption'];
+                        }
+                    }
+                }
+            }
+        }
+        if (!isset($views[$view])) { return 'Der gewählte Kacheltyp ist nicht freigegeben.'; }
+
+        for ($parent = $category; $parent > 0; $parent = IPS_GetParent($parent)) {
+            if ($parent === $this->InstanceID) {
+                return 'Die Zielkategorie darf nicht innerhalb der Hausstatus-Instanz liegen.';
+            }
+            if (IPS_GetObject($parent)['ObjectIsHidden'] ?? false) {
+                return 'Die Zielkategorie oder ihr übergeordneter Ordner ist ausgeblendet. Bitte sichtbare Kategorie auswählen.';
+            }
+        }
+
+        $room = $view === 12 ? trim($this->ReadPropertyString('NewTileRoomFilter')) : '';
+        $title = trim($this->ReadPropertyString('NewTileTitle'));
+        if (strlen($title) > 100 || strlen($room) > 100) {
+            return 'Name und Raumname dürfen maximal 100 Zeichen enthalten.';
+        }
+        if ($title === '') {
+            $title = preg_replace('/^(Einzeln|Gemeinsam|Detail|Raum|NAS):\\s*/u', '', $views[$view]);
+        }
+        if ($title === '') { $title = 'Hausstatus-Kachel'; }
+
+        $moduleID = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        foreach (IPS_GetChildrenIDs($category) as $child) {
+            $target = IPS_LinkExists($child) ? (int)IPS_GetLink($child)['TargetID'] : $child;
+            if (!IPS_InstanceExists($target)
+                || IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== $moduleID) {
+                continue;
+            }
+            if ((int)IPS_GetProperty($target, 'View') !== $view
+                || (int)IPS_GetProperty($target, 'HomepagePart') !== 0
+                || (string)IPS_GetProperty($target, 'RoomFilter') !== $room) {
+                continue;
+            }
+            if ($view === 19 && IPS_GetName($target) !== $title) { continue; }
+            return 'Diese Kachel ist in der Zielkategorie bereits vorhanden (ID '
+                . $target . '). Es wurde nichts verändert.';
+        }
+
+        // Creating a new module view with ConfigSource links it to the existing
+        // master settings. No existing category, link or other view is moved.
+        $id = IPS_CreateInstance($moduleID);
+        IPS_SetParent($id, $category);
+        IPS_SetName($id, $title);
+        IPS_SetProperty($id, 'View', $view);
+        IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
+        if ($view === 12) { IPS_SetProperty($id, 'RoomFilter', $room); }
+        IPS_ApplyChanges($id);
+        return 'Kachel „' . $title . '“ erstellt (ID ' . $id
+            . ') in „' . IPS_GetName($category) . '“. Die Zielkategorie in der Visualisierung öffnen.';
+    }
+
     public function GetHomepageLayoutDiagnostics(): string
     {
         $rows = [];
