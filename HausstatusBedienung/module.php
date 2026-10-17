@@ -221,6 +221,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
         $this->HideTileMaximize();
         $this->HideUnusedShieldVariables();
+        $this->VersionShieldStatusVariables();
         $this->OrganizeHomepageDetails();
         $this->OrganizeSeparateHomepage();
         // Safe presentation only: status variables stay at the data receiver;
