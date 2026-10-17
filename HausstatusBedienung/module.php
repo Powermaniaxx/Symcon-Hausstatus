@@ -550,7 +550,7 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function RequestAction(string $Ident, mixed $Value): void
     {
-        if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing'], true)) {
+        if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing', 'WetterComRefresh'], true)) {
             $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value)
                 . (in_array($Ident, ['Light', 'Dining', 'Brightness', 'DiningBrightness'], true)
                     ? ' | value=' . json_encode($Value, JSON_INVALID_UTF8_SUBSTITUTE) : ''));
