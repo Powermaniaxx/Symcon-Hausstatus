@@ -193,6 +193,7 @@ trait HausstatusNavigationSupport
     private function OrganizeHomepageDetails(): void
     {
         if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
+        $this->OrganizeSystemOverview();
         $pv = $this->PVDetailsInstance();
         if ($pv > 0) {
             $link = @IPS_GetObjectIDByIdent('SVHSTileLink_7', IPS_GetParent($this->InstanceID));
@@ -207,6 +208,85 @@ trait HausstatusNavigationSupport
         if ($rooms > 0 && in_array($this->PresentationBaseName(IPS_GetName($rooms)), ['Räume und Geräte', 'Raumsteuerung', 'Räume'], true)) {
             $name = 'Räume';
             if (IPS_GetName($rooms) !== $name) { IPS_SetName($rooms, $name); }
+        }
+    }
+
+    /**
+     * Combine FritzBox and Docker inside the existing System category.
+     * Preserve older instances/links and their settings; hide only duplicates.
+     */
+    private function OrganizeSystemOverview(): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
+        $roots = array_unique(array_filter([55503, $this->ReadPropertyInteger('HomepageCategory')], static fn(int $id): bool => $id > 0));
+        $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        $categories = [];
+        foreach ($roots as $root) {
+            if (!IPS_CategoryExists($root)) { continue; }
+            $queue = [[$root, 0]];
+            while ($queue) {
+                [$parent, $depth] = array_shift($queue);
+                foreach (IPS_GetChildrenIDs($parent) as $child) {
+                    if (!IPS_CategoryExists($child)) { continue; }
+                    if (in_array(IPS_GetName($child), ['System', 'Systeme'], true)) {
+                        $categories[$child] = true;
+                    } elseif ($depth < 2 && !IPS_GetObject($child)['ObjectIsHidden']) {
+                        $queue[] = [$child, $depth + 1];
+                    }
+                }
+            }
+        }
+        foreach (array_keys($categories) as $category) {
+            $network = [];
+            $docker = [];
+            $combined = [];
+            foreach (IPS_GetChildrenIDs($category) as $object) {
+                $target = IPS_LinkExists($object) ? (int)IPS_GetLink($object)['TargetID'] : $object;
+                if (!IPS_InstanceExists($target)
+                    || IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== $module
+                    || ($target !== $this->InstanceID && (int)IPS_GetProperty($target, 'ConfigSource') !== $this->InstanceID)) {
+                    continue;
+                }
+                $view = (int)IPS_GetProperty($target, 'View');
+                if (in_array($view, [13, 20, 21, 22, 23, 24], true)) { $network[] = $object; }
+                elseif ($view === 25) { $docker[] = $object; }
+                elseif ($view === 31) { $combined[] = $object; }
+            }
+            if (!$combined && (!$network || !$docker)) { continue; }
+            $id = @IPS_GetObjectIDByIdent('SVHSSystemOverview', $category);
+            if ($id !== false && (!IPS_InstanceExists($id)
+                || IPS_GetInstance($id)['ModuleInfo']['ModuleID'] !== $module
+                || (int)IPS_GetProperty($id, 'ConfigSource') !== $this->InstanceID)) {
+                $this->SendDebug('System-Kachel', 'Kennung SVHSSystemOverview ist belegt; keine Änderung.', 0);
+                continue;
+            }
+            if ($id === false && $combined) {
+                foreach ($combined as $object) {
+                    if (IPS_InstanceExists($object)) { $id = $object; break; }
+                }
+            }
+            if ($id === false) {
+                $id = IPS_CreateInstance($module);
+                IPS_SetParent($id, $category);
+                IPS_SetIdent($id, 'SVHSSystemOverview');
+            }
+            $changed = false;
+            foreach (['ConfigSource' => $this->InstanceID, 'View' => 31, 'ActiveView' => true] as $key => $value) {
+                if (IPS_GetProperty($id, $key) !== $value) {
+                    IPS_SetProperty($id, $key, $value);
+                    $changed = true;
+                }
+            }
+            if ($changed) { IPS_ApplyChanges($id); }
+            if (IPS_GetName($id) !== 'Systeme · FritzBox und Docker') {
+                IPS_SetName($id, 'Systeme · FritzBox und Docker');
+            }
+            if (IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, false); }
+            foreach (array_merge($network, $docker, $combined) as $old) {
+                if ($old !== $id && !IPS_GetObject($old)['ObjectIsHidden']) {
+                    IPS_SetHidden($old, true);
+                }
+            }
         }
     }
 
