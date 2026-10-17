@@ -187,7 +187,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach ($this->BedroomMediaIDs() as $id) { $ids[] = $id; }
         foreach ($this->ShieldIDs() as $id) { $ids[] = $id; }
         foreach ($this->LaundrySourceIDs() as $id) { $ids[] = $id; }
-        if ($this->ReadPropertyInteger('View') === 25) {
+        if (in_array($this->ReadPropertyInteger('View'), [25, 31], true)) {
             foreach ($this->DockerContainerIDs() as $dockerInstanceID) {
                 $this->RegisterReference($dockerInstanceID);
                 foreach (IPS_GetChildrenIDs($dockerInstanceID) as $dockerChild) {
@@ -210,7 +210,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $source = $this->ReadPropertyInteger('ConfigSource');
         if ($source > 0 && IPS_InstanceExists($source)) { $this->RegisterReference($source); }
-        if (in_array($this->ReadPropertyInteger('View'), [13, 24], true)) {
+        if (in_array($this->ReadPropertyInteger('View'), [13, 24, 31], true)) {
             foreach ($this->WirelessNetworks() as $wifi) {
                 foreach (['State', 'SSID', 'Devices'] as $name) { $ids[] = $wifi[$name]; }
                 if ($wifi['QRCode'] > 0 && IPS_MediaExists($wifi['QRCode'])) { $this->RegisterReference($wifi['QRCode']); }
@@ -400,9 +400,9 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields['SettingsCategorySystem'] = ['visible' => $own || $view === 30];
         $fields['RoomFilter'] = ['visible' => $view === 12];
         $fields['NetworkSettings'] = ['visible' => $own,
-            'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
+            'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24, 31], true)];
         $fields['ExtraTileSettings'] = ['visible' => true, 'expanded' => $view === 19];
-        $fields['DockerSettings'] = ['visible' => $own, 'expanded' => $own && $view === 25];
+        $fields['DockerSettings'] = ['visible' => $own, 'expanded' => $own && in_array($view, [25, 31], true)];
         $fields['ModuleUpdateSettings'] = ['visible' => $view === 30, 'expanded' => $view === 30];
         $caption = 'Eigene Einstellungen: Die Quellen und Bedienoptionen werden in dieser Instanz festgelegt.';
         if (!$own) {
