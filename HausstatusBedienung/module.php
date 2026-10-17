@@ -1144,7 +1144,16 @@ class HausstatusBedienung extends IPSModuleStrict
             ];
         }
         $state = ['View' => $this->CurrentView(), 'SeparateDetails' => $this->ConfigBoolean('SeparateDetails')];
-        $state['HomepagePart'] = $this->ReadPropertyInteger('HomepagePart');
+        // The preserved homepage tile's fixed ident defines its visual section.
+        // This keeps existing tiles correct even after stale property values.
+        $homepagePart = $this->ReadPropertyInteger('HomepagePart');
+        if ($state['View'] === 0) {
+            $ident = IPS_GetObject($this->InstanceID)['ObjectIdent'] ?? '';
+            if (preg_match('/^SVHSHomePart_([1-9][0-9]*)$/D', $ident, $match) === 1) {
+                $homepagePart = (int)$match[1];
+            }
+        }
+        $state['HomepagePart'] = $homepagePart;
         $part = $state['View'] === 0 ? $state['HomepagePart'] : 0;
         $shows = static fn(array $parts): bool => $part === 0 || in_array($part, $parts, true);
         foreach (array_keys(self::SOURCES) as $name) { $state[$name] = $this->Read($this->ConfigInteger($name)); }
