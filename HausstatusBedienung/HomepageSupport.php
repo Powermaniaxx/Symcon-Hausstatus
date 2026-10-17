@@ -335,9 +335,79 @@ trait HausstatusHomepageSupport
     {
         $rows = [];
         foreach ($this->HomepageObjects() as $id) {
-            $target = IPS_LinkExists($id) ? IPS_GetLink($id)['TargetID'] : $id;
-            $rows[] = ['id' => $id, 'name' => IPS_GetName($id), 'parent' => IPS_GetParent($id), 'view' => IPS_GetProperty($target, 'View'), 'hidden' => IPS_GetObject($id)['ObjectIsHidden']];
+            $target = IPS_LinkExists($id) ? (int) IPS_GetLink($id)['TargetID'] : $id;
+            $rows[] = [
+                'id' => $id,
+                'name' => IPS_GetName($id),
+                'ident' => IPS_GetObject($id)['ObjectIdent'],
+                'parent' => IPS_GetParent($id),
+                'target' => $target,
+                'view' => IPS_GetProperty($target, 'View'),
+                'part' => IPS_GetProperty($target, 'HomepagePart'),
+                'hidden' => IPS_GetObject($id)['ObjectIsHidden']
+            ];
         }
-        return json_encode(['version' => (json_decode((string)file_get_contents(__DIR__ . '/../library.json'), true)['version'] ?? 'unbekannt'), 'category' => $this->ReadPropertyInteger('HomepageCategory'), 'lastError' => $this->GetBuffer('HomepageLayoutError'), 'tiles' => $rows], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+
+        // Report duplicate candidates without touching objects. Compare instance
+        // targets, View, HomepagePart and RoomFilter, not names alone.
+        $root = $this->ReadPropertyInteger('HomepageCategory');
+        $roots = [];
+        if ($root > 0 && IPS_ObjectExists($root) && (int) IPS_GetObject($root)['ObjectType'] === 0) {
+            $roots['Startseite'] = $root;
+        }
+        if (IPS_ObjectExists(55503) && (int) IPS_GetObject(55503)['ObjectType'] === 0) {
+            $parent = IPS_GetParent(55503);
+            foreach (IPS_GetChildrenIDs($parent) as $id) {
+                $obj = IPS_GetObject($id);
+                if ((int) $obj['ObjectType'] !== 0) { continue; }
+                if ($obj['ObjectIdent'] === 'MirrorVisualisierungSusi' || $this->PresentationBaseName((string) $obj['ObjectName']) === 'Visualisierung Susi') {
+                    $roots['Susi'] = $id;
+                    break;
+                }
+            }
+        }
+        $duplicates = [];
+        foreach ($roots as $label => $category) {
+            $groups = [];
+            $queue = [[$category, 0]];
+            while ($queue) {
+                [$parent, $depth] = array_shift($queue);
+                foreach (IPS_GetChildrenIDs($parent) as $id) {
+                    $obj = IPS_GetObject($id);
+                    if ($obj['ObjectIsHidden']) { continue; }
+                    if ((int) $obj['ObjectType'] === 0) {
+                        if ($depth < 2) { $queue[] = [$id, $depth + 1]; }
+                        continue;
+                    }
+                    $target = IPS_LinkExists($id) ? (int) IPS_GetLink($id)['TargetID'] : $id;
+                    if (!IPS_InstanceExists($target)
+                        || IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== '{9E33E109-4881-4E78-9906-38CAC2F1E210}') { continue; }
+                    if ($target !== $this->InstanceID && (int) IPS_GetProperty($target, 'ConfigSource') !== $this->InstanceID) { continue; }
+                    $key = implode(':', [
+                        (int) IPS_GetProperty($target, 'View'),
+                        (int) IPS_GetProperty($target, 'HomepagePart'),
+                        (string) IPS_GetProperty($target, 'RoomFilter')
+                    ]);
+                    $groups[$key][] = [
+                        'id' => $id, 'target' => $target,
+                        'parent' => $parent, 'name' => IPS_GetName($id),
+                        'ident' => $obj['ObjectIdent']
+                    ];
+                }
+            }
+            foreach ($groups as $key => $items) {
+                if (count($items) > 1) {
+                    $duplicates[] = ['visualization' => $label, 'viewPartRoom' => $key, 'objects' => $items];
+                }
+            }
+        }
+
+        return json_encode([
+            'version' => $this->HausstatusReleaseVersion(),
+            'category' => $root,
+            'lastError' => $this->GetBuffer('HomepageLayoutError'),
+            'tiles' => $rows,
+            'duplicateCandidates' => $duplicates
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     }
 }
