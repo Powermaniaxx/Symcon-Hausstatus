@@ -71,6 +71,11 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyBoolean('PreserveHomepageStyle', true);
         $this->RegisterPropertyInteger('HomepagePart', 0);
         $this->RegisterPropertyInteger('HomepageCategory', 0);
+        // Independent add-tile dialog: destination selected before creating a new view.
+        $this->RegisterPropertyInteger('NewTileView', -1);
+        $this->RegisterPropertyInteger('NewTileCategory', 0);
+        $this->RegisterPropertyString('NewTileTitle', '');
+        $this->RegisterPropertyString('NewTileRoomFilter', '');
         $this->RegisterAttributeString('HomepageLayout', '');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
@@ -384,6 +389,7 @@ class HausstatusBedienung extends IPSModuleStrict
             $fields[$name] = ['visible' => $own, 'expanded' => $own && ($view === $sectionView || ($name === 'PresenceSettings' && $view === 18))];
         }
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
+        $fields['TileCreationSettings'] = ['visible' => $own, 'expanded' => false];
         $fields['DisplaySettings'] = ['visible' => $own];
         $fields['NodeRedViewerSettings'] = ['visible' => $own, 'expanded' => false];
         $fields['SettingsCategoryBasics'] = ['visible' => true];
