@@ -5,6 +5,12 @@
       "caption": "Hausstatus – Einstellungen"
     },
     {
+      "type": "Label",
+      "name": "SettingsCategoryBasics",
+      "caption": "ALLGEMEIN · KACHELN UND STARTSEITE",
+      "visible": true
+    },
+    {
       "type": "ExpansionPanel",
       "name": "TileSettings",
       "caption": "01 · Kacheltyp und Datenquelle",
@@ -156,7 +162,7 @@
         },
         {
           "type": "Label",
-          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „02 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
+          "caption": "Kacheltyp wählen, gegebenenfalls die Master-Instanz als gemeinsame Datenquelle auswählen und Änderungen übernehmen. Weitere Variablen können unter „03 · Zusätzliche Variablen“ für genau diese Kachel ergänzt werden."
         },
         {
           "type": "SelectInstance",
@@ -169,7 +175,7 @@
         },
         {
           "type": "Label",
-          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „02“ gelten immer nur für diese Kachel."
+          "caption": "Leer lassen = Variablen direkt in dieser Instanz auswählen. Master-Instanz wählen = dieselben Standardquellen nutzen. Zusätzliche Variablen unter „03“ gelten immer nur für diese Kachel."
         },
         {
           "type": "Button",
@@ -185,48 +191,8 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "ExtraTileSettings",
-      "caption": "02 · Zusätzliche Variablen für diese Kachel",
-      "expanded": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
-        },
-        {
-          "type": "List",
-          "name": "ExtraTileVariables",
-          "caption": "Eigene Variablen anzeigen",
-          "rowCount": 4,
-          "add": true,
-          "delete": true,
-          "columns": [
-            {
-              "caption": "Anzeigename (optional)",
-              "name": "Name",
-              "width": "200px",
-              "add": "",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "caption": "Bestehende Variable",
-              "name": "Variable",
-              "width": "auto",
-              "add": 0,
-              "edit": {
-                "type": "SelectVariable"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "ExpansionPanel",
       "name": "OverviewSettings",
-      "caption": "03 · Startseite und Detailkacheln",
+      "caption": "02 · Startseite und Navigation",
       "expanded": true,
       "items": [
         {
@@ -265,43 +231,49 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "NodeRedViewerSettings",
-      "caption": "Performance · Node-RED nur bei offenem WebFront",
+      "name": "ExtraTileSettings",
+      "caption": "03 · Zusätzliche Variablen dieser Kachel",
       "expanded": false,
       "items": [
         {
           "type": "Label",
-          "caption": "Die Hausstatus-Kacheln melden ihre Sichtbarkeit alle 30 Sekunden. Wenn Node-RED die passenden, WebFront-gesteuerten Flows verwendet, stoppen die reinen Shield-/Philips-Abfragen nach 75 Sekunden ohne Signal. Anwesenheit, Alarm und Ansagen bleiben unabhängig."
+          "caption": "Optional: vorhandene Variablen direkt hinzufügen. Ihre Originalwerte werden nur angezeigt, nicht geschaltet. Dies gilt nur für diese Kachel, unabhängig von der Master-Konfiguration. Beim Typ „Eigene Kachel“ erscheinen ausschließlich diese Einträge."
         },
         {
-          "type": "ValidationTextBox",
-          "name": "NodeRedViewerPingURL",
-          "caption": "Node-RED Lebenszeichen-URL (leer = deaktiviert)",
-          "placeholder": "http://192.168.178.140:1880/symcon/visu-ping"
-        },
-        {
-          "type": "Label",
-          "caption": "Erst den neuen Node-RED-Flow importieren und aktivieren, dann hier die lokale URL eintragen und Änderungen übernehmen. Die URL wird nur bei geöffneten Hausstatus-Kacheln angesprochen."
+          "type": "List",
+          "name": "ExtraTileVariables",
+          "caption": "Eigene Variablen anzeigen",
+          "rowCount": 4,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Anzeigename (optional)",
+              "name": "Name",
+              "width": "200px",
+              "add": "",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Bestehende Variable",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "type": "ExpansionPanel",
-      "name": "ModuleUpdateSettings",
-      "caption": "System · Hausstatus-Modulupdate",
-      "expanded": false,
-      "visible": false,
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Nur in privater System-Visualisierung verwenden. Die Freigabe ist standardmäßig deaktiviert. Ein Update erfordert eine separate Bestätigung."
-        },
-        {
-          "type": "CheckBox",
-          "name": "ModuleUpdateEnabled",
-          "caption": "Modulupdates über diese System-Kachel erlauben"
-        }
-      ]
+      "type": "Label",
+      "name": "SettingsCategorySecurity",
+      "caption": "ANWESENHEIT · SICHERHEIT",
+      "visible": false
     },
     {
       "type": "ExpansionPanel",
@@ -439,8 +411,107 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "DeviceSettings",
+      "caption": "07 · Gerätewarnungen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "BatteryWarnings",
+          "caption": "Anzahl Gerätewarnungen – Integer-Variable"
+        },
+        {
+          "type": "Label",
+          "caption": "Die Zählvariable unter dem Batteriewächter auswählen, nicht das PHP-Skript."
+        }
+      ]
+    },
+    {
+      "type": "Label",
+      "name": "SettingsCategoryRooms",
+      "caption": "RÄUME · LICHT · HEIZUNG",
+      "visible": false
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "RoomDeviceSettings",
+      "caption": "08 · Räume und weitere Geräte",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "RoomControlsEnabled",
+          "caption": "Raumgeräte über ihre vorhandenen Aktionen bedienen"
+        },
+        {
+          "type": "Label",
+          "caption": "Raumseiten stellen Licht, Heizung und Medien zuerst dar. Lampen haben kompakte Schalter und Dimmer; Heizung zeigt Soll/Ist gemeinsam. Technische Werte bleiben unter Weitere Einstellungen. Die neuen Seiten stehen unter Räume und sind über Räume öffnen in der Übersicht erreichbar."
+        },
+        {
+          "type": "List",
+          "name": "RoomEntries",
+          "caption": "Räume, Geräte und PV-Details",
+          "rowCount": 10,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "name": "Room",
+              "caption": "Raum / Bereich",
+              "width": "170px",
+              "add": "Raum",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Group",
+              "caption": "Gruppe",
+              "width": "160px",
+              "add": "Geräte",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Name",
+              "caption": "Beschriftung",
+              "width": "220px",
+              "add": "Gerät",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "name": "Target",
+              "caption": "Quelle",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectObject"
+              }
+            },
+            {
+              "name": "Operate",
+              "caption": "Bedienen",
+              "width": "100px",
+              "add": true,
+              "edit": {
+                "type": "CheckBox"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "Schalter, Auswahl, Regler und RGB-Farbe verwenden die vorhandene Variablendarstellung. Andere Darstellungen lassen sich über „Bedienung öffnen“ in Symcon bedienen. Türbefehle bleiben im Haustürbereich."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "LightSettings",
-      "caption": "07 · Licht und Esstisch",
+      "caption": "09 · Licht und Esstisch",
       "expanded": false,
       "items": [
         {
@@ -505,7 +576,7 @@
     {
       "type": "ExpansionPanel",
       "name": "HeaterSettings",
-      "caption": "08 · Zusatzheizung",
+      "caption": "10 · Zusatzheizung",
       "items": [
         {
           "type": "ValidationTextBox",
@@ -555,8 +626,68 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "TemperatureSettings",
+      "caption": "11 · Temperaturen",
+      "expanded": false,
+      "items": [
+        {
+          "type": "SelectVariable",
+          "name": "HeatingProfile",
+          "caption": "Heizungsprofil gesamte Wohnung – Auswahl oder Status (leer: Variable 31603)"
+        },
+        {
+          "type": "List",
+          "name": "Rooms",
+          "caption": "Räume und Temperaturvariablen",
+          "rowCount": 9,
+          "add": true,
+          "delete": true,
+          "columns": [
+            {
+              "caption": "Raum",
+              "name": "Name",
+              "width": "200px",
+              "add": "Raum",
+              "edit": {
+                "type": "ValidationTextBox"
+              }
+            },
+            {
+              "caption": "Isttemperatur",
+              "name": "Variable",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            },
+            {
+              "caption": "Solltemperatur (optional)",
+              "name": "Setpoint",
+              "width": "auto",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "Links Sollwerte einstellen, rechts Istwerte ablesen. Ohne ausgewählte Sollquelle werden passende Solltemperaturen aus den Raumgeräten oder vom selben Thermostat gesucht. Ohne passende Quelle bleibt die Isttemperatur sichtbar."
+        }
+      ]
+    },
+    {
+      "type": "Label",
+      "name": "SettingsCategoryMedia",
+      "caption": "MEDIEN · HEIMKINO",
+      "visible": false
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "CinemaSettings",
-      "caption": "09 · Mediengeräte und HEOS",
+      "caption": "12 · Wohnzimmer: Cinema 40, HEOS, Shield und Philips-TV",
       "expanded": false,
       "items": [
         {
@@ -651,7 +782,7 @@
     {
       "type": "ExpansionPanel",
       "name": "BedroomMediaSettings",
-      "caption": "Medien Schlafzimmer · Marantz SR-5010 und Subwoofer",
+      "caption": "13 · Schlafzimmer: Marantz und Subwoofer",
       "expanded": false,
       "items": [
         {
@@ -692,26 +823,51 @@
       ]
     },
     {
+      "type": "Label",
+      "name": "SettingsCategoryHousehold",
+      "caption": "HAUSHALT · ENERGIE · AUSSENBEREICH",
+      "visible": false
+    },
+    {
       "type": "ExpansionPanel",
-      "name": "DeviceSettings",
-      "caption": "10 · Gerätewarnungen",
+      "name": "LaundrySettings",
+      "caption": "14 · Waschmaschine und Trockner",
       "expanded": false,
       "items": [
         {
+          "type": "Label",
+          "caption": "Gemeinsame Kachel auf der Startseite. Leistungsquellen in Watt. Laufstatus kommt aus den vorhandenen Ansageskripten; Aktiv seit entspricht dem erkannten Laufbeginn."
+        },
+        {
           "type": "SelectVariable",
-          "name": "BatteryWarnings",
-          "caption": "Anzahl Gerätewarnungen – Integer-Variable"
+          "name": "WasherPower",
+          "caption": "Waschmaschine: aktuelle Leistung (W)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WasherRunning",
+          "caption": "Waschmaschine: läuft (Boolean, leer = automatisch)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DryerPower",
+          "caption": "Trockner: aktuelle Leistung (W)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DryerRunning",
+          "caption": "Trockner: läuft (Boolean, leer = automatisch)"
         },
         {
           "type": "Label",
-          "caption": "Die Zählvariable unter dem Batteriewächter auswählen, nicht das PHP-Skript."
+          "caption": "Automatische Zuordnung: WaschmaschineLaeuft / TrocknerLaeuft unter einem Skript mit aktivem Ereignis für die gewählte Leistung. Bei mehreren Treffern den Laufstatus ausdrücklich auswählen. Ansageskripte zuvor einmal manuell einrichten, danach hier Änderungen übernehmen."
         }
       ]
     },
     {
       "type": "ExpansionPanel",
       "name": "PVSettings",
-      "caption": "11 · PV-Anlage",
+      "caption": "15 · PV-Anlage",
       "expanded": false,
       "items": [
         {
@@ -734,7 +890,7 @@
     {
       "type": "ExpansionPanel",
       "name": "OutdoorSettings",
-      "caption": "12 · Markise und Dachfenster",
+      "caption": "16 · Markise und Dachfenster",
       "expanded": false,
       "items": [
         {
@@ -792,113 +948,15 @@
       ]
     },
     {
-      "type": "ExpansionPanel",
-      "name": "MotionSettings",
-      "caption": "13 · Bewegung und Verlauf",
-      "expanded": false,
-      "items": [
-        {
-          "type": "List",
-          "name": "MotionSensors",
-          "caption": "Bewegungsmelder – Verlauf der letzten 24 Stunden",
-          "rowCount": 6,
-          "add": true,
-          "delete": true,
-          "columns": [
-            {
-              "caption": "Melder",
-              "name": "Name",
-              "width": "220px",
-              "add": "Bewegungsmelder",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "caption": "Boolean-Variable",
-              "name": "Variable",
-              "width": "auto",
-              "add": 0,
-              "edit": {
-                "type": "SelectVariable"
-              }
-            }
-          ]
-        },
-        {
-          "type": "SelectInstance",
-          "name": "MotionArchive",
-          "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
-        },
-        {
-          "type": "CheckBox",
-          "name": "MotionLogging",
-          "caption": "Ausgewählte Bewegungsmelder archivieren"
-        },
-        {
-          "type": "Label",
-          "caption": "Die Melder müssen Boolean-Variablen sein. Der Verlauf zeigt die im Archiv gespeicherten Zustandswechsel."
-        }
-      ]
-    },
-    {
-      "type": "ExpansionPanel",
-      "name": "TemperatureSettings",
-      "caption": "14 · Temperaturen",
-      "expanded": false,
-      "items": [
-        {
-          "type": "SelectVariable",
-          "name": "HeatingProfile",
-          "caption": "Heizungsprofil gesamte Wohnung – Auswahl oder Status (leer: Variable 31603)"
-        },
-        {
-          "type": "List",
-          "name": "Rooms",
-          "caption": "Räume und Temperaturvariablen",
-          "rowCount": 9,
-          "add": true,
-          "delete": true,
-          "columns": [
-            {
-              "caption": "Raum",
-              "name": "Name",
-              "width": "200px",
-              "add": "Raum",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "caption": "Isttemperatur",
-              "name": "Variable",
-              "width": "auto",
-              "add": 0,
-              "edit": {
-                "type": "SelectVariable"
-              }
-            },
-            {
-              "caption": "Solltemperatur (optional)",
-              "name": "Setpoint",
-              "width": "auto",
-              "add": 0,
-              "edit": {
-                "type": "SelectVariable"
-              }
-            }
-          ]
-        },
-        {
-          "type": "Label",
-          "caption": "Links Sollwerte einstellen, rechts Istwerte ablesen. Ohne ausgewählte Sollquelle werden passende Solltemperaturen aus den Raumgeräten oder vom selben Thermostat gesucht. Ohne passende Quelle bleibt die Isttemperatur sichtbar."
-        }
-      ]
+      "type": "Label",
+      "name": "SettingsCategorySensors",
+      "caption": "WETTER · SENSOREN",
+      "visible": false
     },
     {
       "type": "ExpansionPanel",
       "name": "WeatherSettings",
-      "caption": "15 · Wetter",
+      "caption": "17 · Wetter",
       "expanded": false,
       "items": [
         {
@@ -979,84 +1037,64 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "RoomDeviceSettings",
-      "caption": "16 · Räume und weitere Geräte",
+      "name": "MotionSettings",
+      "caption": "18 · Bewegung und Verlauf",
       "expanded": false,
       "items": [
         {
-          "type": "CheckBox",
-          "name": "RoomControlsEnabled",
-          "caption": "Raumgeräte über ihre vorhandenen Aktionen bedienen"
-        },
-        {
-          "type": "Label",
-          "caption": "Raumseiten stellen Licht, Heizung und Medien zuerst dar. Lampen haben kompakte Schalter und Dimmer; Heizung zeigt Soll/Ist gemeinsam. Technische Werte bleiben unter Weitere Einstellungen. Die neuen Seiten stehen unter Räume und sind über Räume öffnen in der Übersicht erreichbar."
-        },
-        {
           "type": "List",
-          "name": "RoomEntries",
-          "caption": "Räume, Geräte und PV-Details",
-          "rowCount": 10,
+          "name": "MotionSensors",
+          "caption": "Bewegungsmelder – Verlauf der letzten 24 Stunden",
+          "rowCount": 6,
           "add": true,
           "delete": true,
           "columns": [
             {
-              "name": "Room",
-              "caption": "Raum / Bereich",
-              "width": "170px",
-              "add": "Raum",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
-              "name": "Group",
-              "caption": "Gruppe",
-              "width": "160px",
-              "add": "Geräte",
-              "edit": {
-                "type": "ValidationTextBox"
-              }
-            },
-            {
+              "caption": "Melder",
               "name": "Name",
-              "caption": "Beschriftung",
               "width": "220px",
-              "add": "Gerät",
+              "add": "Bewegungsmelder",
               "edit": {
                 "type": "ValidationTextBox"
               }
             },
             {
-              "name": "Target",
-              "caption": "Quelle",
+              "caption": "Boolean-Variable",
+              "name": "Variable",
               "width": "auto",
               "add": 0,
               "edit": {
-                "type": "SelectObject"
-              }
-            },
-            {
-              "name": "Operate",
-              "caption": "Bedienen",
-              "width": "100px",
-              "add": true,
-              "edit": {
-                "type": "CheckBox"
+                "type": "SelectVariable"
               }
             }
           ]
         },
         {
+          "type": "SelectInstance",
+          "name": "MotionArchive",
+          "caption": "Archiv (leer = automatisch bei genau einem Archiv)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "MotionLogging",
+          "caption": "Ausgewählte Bewegungsmelder archivieren"
+        },
+        {
           "type": "Label",
-          "caption": "Schalter, Auswahl, Regler und RGB-Farbe verwenden die vorhandene Variablendarstellung. Andere Darstellungen lassen sich über „Bedienung öffnen“ in Symcon bedienen. Türbefehle bleiben im Haustürbereich."
+          "caption": "Die Melder müssen Boolean-Variablen sein. Der Verlauf zeigt die im Archiv gespeicherten Zustandswechsel."
         }
       ]
     },
     {
+      "type": "Label",
+      "name": "SettingsCategoryNetwork",
+      "caption": "NETZWERK · NAS",
+      "visible": false
+    },
+    {
       "type": "ExpansionPanel",
       "name": "NetworkSettings",
-      "caption": "17 · FritzBox und Netzwerk",
+      "caption": "19 · FritzBox und Netzwerk",
       "expanded": false,
       "items": [
         {
@@ -1251,7 +1289,7 @@
     {
       "type": "ExpansionPanel",
       "name": "DockerSettings",
-      "caption": "18 · NAS-Docker-Container",
+      "caption": "20 · NAS-Docker-Container",
       "expanded": false,
       "items": [
         {
@@ -1289,9 +1327,15 @@
       ]
     },
     {
+      "type": "Label",
+      "name": "SettingsCategorySystem",
+      "caption": "DARSTELLUNG · LEISTUNG · SYSTEM",
+      "visible": false
+    },
+    {
       "type": "ExpansionPanel",
       "name": "DisplaySettings",
-      "caption": "19 · Texte und Beschreibungen",
+      "caption": "21 · Texte und Beschreibungen",
       "expanded": false,
       "items": [
         {
@@ -1442,37 +1486,41 @@
     },
     {
       "type": "ExpansionPanel",
-      "name": "LaundrySettings",
-      "caption": "19 · Waschmaschine und Trockner",
+      "name": "NodeRedViewerSettings",
+      "caption": "22 · Node-RED nur bei offenem WebFront",
       "expanded": false,
       "items": [
         {
           "type": "Label",
-          "caption": "Gemeinsame Kachel auf der Startseite. Leistungsquellen in Watt. Laufstatus kommt aus den vorhandenen Ansageskripten; Aktiv seit entspricht dem erkannten Laufbeginn."
+          "caption": "Die Hausstatus-Kacheln melden ihre Sichtbarkeit alle 30 Sekunden. Wenn Node-RED die passenden, WebFront-gesteuerten Flows verwendet, stoppen die reinen Shield-/Philips-Abfragen nach 75 Sekunden ohne Signal. Anwesenheit, Alarm und Ansagen bleiben unabhängig."
         },
         {
-          "type": "SelectVariable",
-          "name": "WasherPower",
-          "caption": "Waschmaschine: aktuelle Leistung (W)"
-        },
-        {
-          "type": "SelectVariable",
-          "name": "WasherRunning",
-          "caption": "Waschmaschine: läuft (Boolean, leer = automatisch)"
-        },
-        {
-          "type": "SelectVariable",
-          "name": "DryerPower",
-          "caption": "Trockner: aktuelle Leistung (W)"
-        },
-        {
-          "type": "SelectVariable",
-          "name": "DryerRunning",
-          "caption": "Trockner: läuft (Boolean, leer = automatisch)"
+          "type": "ValidationTextBox",
+          "name": "NodeRedViewerPingURL",
+          "caption": "Node-RED Lebenszeichen-URL (leer = deaktiviert)",
+          "placeholder": "http://192.168.178.140:1880/symcon/visu-ping"
         },
         {
           "type": "Label",
-          "caption": "Automatische Zuordnung: WaschmaschineLaeuft / TrocknerLaeuft unter einem Skript mit aktivem Ereignis für die gewählte Leistung. Bei mehreren Treffern den Laufstatus ausdrücklich auswählen. Ansageskripte zuvor einmal manuell einrichten, danach hier Änderungen übernehmen."
+          "caption": "Erst den neuen Node-RED-Flow importieren und aktivieren, dann hier die lokale URL eintragen und Änderungen übernehmen. Die URL wird nur bei geöffneten Hausstatus-Kacheln angesprochen."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "name": "ModuleUpdateSettings",
+      "caption": "23 · Hausstatus-Modulupdate",
+      "expanded": false,
+      "visible": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Nur in privater System-Visualisierung verwenden. Die Freigabe ist standardmäßig deaktiviert. Ein Update erfordert eine separate Bestätigung."
+        },
+        {
+          "type": "CheckBox",
+          "name": "ModuleUpdateEnabled",
+          "caption": "Modulupdates über diese System-Kachel erlauben"
         }
       ]
     }
