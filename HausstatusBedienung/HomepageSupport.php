@@ -276,14 +276,61 @@ trait HausstatusHomepageSupport
             5 => 'Medien Wohnzimmer', 6 => 'Medien Schlafzimmer', 7 => 'Medien Ankleidezimmer',
             8 => 'Wetter, Markise und Dachfenster', 9 => 'Räume und Zusatzheizung',
             10 => 'Bewegung', 11 => 'Raumgeräte', 12 => 'Zusätzliche Variablen'];
+        // Find existing auto-created parts across categories before creating any.
+        // A previous change of the homepage target must reuse (move) the SAME
+        // instance rather than producing a new set of identical home tiles.
+        $known = [];
+        $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
+        foreach (IPS_GetInstanceListByModuleID($module) as $candidate) {
+            if ($candidate === $this->InstanceID
+                || (int)IPS_GetProperty($candidate, 'ConfigSource') !== $this->InstanceID) {
+                continue;
+            }
+            $ident = IPS_GetObject($candidate)['ObjectIdent'] ?? '';
+            if (preg_match('/^SVHSHomePart_([1-9][0-9]*)$/D', $ident, $match)) {
+                $known[(int)$match[1]][] = $candidate;
+            }
+        }
         $plan = [];
-        // Preflight every identifier before hiding or moving an existing presentation.
+        // Preflight the entire layout: collisions and ambiguous duplicates
+        // cannot cause a second automatic instance to be created.
         foreach ($tiles as $part => $title) {
-            $id = @IPS_GetObjectIDByIdent('SVHSHomePart_' . $part, $root);
-            if ($id !== false && !$this->OwnedHomepageTile($id, 0)) {
+            $ident = 'SVHSHomePart_' . $part;
+            $local = @IPS_GetObjectIDByIdent($ident, $root);
+            if ($local !== false && (!$this->OwnedHomepageTile((int)$local, 0)
+                && (!IPS_InstanceExists((int)$local)
+                    || (int)IPS_GetProperty((int)$local, 'ConfigSource') !== $this->InstanceID))) {
                 throw new RuntimeException('Kennung für Hausstatus-Bereich ' . $part . ' ist bereits belegt.');
             }
-            $plan[$part] = ['id' => $id === false ? 0 : $id, 'title' => $title];
+            $matches = $known[$part] ?? [];
+            if (count($matches) > 1) {
+                throw new RuntimeException('Hausstatus-Bereich ' . $part
+                    . ' ist mehrfach vorhanden (IDs: ' . implode(', ', $matches)
+                    . '). Zur Sicherheit wird keine weitere Kachel angelegt.');
+            }
+            $id = $local !== false ? (int)$local : ($matches[0] ?? 0);
+            // Reuse a unique legacy part that predates the stable object ident.
+            if ($id === 0) {
+                $legacy = [];
+                foreach (IPS_GetChildrenIDs($root) as $child) {
+                    if (!IPS_InstanceExists($child)
+                        || IPS_GetInstance($child)['ModuleInfo']['ModuleID'] !== $module
+                        || (int)IPS_GetProperty($child, 'ConfigSource') !== $this->InstanceID
+                        || (int)IPS_GetProperty($child, 'View') !== 0
+                        || (int)IPS_GetProperty($child, 'HomepagePart') !== $part) {
+                        continue;
+                    }
+                    if ((IPS_GetObject($child)['ObjectIdent'] ?? '') === '') {
+                        $legacy[] = $child;
+                    }
+                }
+                if (count($legacy) > 1) {
+                    throw new RuntimeException('Mehrere unbenannte bestehende Kacheln für Bereich '
+                        . $part . ' erkannt. Keine zusätzliche Kachel erstellt.');
+                }
+                if ($legacy) { $id = $legacy[0]; }
+            }
+            $plan[$part] = ['id' => $id, 'title' => $title];
         }
         $saved = $this->HomepageSavedLayout();
         $previous = $saved['visibility'] ?? [];
@@ -310,20 +357,40 @@ trait HausstatusHomepageSupport
         foreach ($plan as $part => $entry) {
             if (!$enabled($part)) { continue; }
             $id = $entry['id'];
-            if ($id === 0) {
-                $id = IPS_CreateInstance('{9E33E109-4881-4E78-9906-38CAC2F1E210}');
-                IPS_SetParent($id, $root); IPS_SetIdent($id, 'SVHSHomePart_' . $part);
-                IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
+            $new = $id === 0;
+            if ($new) {
+                $id = IPS_CreateInstance($module);
+                IPS_SetParent($id, $root);
+                IPS_SetIdent($id, 'SVHSHomePart_' . $part);
+                IPS_SetPosition($id, $part * 10);
+            } else {
+                if (IPS_GetParent($id) !== $root) { IPS_SetParent($id, $root); }
+                if ((IPS_GetObject($id)['ObjectIdent'] ?? '') === '') {
+                    IPS_SetIdent($id, 'SVHSHomePart_' . $part);
+                }
             }
-            // Also repair reused tiles: the stable SVHSHomePart_N ident defines the part.
-            IPS_SetProperty($id, 'ConfigSource', $this->InstanceID);
-            IPS_SetProperty($id, 'View', 0);
-            IPS_SetProperty($id, 'HomepagePart', $part);
-            IPS_SetName($id, $entry['title']); IPS_SetPosition($id, $part * 10);
-            IPS_SetProperty($id, 'ActiveView', true);
-            IPS_SetProperty($id, 'ShieldCompact', $this->ReadPropertyBoolean('ShieldCompact'));
-            if ($part === 12) { IPS_SetProperty($id, 'ExtraTileVariables', $this->ReadPropertyString('ExtraTileVariables')); }
-            IPS_ApplyChanges($id); IPS_SetHidden($id, false); $active[] = $id;
+            $properties = [
+                'ConfigSource' => $this->InstanceID,
+                'View' => 0,
+                'HomepagePart' => $part,
+                'ActiveView' => true,
+                'ShieldCompact' => $this->ReadPropertyBoolean('ShieldCompact')
+            ];
+            if ($part === 12) {
+                $properties['ExtraTileVariables'] = $this->ReadPropertyString('ExtraTileVariables');
+            }
+            $changed = $new;
+            foreach ($properties as $key => $value) {
+                if (IPS_GetProperty($id, $key) !== $value) {
+                    IPS_SetProperty($id, $key, $value);
+                    $changed = true;
+                }
+            }
+            if (IPS_GetName($id) !== $entry['title']) { IPS_SetName($id, $entry['title']); }
+            // Never reset a manually adjusted tile position on each refresh.
+            if ($changed) { IPS_ApplyChanges($id); }
+            if (IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, false); }
+            $active[] = $id;
         }
         foreach ($this->HomepageObjects() as $id) {
             if (!in_array($id, $active, true)) { IPS_SetHidden($id, true); }
