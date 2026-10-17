@@ -386,6 +386,12 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields['OverviewSettings'] = ['visible' => $own && $view === 0];
         $fields['DisplaySettings'] = ['visible' => $own];
         $fields['NodeRedViewerSettings'] = ['visible' => $own, 'expanded' => false];
+        $fields['SettingsCategoryBasics'] = ['visible' => true];
+        foreach (['SettingsCategorySecurity', 'SettingsCategoryRooms', 'SettingsCategoryMedia',
+            'SettingsCategoryHousehold', 'SettingsCategorySensors', 'SettingsCategoryNetwork'] as $group) {
+            $fields[$group] = ['visible' => $own];
+        }
+        $fields['SettingsCategorySystem'] = ['visible' => $own || $view === 30];
         $fields['RoomFilter'] = ['visible' => $view === 12];
         $fields['NetworkSettings'] = ['visible' => $own,
             'expanded' => $own && in_array($view, [13, 20, 21, 22, 23, 24], true)];
