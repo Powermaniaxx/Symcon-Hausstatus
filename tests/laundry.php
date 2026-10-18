@@ -65,6 +65,28 @@ check($data['devices'][0]['since'] === $started, 'Use VariableChanged, not Varia
 check($data['devices'][1]['running'] === false && $data['devices'][1]['since'] === null, 'Inactive device must not show previous start');
 check(invoke($module, 'LaundrySourceIDs') === [15161, 1001, 12920, 1002], 'Subscribe to power AND detected state');
 
+// A stuck TRUE flag must not show hours of washing at zero watts.
+$GLOBALS['variables'][15161]['raw'] = 0.0;
+$GLOBALS['variables'][15161]['VariableChanged'] = time() - 2400;
+$stuck = invoke($module, 'LaundryState')['devices'][0];
+check($stuck['running'] === false && $stuck['since'] === null, 'Long-standing zero-watt flag must display inactive');
+check(str_contains($stuck['note'], 'Laufstatusquelle'), 'Explain the underlying stale source without writing to it');
+check($GLOBALS['variables'][1001]['raw'] === true, 'Read-only correction must not change source variable');
+
+// A short pause cannot end an actual wash. Full-power readings reset the idle clock.
+$GLOBALS['variables'][15161]['raw'] = 900.0;
+check(invoke($module, 'LaundryState')['devices'][0]['running'] === true, 'Actual motor power must show running');
+$GLOBALS['variables'][15161]['raw'] = 0.0;
+$GLOBALS['variables'][15161]['VariableChanged'] = time() - 25;
+check(invoke($module, 'LaundryState')['devices'][0]['running'] === true, 'Short 0W program pause must stay running');
+// Simulate elapsed time with a synthetic clock; no delay in the test run.
+$elapsed = (new ReflectionMethod($module, 'LaundryCheckedRunState'))->invoke(
+    $module, 'Washer', 15161, true, $started, 0.0, time() + 960
+);
+check($elapsed['running'] === false, 'An observed idle period beyond 15 minutes must end displayed run');
+$GLOBALS['variables'][15161]['raw'] = 1.2;
+check(invoke($module, 'LaundryState')['devices'][0]['running'] === true, 'Power resumes -> running remains true');
+
 // An active duplicate is ambiguous; disabling that event restores unique discovery.
 $GLOBALS['variables'][1003] = $GLOBALS['variables'][1001];
 $GLOBALS['scripts'][502] = ['WaschmaschineLaeuft' => 1003, 'event' => 2003];
