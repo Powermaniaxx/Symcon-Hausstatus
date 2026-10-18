@@ -40,7 +40,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'NetworkTotalReceived' => 0, 'NetworkTotalSent' => 0,
         'NetworkVoipDNS1' => 0, 'NetworkVoipDNS2' => 0,
         'WasherPower' => 15161, 'DryerPower' => 12920, 'WasherRunning' => 0, 'DryerRunning' => 0,
-        'HeatingProfile' => 31603, 'Presence' => 0, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
+        'HeatingProfile' => 31603, 'Presence' => 52726, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 14121, 'HeosNAS' => 45081, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
@@ -197,7 +197,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if ($this->ReadPropertyInteger('View') === 18) {
             foreach ($this->ExtraAlarmSources() as $row) { $ids[] = $row['id']; }
-            $ids[] = 12936; // Google Home aktualisiert nur die Verlaufskachel.
+            $ids[] = 52726; // Die tatsaechliche Google-Home-Quelle aktualisiert die Verlaufskachel.
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 7, 15, 29], true)) {
             foreach ($this->PVInverterSources() as $inverter) { $ids[] = $inverter['power']; $ids[] = $inverter['producing']; }
@@ -783,10 +783,11 @@ class HausstatusBedienung extends IPSModuleStrict
     private function ConfigInteger(string $name): int
     {
         $id = (int)$this->ConfigValue($name);
-        // An unconfigured overall presence defaults to Google Home (12936).
-        // A deliberately selected Presence source always takes precedence.
-        return $id === 0 ? (['HeatingProfile' => 31603, 'HeosRadio' => 14121, 'HeosNAS' => 45081,
-            'Presence' => 12936][$name] ?? 0) : $id;
+        // Google Home liefert den richtigen Hausstatus in 52726.
+        // Bestehende Zuordnungen auf 12936 sowie leere Zuordnungen nutzen 52726.
+        // Andere bewusst gewaehlte Anwesenheitsquellen bleiben erhalten.
+        if ($name === 'Presence' && ($id === 0 || $id === 12936)) { return 52726; }
+        return $id === 0 ? (['HeatingProfile' => 31603, 'HeosRadio' => 14121, 'HeosNAS' => 45081][$name] ?? 0) : $id;
     }
     private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
