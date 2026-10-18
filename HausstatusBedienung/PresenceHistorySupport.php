@@ -89,7 +89,8 @@ trait HausstatusPresenceHistorySupport
         $result = [];
         $seen = [
             $this->ConfigInteger('Presence') => true,
-            12936 => true, // Google Home ist eine eigene Vergleichsquelle.
+            52726 => true, // Richtige Google-Home-Quelle, nicht als zusaetzlicher Alarm anzeigen.
+            12936 => true, // Veraltete Hausstatus-Quelle nicht doppelt anzeigen.
             $this->ConfigInteger('Alarm') => true,
             $this->ConfigInteger('SvenPresence') => true,
             $this->ConfigInteger('SusiPresence') => true
@@ -113,7 +114,7 @@ trait HausstatusPresenceHistorySupport
         $presenceID = $this->ConfigInteger('Presence');
         $rows = [
             ['source' => 'Presence', 'id' => $presenceID,
-                'name' => $presenceID === 12936 ? 'Allgemeine Anwesenheit' : 'Hausstatus',
+                'name' => $presenceID === 52726 ? 'Allgemeine Anwesenheit' : 'Hausstatus',
                 'kind' => 'house'],
             ['source' => 'SvenPresence', 'id' => $this->ConfigInteger('SvenPresence'),
                 'name' => 'Sven', 'kind' => 'person'],
@@ -122,11 +123,11 @@ trait HausstatusPresenceHistorySupport
             ['source' => 'Alarm', 'id' => $this->ConfigInteger('Alarm'),
                 'name' => 'Alarm innen', 'kind' => 'alarm']
         ];
-        // Show Google Home as a separate comparison only when Hausstatus
-        // uses another source. Never display the same variable twice.
-        if ($presenceID !== 12936) {
+        // Show the actual Google Home presence as a separate comparison only when
+        // Hausstatus uses a different variable. No duplicate of the same source.
+        if ($presenceID !== 52726) {
             array_splice($rows, 1, 0, [[
-                'source' => 'GoogleHomePresence', 'id' => 12936,
+                'source' => 'GoogleHomePresence', 'id' => 52726,
                 'name' => 'Google Home', 'kind' => 'house'
             ]]);
         }
