@@ -56,7 +56,7 @@ trait HausstatusLaundrySupport
 
     private function LaundryEnergy(int $powerID, int $now): array
     {
-        $empty = ['week' => null, 'month' => null, 'year' => null, 'note' => 'Keine Verbrauchsdaten im Symcon-Archiv.'];
+        $empty = ['today' => null, 'week' => null, 'month' => null, 'year' => null, 'note' => 'Keine Verbrauchsdaten im Symcon-Archiv.'];
         if ($powerID <= 0 || !IPS_VariableExists($powerID)) { return $empty; }
         $archives = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
         if (count($archives) !== 1) { $empty['note'] = 'Archiv nicht eindeutig zugeordnet.'; return $empty; }
@@ -66,6 +66,7 @@ trait HausstatusLaundrySupport
             $timezone = new DateTimeZone('Europe/Berlin');
             $today = (new DateTimeImmutable('@' . $now))->setTimezone($timezone);
             $starts = [
+                'today' => $today->setTime(0, 0)->getTimestamp(),
                 'week' => $today->modify('monday this week')->setTime(0, 0)->getTimestamp(),
                 'month' => $today->modify('first day of this month')->setTime(0, 0)->getTimestamp(),
                 'year' => $today->setDate((int)$today->format('Y'), 1, 1)->setTime(0, 0)->getTimestamp()
@@ -73,14 +74,15 @@ trait HausstatusLaundrySupport
             $cacheKey = 'LaundryEnergy_' . $powerID;
             $cache = json_decode($this->GetBuffer($cacheKey), true);
             if (is_array($cache) && ($cache['until'] ?? 0) > $now
+                && ($cache['dayStart'] ?? null) === $starts['today']
                 && ($cache['yearStart'] ?? null) === $starts['year']) {
                 return $cache['value'];
             }
             // Stündliche Archivmittelwerte als Näherung integrieren; fehlende Stunden nicht als Nullverbrauch behaupten.
             $hourStart = (int)(floor($starts['year'] / 3600) * 3600);
             $values = AC_GetAggregatedValues($archive, $powerID, 0, $hourStart, $now, 10000);
-            $result = ['week' => 0.0, 'month' => 0.0, 'year' => 0.0, 'note' => 'Ca.-Werte aus archivierten Stundenmittelwerten.'];
-            $coverage = ['week' => 0, 'month' => 0, 'year' => 0];
+            $result = ['today' => 0.0, 'week' => 0.0, 'month' => 0.0, 'year' => 0.0, 'note' => 'Ca.-Werte aus archivierten Stundenmittelwerten.'];
+            $coverage = ['today' => 0, 'week' => 0, 'month' => 0, 'year' => 0];
             foreach ($values as $entry) {
                 $start = (int)($entry['TimeStamp'] ?? 0);
                 $average = $entry['Avg'] ?? null;
@@ -101,7 +103,7 @@ trait HausstatusLaundrySupport
             elseif (min($coverage) < ($now - $starts['year']) * 0.95) {
                 $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
             }
-            $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'yearStart' => $starts['year'], 'value' => $result], JSON_THROW_ON_ERROR));
+            $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'dayStart' => $starts['today'], 'yearStart' => $starts['year'], 'value' => $result], JSON_THROW_ON_ERROR));
             return $result;
         } catch (Throwable $e) {
             $empty['note'] = 'Verbrauchsarchiv derzeit nicht lesbar.';
