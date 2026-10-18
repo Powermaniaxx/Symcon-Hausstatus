@@ -314,9 +314,11 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 .moduleUpdateBox{max-width:520px;margin:8px auto;padding:16px;border:1px solid #8884;border-radius:12px;background:Canvas}
 .moduleUpdateBox h2{font-size:17px;margin:0 0 8px}.moduleUpdateBox p{font-size:13px;line-height:1.5}
 .moduleUpdateBox .buttons{flex-wrap:wrap}.moduleUpdateBox button{min-height:46px}
-/* Anwesenheitsseite: etwas mehr Luft unter dem festen Symcon-Kacheltitel. */
-body.presenceHistoryView main{padding-top:68px}
-#presenceHistorySection:not([hidden]){padding-top:8px;margin-top:0}
+/* Die Anwesenheitskachel braucht Abstand unter dem nativen Symcon-Titel.
+   Spezifischer als body.hausstatusSingleTile main, das sonst 8px erzwingt. */
+body.presenceHistoryView main,
+body.hausstatusSingleTile.presenceHistoryView main{padding-top:80px}
+#presenceHistorySection:not([hidden]){padding-top:10px;margin-top:0}
 /* Hohe 24h-Verlaeufe machen auch kuerzere Statuswechsel lesbar. */
 .presencePerson .presenceTrack{height:26px;margin-top:10px;border-radius:7px}
 .presencePerson.isSystem .presenceTrack{height:22px;margin-top:8px}
