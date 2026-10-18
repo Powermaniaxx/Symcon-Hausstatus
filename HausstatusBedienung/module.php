@@ -783,8 +783,10 @@ class HausstatusBedienung extends IPSModuleStrict
     private function ConfigInteger(string $name): int
     {
         $id = (int)$this->ConfigValue($name);
-        // Existing installations may still store 0; keep explicitly selected sources.
-        return $id === 0 ? (['HeatingProfile' => 31603, 'HeosRadio' => 14121, 'HeosNAS' => 45081][$name] ?? 0) : $id;
+        // An unconfigured overall presence defaults to Google Home (12936).
+        // A deliberately selected Presence source always takes precedence.
+        return $id === 0 ? (['HeatingProfile' => 31603, 'HeosRadio' => 14121, 'HeosNAS' => 45081,
+            'Presence' => 12936][$name] ?? 0) : $id;
     }
     private function ConfigBoolean(string $name): bool { return (bool)$this->ConfigValue($name); }
     private function ConfigString(string $name): string { return (string)$this->ConfigValue($name); }
