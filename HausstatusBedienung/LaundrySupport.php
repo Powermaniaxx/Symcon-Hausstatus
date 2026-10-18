@@ -100,8 +100,13 @@ trait HausstatusLaundrySupport
                 else { $result[$period] = round($result[$period], 3); }
             }
             if (count($values) >= 10000) { $result['note'] = 'Archivabfrage begrenzt: Verbrauch möglicherweise unvollständig.'; }
-            elseif (min($coverage) < ($now - $starts['year']) * 0.95) {
-                $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
+            else {
+                foreach ($starts as $period => $periodStart) {
+                    if ($coverage[$period] < ($now - $periodStart) * 0.95) {
+                        $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
+                        break;
+                    }
+                }
             }
             $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'dayStart' => $starts['today'], 'yearStart' => $starts['year'], 'value' => $result], JSON_THROW_ON_ERROR));
             return $result;
