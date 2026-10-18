@@ -455,7 +455,7 @@
         {
           "type": "SelectVariable",
           "name": "Presence",
-          "caption": "Anwesenheit – Statusvariable"
+          "caption": "Anwesenheit – Statusvariable (Google Home: 52726)"
         },
         {
           "type": "SelectVariable",
