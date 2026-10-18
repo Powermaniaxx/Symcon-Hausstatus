@@ -110,12 +110,11 @@ trait HausstatusPresenceHistorySupport
     private function PresenceHistorySources(): array
     {
         // House and alarm reuse the existing sources from the standard dashboard.
+        $presenceID = $this->ConfigInteger('Presence');
         $rows = [
-            ['source' => 'Presence', 'id' => $this->ConfigInteger('Presence'),
-                'name' => 'Hausstatus', 'kind' => 'house'],
-            // Rohstatus Google Home, unabhaengig vom zentralen Hausstatus.
-            ['source' => 'GoogleHomePresence', 'id' => 12936,
-                'name' => 'Google Home', 'kind' => 'house'],
+            ['source' => 'Presence', 'id' => $presenceID,
+                'name' => $presenceID === 12936 ? 'Allgemeine Anwesenheit' : 'Hausstatus',
+                'kind' => 'house'],
             ['source' => 'SvenPresence', 'id' => $this->ConfigInteger('SvenPresence'),
                 'name' => 'Sven', 'kind' => 'person'],
             ['source' => 'SusiPresence', 'id' => $this->ConfigInteger('SusiPresence'),
@@ -123,6 +122,14 @@ trait HausstatusPresenceHistorySupport
             ['source' => 'Alarm', 'id' => $this->ConfigInteger('Alarm'),
                 'name' => 'Alarm innen', 'kind' => 'alarm']
         ];
+        // Show Google Home as a separate comparison only when Hausstatus
+        // uses another source. Never display the same variable twice.
+        if ($presenceID !== 12936) {
+            array_splice($rows, 1, 0, [[
+                'source' => 'GoogleHomePresence', 'id' => 12936,
+                'name' => 'Google Home', 'kind' => 'house'
+            ]]);
+        }
         foreach ($this->ExtraAlarmSources() as $source) { $rows[] = $source; }
         return $rows;
     }
