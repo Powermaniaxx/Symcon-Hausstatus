@@ -123,14 +123,13 @@ trait HausstatusPresenceHistorySupport
             ['source' => 'Alarm', 'id' => $this->ConfigInteger('Alarm'),
                 'name' => 'Alarm innen', 'kind' => 'alarm']
         ];
-        // Show the actual Google Home presence as a separate comparison only when
-        // Hausstatus uses a different variable. No duplicate of the same source.
-        if ($presenceID !== 52726) {
-            array_splice($rows, 1, 0, [[
-                'source' => 'GoogleHomePresence', 'id' => 52726,
-                'name' => 'Google Home', 'kind' => 'house'
-            ]]);
-        }
+        // Two deliberately separate visual cards: Gesamtanwesenheit and Google Home.
+        // Both may read 52726; this does not create or modify any Symcon variable.
+        // Their archive history is reused below to avoid querying the same source twice.
+        array_splice($rows, 1, 0, [[
+            'source' => 'GoogleHomePresence', 'id' => 52726,
+            'name' => 'Google Home', 'kind' => 'house'
+        ]]);
         foreach ($this->ExtraAlarmSources() as $source) { $rows[] = $source; }
         return $rows;
     }
@@ -143,11 +142,17 @@ trait HausstatusPresenceHistorySupport
         $sources = $this->PresenceHistorySources();
         if (!is_array($cache) || (int)($cache['time'] ?? 0) < $now - 45) {
             $history = [];
+            $historyByVariable = [];
             $archive = $this->PresenceHistoryArchive();
 
             foreach ($sources as $source) {
                 $id = (int)$source['id'];
                 $key = $source['source'];
+                // Two labels for the same source need only one archive read.
+                if ($id > 0 && array_key_exists($id, $historyByVariable)) {
+                    $history[$key] = $historyByVariable[$id];
+                    continue;
+                }
                 $item = ['entries' => [], 'previous' => null, 'note' => ''];
                 try {
                     if ($id <= 0 || !IPS_VariableExists($id)
@@ -183,6 +188,7 @@ trait HausstatusPresenceHistorySupport
                     $item['note'] = $e->getMessage();
                 }
                 $history[$key] = $item;
+                if ($id > 0) { $historyByVariable[$id] = $item; }
             }
             $cache = ['time' => $now, 'history' => $history];
             $this->SetBuffer('PresenceHistoryCache', json_encode($cache, JSON_THROW_ON_ERROR));
