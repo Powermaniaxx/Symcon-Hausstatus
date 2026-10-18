@@ -116,6 +116,58 @@ trait HausstatusLaundrySupport
         }
     }
 
+    /**
+     * A run flag can remain TRUE if its external announcement script misses the
+     * switch-off event. Show a run only while its power reading is plausible.
+     * A short zero-watt pause during a wash cycle is normal, so allow 15 minutes.
+     *
+     * Display-only protection: never modify the real run flag, the power source,
+     * or the existing announcement script.
+     *
+     * @return array{running: ?bool, since: ?int, note: string}
+     */
+    private function LaundryCheckedRunState(string $key, int $powerID, ?bool $running, ?int $since, ?float $watts, int $now): array
+    {
+        $cacheKey = 'LaundryLowPower_' . $key . '_' . $powerID;
+        $result = ['running' => $running, 'since' => $since, 'note' => ''];
+
+        if ($running !== true || $watts === null || $powerID <= 0 || !IPS_VariableExists($powerID)) {
+            // No validated low-power measurement -> no reason to override the source.
+            if ($running === false || ($watts !== null && $watts > 2.0)) {
+                $this->SetBuffer($cacheKey, '');
+            }
+            return $result;
+        }
+
+        if ($watts > 2.0) {
+            $this->SetBuffer($cacheKey, '');
+            return $result;
+        }
+
+        // Power is <= 2 W. Use the last actual power transition if we have not
+        // monitored this idle period before. Never predate the current run flag.
+        $metadata = IPS_GetVariable($powerID);
+        $changed = (int)($metadata['VariableChanged'] ?? 0);
+        $initialLow = ($changed > 0 && $changed <= $now) ? $changed : $now;
+        $lowSince = (int)$this->GetBuffer($cacheKey);
+        if ($lowSince <= 0 || $lowSince > $now) {
+            $lowSince = $initialLow;
+        }
+        if ($since !== null && $since > 0 && $since <= $now) {
+            $lowSince = max($lowSince, $since);
+        }
+        $this->SetBuffer($cacheKey, (string)$lowSince);
+
+        if ($now - $lowSince < 900) {
+            return $result;
+        }
+
+        $result['running'] = false;
+        $result['since'] = null;
+        $result['note'] = 'Laufstatusquelle meldet weiterhin „Läuft“, aber die Leistung liegt seit mindestens 15 Minuten bei höchstens 2 W. Ansageskript/Laufstatus prüfen.';
+        return $result;
+    }
+
     private function LaundryState(): ?array
     {
         if (!$this->HasLaundryView()) { return null; }
@@ -143,6 +195,12 @@ trait HausstatusLaundrySupport
                     }
                 }
                 if ($watts === null) { $notes[] = 'Aktuelle Leistung nicht verfügbar.'; }
+                $checked = $this->LaundryCheckedRunState(
+                    $source['key'], $source['powerID'], $running, $since, $watts, $now
+                );
+                $running = $checked['running'];
+                $since = $checked['since'];
+                if ($checked['note'] !== '') { $notes[] = $checked['note']; }
             } catch (Throwable $e) { $notes[] = 'Quelle momentan nicht lesbar.'; }
             $devices[] = ['key' => $source['key'], 'name' => $source['name'], 'running' => $running,
                 'watts' => $watts, 'since' => $since, 'energy' => $this->LaundryEnergy($source['powerID'], $now), 'note' => implode(' ', $notes)];
