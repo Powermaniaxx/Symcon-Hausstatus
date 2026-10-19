@@ -85,22 +85,11 @@ async function wake(mac,broadcast){
  });
 }
 
-function hdmi3Intent(){
- return {extras:{uri:'content://android.media.tv/passthrough/'+encodeURIComponent('com.mediatek.tvinput/.hdmi.HDMIInputService/HW7')},action:'org.droidtv.playtv.SELECTURI',component:{packageName:'org.droidtv.playtv',className:'org.droidtv.playtv.PlayTvActivity'}};
-}
-
 function clearPendingHdmi3(){if(fs.existsSync(HDMI_PENDING))fs.unlinkSync(HDMI_PENDING);}
 
-async function selectHdmi3(config,request=api){
- await request('POST','activities/launch',{intent:hdmi3Intent()},config);
-}
-
-async function applyPendingHdmi3(config,isOn,request=api){
- if(!fs.existsSync(HDMI_PENDING))return;
- const pending=JSON.parse(fs.readFileSync(HDMI_PENDING,'utf8'));
- if(!Number.isFinite(pending.until)||pending.until<Date.now()){clearPendingHdmi3();return;}
- if(!isOn)return;
- await selectHdmi3(config,request);clearPendingHdmi3();
+async function applyPendingHdmi3(){
+ // HDMI switching is disabled. Cancel legacy requests without selecting an input.
+ clearPendingHdmi3();
 }
 
 function reachable(){
@@ -119,11 +108,11 @@ function reachable(){
 }
 
 async function collect(request=api,health=reachable){
+ clearPendingHdmi3();
  const empty={online:false,power:'unknown',app:'',title:'',playback:'unknown',error:''};
  try{
   const config=credentials();const state=await request('GET','powerstate',undefined,config);
   let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
-  try{await applyPendingHdmi3(config,state.powerstate==='On');}catch(e){error='HDMI 3 noch nicht gesetzt: '+e.message;}
   return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
  }catch(error){
   if(networkFailure(error)){
@@ -137,15 +126,15 @@ async function collect(request=api,health=reachable){
 async function execute(command,request=api,wakeDevice=wake){
  if(!command||!/^[a-f0-9]{24}$/.test(command.id)||!['wake','sleep','hdmi3'].includes(command.action)||!Number.isInteger(command.expires))throw new Error('Ungültiger TV-Schaltbefehl.');
  if(command.expires<Math.floor(Date.now()/1000))return false;
+ clearPendingHdmi3();
+ // Acknowledge old queued HDMI commands without sending anything to the TV.
+ if(command.action==='hdmi3')return true;
  const config=credentials();
- if(command.action==='hdmi3'){await selectHdmi3(config,request);clearPendingHdmi3();return true;}
- if(command.action==='sleep')clearPendingHdmi3();
  try{await request('POST','powerstate',{powerstate:command.action==='wake'?'On':'Standby'},config);}
  catch(error){
   if(command.action!=='wake'||!networkFailure(error))throw error;
   await wakeDevice(config.mac,config.broadcast);
  }
- if(command.action==='wake')fs.writeFileSync(HDMI_PENDING,JSON.stringify({until:Date.now()+90000}),{mode:0o600});
  return true;
 }
 
@@ -163,7 +152,7 @@ async function pair(){
  fs.writeFileSync(FILE,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.chmodSync(FILE,0o600);
  console.log('TV gekoppelt. Zugangsdaten ausschließlich lokal gespeichert.');
 }
-module.exports={digest,api,wakePacket,collect,execute,hdmi3Intent,applyPendingHdmi3,networkFailure,reachable};
+module.exports={digest,api,wakePacket,collect,execute,applyPendingHdmi3,networkFailure,reachable};
 if(require.main===module){
  const action=process.argv[2]||'status';
  (action==='pair'?pair():action==='status'?collect().then(status=>console.log(JSON.stringify(status))):Promise.reject(new Error('Aufruf: philips-tv.js pair oder status'))).catch(error=>{console.error(error.message);process.exitCode=1;});

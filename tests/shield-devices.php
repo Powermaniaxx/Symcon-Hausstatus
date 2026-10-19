@@ -8,6 +8,7 @@ $GLOBALS['vars'] = []; $GLOBALS['actions'] = [];
 function IPS_GetObjectIDByIdent(string $ident, int $owner): int|false { return array_search($ident, array_column($GLOBALS['vars'], 'ident', 'id'), true); }
 function IPS_VariableExists(int $id): bool { return isset($GLOBALS['vars'][$id]); }
 function GetValue(int $id): mixed { return $GLOBALS['vars'][$id]['value']; }
+function GetValueString(int $id): string { return (string)GetValue($id); }
 function RequestAction(int $id, mixed $value): bool { $GLOBALS['actions'][] = [$id, $value]; return true; }
 function IPS_SemaphoreEnter(string $key, int $timeout): bool { return true; }
 function IPS_SemaphoreLeave(string $key): void {}
@@ -17,6 +18,10 @@ class Fixture {
     use HausstatusShieldSupport;
     use HausstatusBedroomMediaSupport;
     public int $InstanceID = 100;
+    private array $buffers = [];
+    private function GetBuffer(string $key): string { return $this->buffers[$key] ?? ''; }
+    private function SetBuffer(string $key, string $value): void { $this->buffers[$key] = $value; }
+    private function VersionedPresentationName(string $name): string { return $name; }
     public array $props = ['ConfigSource' => 0];
     public array $attributes = [];
     public function __construct() { $this->CreateShield(); $this->CreateBedroomMedia(); $this->props['ShieldEnabled'] = true; }
@@ -82,11 +87,11 @@ $s=$m->state();
 check($s['title']==='Wohnzimmer','Legacy maps to living room');
 check($s['devices']['ankleidezimmer']['title']==='Ankleide','Dressing isolated');
 check($s['devices']['schlafzimmer']['title']==='Schlafen','Bedroom isolated');
-check(count($m->ids())===36,'All device sources including channel and subtitle watched');
+check(count($m->ids())===27,'Only the three received Shield devices are registered and watched');
 $m->UpdateShield(json_encode(['device'=>'ankleidezimmer']+array_replace($status,['power'=>'standby'])));
 check($m->state()['devices']['ankleidezimmer']['title']==='','Standby clears only own title');
 check($m->state()['title']==='Wohnzimmer','Other titles preserved');
-$m->SetValue('ShieldBedroomUpdated',time()-90); $m->ExpireShield();
+$m->SetValue('ShieldBedroomUpdated',time()-190); $m->ExpireShield();
 check($m->state()['devices']['schlafzimmer']['stale'],'Independent watchdog');
 check($m->state()['online'],'Watchdog preserves fresh living room');
 $m->props['ShieldCompact']=true; $s=$m->state();
@@ -112,9 +117,9 @@ $m->props['ShieldEnabled']=false;
 $m->power('philips',true);
 $tvReply=json_decode($m->UpdateShield(json_encode(['device'=>'philips']+$status)),true);
 check($tvReply['command']['action']==='wake','TV queue works independently of Shield setting');
-$m->hdmi(true);
+rejects(fn()=>$m->hdmi(true));
 $hdmiReply=json_decode($m->UpdateShield(json_encode(['device'=>'philips']+$status)),true);
-check($hdmiReply['command']['action']==='hdmi3','HDMI command queued only for TV');
+check($hdmiReply['command']['action']==='wake','HDMI disabled; existing power command unchanged');
 rejects(fn()=>$m->hdmi(false));
 $m->props['PhilipsTvEnabled']=false;
 rejects(fn()=>$m->power('philips',false));

@@ -1423,7 +1423,6 @@ function renderShield(cinema,shield){
  }
  if(shield.device){
   buttons(box,'ShieldPower_'+shield.device,shield.kind==='tv'||(shield.online===true&&!shield.stale),shield.power==='awake'?true:shield.power==='standby'?false:null);
-  if(shield.kind==='tv'){const hdmi=document.createElement('button');hdmi.type='button';hdmi.className='tvHdmiButton';text(hdmi,'HDMI 3');hdmi.disabled=busy||shield.online!==true||shield.power!=='awake';hdmi.addEventListener('click',()=>send('PhilipsHdmi3',true));box.append(hdmi);}
 
  }
  if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}

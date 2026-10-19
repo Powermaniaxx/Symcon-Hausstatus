@@ -40,10 +40,10 @@ assert.equal(powerButtons.at(-1).command,'ShieldPower_philips');
 assert.equal(powerButtons.at(-1).enabled,true); // WLAN wake must remain possible when API is asleep.
 assert.match(flatten(tvParent),/Philips TV/);
 assert.doesNotMatch(flatten(tvParent),/Aktive App|Wiedergabe|Medientitel/);
-assert.equal(tvParent.children[0].children.find(n=>n.className==='tvHdmiButton').disabled,true);
+assert.equal(tvParent.children[0].children.find(n=>n.className==='tvHdmiButton'),undefined);
 const onParent=new Element();context.renderShield(onParent,{kind:'tv',device:'philips',online:true,power:'awake',error:'',stale:false});
-const hdmi=onParent.children[0].children.find(n=>n.className==='tvHdmiButton');assert.equal(hdmi.disabled,false);hdmi.events.click();
-assert.deepEqual(sent[0],['PhilipsHdmi3',true]);
+assert.equal(onParent.children[0].children.find(n=>n.className==='tvHdmiButton'),undefined);
+assert.doesNotMatch(flatten(onParent),/HDMI 3/);
 console.log('Shield room layout, compact rendering and TV source button: passed');
 const zattoo=new Element();
 context.renderShield(zattoo,{...full,app:'com.zattoo.player',title:'Bares für Rares',channel:'ZDFneo',subtitle:'Folge 2156'});

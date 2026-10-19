@@ -279,11 +279,7 @@ trait HausstatusShieldSupport
 
     private function SetPhilipsHdmi3(mixed $value): void
     {
-        if ($value !== true) { throw new InvalidArgumentException('HDMI 3 erwartet true.'); }
-        if (!$this->ConfigBoolean('PhilipsTvEnabled')) { throw new RuntimeException('Philips TV ist deaktiviert.'); }
-        $owner = $this->ShieldOwner();
-        if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'PhilipsHdmi3', true); return; }
-        $this->ShieldPowerQueue('philips', 'hdmi3');
+        throw new RuntimeException('Die automatische und manuelle HDMI-Umschaltung ist deaktiviert.');
     }
 
     public function UpdateShield(string $JSON): string

@@ -86,10 +86,9 @@ Standby muss getestet werden; WLAN-Wecken kann vom TV bzw. Access Point abhänge
 
 ## HDMI 3 und automatische TV-Kopplung
 
-Nach einem Ein-Befehl wird HDMI 3 einmal angewählt, sobald die API den TV als
-eingeschaltet meldet. Während des Aufwachens wird bis zu 90 Sekunden versucht.
-Zusätzlich steht bei eingeschaltetem TV die kleine Schaltfläche „HDMI 3“ bereit.
-Der verwendete Eingang HW7 wurde am echten TV als HDMI 3 bestätigt.
+Die HDMI-Umschaltung ist deaktiviert. Ein-Befehle ändern den Eingang nicht mehr;
+die HDMI-3-Schaltfläche wurde entfernt. Bereits vorgemerkte HDMI-Aufträge werden
+verworfen, ohne den TV umzuschalten. TV-Status und Ein/Standby bleiben bestehen.
 
 `ShieldWohnzimmer-TV-Kopplung.php` vollständig in ein neues PHP-Skript in Symcon
 kopieren und einmal manuell ausführen. Es legt ein eigenes Ereignis am Skript an,
