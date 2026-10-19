@@ -4,6 +4,7 @@ const https=require('node:https'),http=require('node:http'),crypto=require('node
 const HOST=process.env.PHILIPS_TV_HOST||'192.168.178.190';
 const FILE=process.env.PHILIPS_TV_CONFIG||'/data/shield/philips-tv.credentials.json';
 const HDMI_PENDING=FILE+'.hdmi3-pending';
+const BACKOFF_FILE=FILE+'.connection-backoff.json';
 const FINGERPRINT='88CA8280AA7C86E1457AC62C717F3052F5F6B29B8339D223F96011D1566BF3F9';
 const SHARED_KEY=Buffer.from('ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA==','base64');
 const md5=value=>crypto.createHash('md5').update(value).digest('hex');
@@ -107,18 +108,49 @@ function reachable(){
  });
 }
 
-async function collect(request=api,health=reachable){
+function connectionBackoff(now){
+ try{
+  const state=JSON.parse(fs.readFileSync(BACKOFF_FILE,'utf8'));
+  if(Number.isInteger(state.failures)&&state.failures>=0&&state.failures<=12
+   &&Number.isFinite(state.nextAttempt)&&state.nextAttempt>=0&&state.nextAttempt<=now+300000)return state;
+ }catch{}
+ return {failures:0,nextAttempt:0};
+}
+
+function resetConnectionBackoff(){
+ try{if(fs.existsSync(BACKOFF_FILE))fs.unlinkSync(BACKOFF_FILE);}catch{}
+}
+
+function recordConnectionFailure(now){
+ const state=connectionBackoff(now);
+ state.failures=Math.min(12,state.failures+1);
+ const delay=state.failures<3?0:Math.min(300000,120000*2**(state.failures-3));
+ state.nextAttempt=delay?now+delay:0;
+ try{fs.writeFileSync(BACKOFF_FILE,JSON.stringify(state),{mode:0o600});}catch{}
+ return state;
+}
+
+async function collect(request=api,health=reachable,now=Date.now){
  clearPendingHdmi3();
  const empty={online:false,power:'unknown',app:'',title:'',playback:'unknown',error:''};
+ const unavailable=async state=>{
+  let online=false;try{online=await health();}catch{}
+  const pause=state.nextAttempt>now()?' HTTPS-Abfrage pausiert; neuer Versuch in '+Math.ceil((state.nextAttempt-now())/1000)+' s.':'';
+  return {...empty,online,error:(online?'TV erreichbar, verschlüsselte Steuerung antwortet nicht.':'TV-Netzwerkverbindung unterbrochen; Standby oder WLAN/API prüfen.')+pause};
+ };
  try{
-  const config=credentials();const state=await request('GET','powerstate',undefined,config);
+  const config=credentials();
+  const backoff=connectionBackoff(now());
+  if(backoff.nextAttempt>now())return await unavailable(backoff);
+  const state=await request('GET','powerstate',undefined,config);
+  resetConnectionBackoff();
   let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
   return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
  }catch(error){
   if(networkFailure(error)){
-   let online=false;try{online=await health();}catch{}
-   return {...empty,online,error:online?'TV erreichbar, verschlüsselte Steuerung antwortet nicht. TV vollständig neu starten.':'TV-Netzwerkverbindung unterbrochen; Standby oder WLAN/API prüfen.'};
+   return await unavailable(recordConnectionFailure(now()));
   }
+  resetConnectionBackoff();
   return {...empty,error:error.message};
  }
 }
@@ -135,6 +167,7 @@ async function execute(command,request=api,wakeDevice=wake){
   if(command.action!=='wake'||!networkFailure(error))throw error;
   await wakeDevice(config.mac,config.broadcast);
  }
+ resetConnectionBackoff();
  return true;
 }
 

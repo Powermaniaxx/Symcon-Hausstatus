@@ -68,6 +68,16 @@ online, der Betrieb aber unbekannt. Die Diagnose unterscheidet den Ausfall der
 verschlüsselten Steuerung von einem insgesamt nicht erreichbaren TV. Dies ersetzt
 keine Energiezustandsmessung und repariert keinen hängenden Dienst im TV.
 
+Nach drei aufeinanderfolgenden Netzwerkfehlern pausieren die HTTPS-Statusabfragen
+zunächst zwei, dann vier und höchstens fünf Minuten. Die Pause wird lokal neben
+der Kopplungsdatei in einer separaten Datei ohne Zugangsdaten gespeichert und gilt
+auch über einzelne Poller-Prozesse hinweg. Während der Pause prüft der bestehende
+Poller nur die öffentliche Erreichbarkeit; der Betrieb bleibt unbekannt und die
+Diagnose nennt die restliche Wartezeit. Statusmeldungen an Symcon laufen weiter.
+Eine erfolgreiche Abfrage setzt die Pause zurück. Explizite Ein-/Standby-Befehle
+werden weiterhin versucht und ermöglichen anschließend eine neue Statusprüfung.
+Die Abfragepause behebt keinen hängenden Dienst im Fernseher.
+
 TV-Ein bleibt auch bei nicht erreichbarer API verfügbar, damit WLAN-Wecken möglich
 ist. Fehlende Kopplung wird als Diagnose angezeigt. Die Steuerung verwendet das
 konkret am TV geprüfte Zertifikat; bei einem Zertifikatswechsel wird die Verbindung
