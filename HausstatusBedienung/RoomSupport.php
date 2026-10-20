@@ -86,7 +86,8 @@ trait HausstatusRoomSupport
             ];
             foreach ($colorRooms as $source => [$roomName, $lightName]) {
                 if ($filter !== '' && mb_strtolower($filter, 'UTF-8') !== mb_strtolower($roomName, 'UTF-8')) { continue; }
-                $rgb = $this->ConfigInteger($source);
+                $targets = $this->ColorTargets($source);
+                $rgb = $targets[0] ?? 0;
                 if ($rgb <= 0 || !IPS_VariableExists($rgb)) { continue; }
                 $found = false;
                 foreach ($result as &$entry) {
@@ -443,6 +444,9 @@ trait HausstatusRoomSupport
             if (!is_int($value) || $value < 1 || $value > 100) { throw new RuntimeException('Helligkeit muss von 1 bis 100 sein.'); }
         }
         $route = $control['route'] ?? '';
+        if (($control['kind'] ?? '') === 'color' && in_array(($entry['colorSourceName'] ?? ''), ['LivingColor', 'DiningColor'], true)) {
+            $this->SetLightColor($entry['colorSourceName'], $value); return;
+        }
         if ($route === 'Dining') { $this->SetDining($route, $value); return; }
         if (in_array($route, ['Light', 'Brightness'], true)) {
             $this->SetLight($route, $value); return;
