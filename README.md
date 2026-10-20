@@ -1,5 +1,18 @@
 # Hausstatus 0.63 für IP-Symcon
 
+## 0.101 / Build 102: RGB-Farbauswahl für Wohnzimmer, Essbereich und Schlafzimmer
+
+In der zentralen Hausstatus-Instanz unter **Licht und Esstisch** lassen sich drei optionale Farbvariablen zuordnen:
+
+- **LivingColor**: Farbwähler auf der Wohnzimmerlicht-Kachel.
+- **DiningColor**: Farbwähler für Esstisch/Essbereich, auch in dessen eigener Lichtkachel.
+- **BedroomColor**: Farbwähler im Raum **Schlafzimmer** direkt beim Licht, nicht in „Weitere Einstellungen“.
+
+Es werden ausschließlich explizit ausgewählte **Integer-RGB-Variablen** (24-Bit-RGB, Werte von 0 bis 16.777.215) mit einer vorhandenen Symcon-Aktion bedient. Der Farbwähler bleibt ausgeblendet, wenn keine Variable konfiguriert ist, und gesperrt, wenn die Variable nicht schaltbar ist. Keine automatische Suche nach zufälligen Farbwerten und keine Überschreibung bestehender Lichtschalter, Dimmer, Farbtemperaturwerte oder Automatikskripte. Das Modul sendet die Änderung nur bei der bestätigten Farbauswahl an die jeweilige Variablenaktion.
+
+Die Farben der Lampen müssen jeweils mit der zugehörigen Symcon-Variable verbunden werden. Wenn ein Gerät nur Farbtemperatur oder Hue/Saturation statt Integer-RGB bereitstellt, braucht es eine passende separate RGB-Hilfsvariable/Aktion; die Farbbefehle werden **nicht** ohne eindeutige Gerätezuordnung umgerechnet. Der Test `node tests/light-color.js` prüft Farbauswahl, gesperrte/unbelegte Quellen und die Anzeigeorte.
+
+
 ## Heizungszentrale in der Raumübersicht (ab 0.80)
 
 Mit Heizungszentrale ab Version 1.8.2 zeigt die Raumübersicht Betriebsart, tatsächliche Regelungsaktivität beziehungsweise Testmodus und die aktuelle Saison. Aufgeklappt lassen sich Automatik oder Manuell und der manuelle Saisonplan wählen. Eine angehaltene Regelung wird dadurch nicht gestartet; hierzu die Heizungszentrale öffnen.
