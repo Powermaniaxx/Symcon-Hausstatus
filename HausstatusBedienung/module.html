@@ -535,6 +535,37 @@ body.systemCombinedView .systemOverviewSection .dockerItem{
 }
 /* Separate Hausstatus tiles use automatic loading; the repeated manual-refresh footer wastes space. */
 body.hausstatusSingleTile .head{display:none}
+/* Symcon draws its native tile title over HTML: keep the selector below it. */
+body.hausstatusSingleTile.roomDetailView main{padding-top:74px}
+body.roomDetailView .roomNavigation{display:block;margin:0 0 8px}
+body.roomDetailView .roomNavigation label{display:none}
+body.roomDetailView .roomNavigation select{width:100%;max-width:none;min-height:48px}
+body.roomDetailView #heatingProfileSection{margin-top:6px;padding:9px}
+body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
+.roomSelectionHint{padding:12px 8px;font-size:13px;opacity:.75;line-height:1.4}
+.waterbedEnergy{margin-top:12px;padding-top:10px;border-top:1px solid #8883;min-width:0}
+.waterbedEnergy h4{font-size:13px;font-weight:650;margin:0 0 8px}
+.waterbedTotals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.waterbedTotal{min-width:0;padding:7px 8px;border:1px solid #8883;border-radius:9px;background:#8881}
+.waterbedTotal span{font-size:11px;display:block;opacity:.75}
+.waterbedTotal strong{display:block;font-size:14px;margin-top:3px;overflow-wrap:anywhere}
+.waterbedHistory{border-collapse:collapse;width:100%;table-layout:fixed;font-size:12px;font-variant-numeric:tabular-nums}
+.waterbedHistory th{text-align:left;padding:8px 6px;border-bottom:1px solid #8886;font-weight:600}
+.waterbedHistory td{padding:7px 6px;border-bottom:1px solid #8883}
+.waterbedHistory th:last-child,.waterbedHistory td:last-child{text-align:right;width:58%}
+.waterbedValue{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+.waterbedBarTrack{width:32%;height:7px;border-radius:6px;overflow:hidden;background:#8883;flex:none}
+.waterbedBar{height:100%;border-radius:6px;background:#218a80}
+.waterbedAmount{min-width:85px;text-align:right}
+.waterbedEnergy .roomNote{margin:9px 0 0}
+@media(max-width:600px){
+ body.hausstatusSingleTile.roomDetailView main{padding-top:76px}
+ .waterbedTotals{gap:5px}
+ .waterbedTotal{padding:6px}
+ .waterbedBarTrack{width:28%}
+ .waterbedAmount{min-width:75px}
+}
+
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -926,6 +957,7 @@ function applyHomepagePart(s){
  document.body.classList.toggle('homepagePart',part>0&&s.View===0);
   document.body.classList.toggle('hausstatusSingleTile',s.View!==0||part>0);
  document.body.classList.toggle('hausstatusHeaterTile',s.View===14||(s.View===0&&part===9));
+ document.body.classList.toggle('roomDetailView',s.View===12);
  if(!part||s.View!==0)return;
  const cards={1:'card-entry',2:'card-energy',3:'card-laundry',4:'card-light',5:'card-cinema',6:'card-shield-schlafzimmer',7:'card-shield-ankleidezimmer'};
  for(const node of el('cards').children)node.hidden=node.hidden||node.id!==cards[part];
@@ -1573,8 +1605,9 @@ function renderPageNavigation(){
   if(!chooser.children.length)text(chooser,'Keine Räume eingerichtet.');
  }else if(state.View===12&&state.PageRoom===''){
   const root=el('roomDeviceSections');root.hidden=false;root.className='roomSummary';root.replaceChildren();
-  for(const room of state.RoomSummary??[]){const row=document.createElement('div');row.className='summaryRoom';const name=document.createElement('strong'),metrics=document.createElement('span');text(name,room.name);text(metrics,room.metrics.length?room.metrics.map(m=>m.label+': '+m.text).join(' · '):'Noch keine Statuswerte eingerichtet');row.append(name,metrics);root.append(row);}
-  if(!root.children.length)text(root,'Keine Räume eingerichtet.');
+  const hint=document.createElement('div');hint.className='roomSelectionHint';
+  text(hint,'Bitte oben einen Raum auswählen. Danach werden nur seine Geräte angezeigt.');
+  root.append(hint);
  }else if(inlinePage?.view===12&&!state.RoomSections?.length&&!state.TemperatureRows?.length){
   const root=el('roomDeviceSections');root.hidden=false;text(root,'Für diesen Raum sind noch keine Geräte eingerichtet.');
  }
@@ -1649,6 +1682,40 @@ function groupKind(name){
  if(/sensor|bewegung|präsenz/.test(value))return 'sensor';
  if(/energie|strom|pv/.test(value))return 'energy';
  return 'other';
+}
+function renderWaterbedEnergy(data){
+ const section=document.createElement('div');section.className='waterbedEnergy';
+ const title=document.createElement('h4');text(title,'Stromverbrauch');section.append(title);
+ const totals=document.createElement('div');totals.className='waterbedTotals';
+ for(const [key,label] of [['power','Aktuelle Leistung'],['today','Heute'],['week','Diese Woche'],['month','Dieser Monat'],['total','Gesamtverbrauch']]){
+  const item=document.createElement('div');item.className='waterbedTotal';
+  const name=document.createElement('span'),value=document.createElement('strong');
+  text(name,label);text(value,data.values?.[key]?.text??'—');item.append(name,value);totals.append(item);
+ }
+ section.append(totals);
+ const subtitle=document.createElement('h4');text(subtitle,'Verlauf · letzte 7 Tage');section.append(subtitle);
+ const table=document.createElement('table');table.className='waterbedHistory';
+ const thead=document.createElement('thead'),header=document.createElement('tr');
+ for(const heading of ['Tag','Verbrauch']){const th=document.createElement('th');text(th,heading);header.append(th);}
+ thead.append(header);table.append(thead);
+ const tbody=document.createElement('tbody'),days=Array.isArray(data.days)?data.days:[];
+ const max=Math.max(0,...days.map(day=>typeof day.kwh==='number'&&Number.isFinite(day.kwh)?day.kwh:0));
+ for(const day of days){
+  const tr=document.createElement('tr'),date=document.createElement('td'),consumption=document.createElement('td');
+  text(date,day.date);
+  const value=document.createElement('div');value.className='waterbedValue';
+  const track=document.createElement('span');track.className='waterbedBarTrack';
+  const bar=document.createElement('span');bar.className='waterbedBar';
+  bar.style.display='block';bar.style.width=(typeof day.kwh==='number'&&max>0?Math.max(0,Math.min(100,day.kwh/max*100)):0)+'%';
+  track.append(bar);value.append(track);
+  const amount=document.createElement('span');amount.className='waterbedAmount';
+  text(amount,typeof day.kwh==='number'?day.kwh.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—');
+  value.append(amount);consumption.append(value);tr.append(date,consumption);tbody.append(tr);
+ }
+ if(!days.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=2;text(td,'Noch keine Tageswerte vorhanden');tr.append(td);tbody.append(tr);}
+ table.append(tbody);section.append(table);
+ if(data.note){const note=document.createElement('p');note.className='roomNote';text(note,data.note);section.append(note);}
+ return section;
 }
 function deviceItems(items){
  const frequent=items.filter(item=>item.primary!==false);
@@ -1743,6 +1810,7 @@ function renderRoomSections(sections,climate=[]){
   const categories=new Map(),labels={light:'Licht',climate:'Klima',media:'Medien',bed:'Wasserbett',sensor:'Sensoren',energy:'Energie',other:'Weitere Geräte'};
   for(const group of room.groups){const kind=groupKind(group.name);if(!categories.has(kind))categories.set(kind,{name:labels[kind],items:[]});categories.get(kind).items.push(...group.items);}
   if(temperatures.length&&!categories.has('climate'))categories.set('climate',{name:labels.climate,items:[]});
+  if(state.WaterbedEnergy&&name==='Schlafzimmer'&&!categories.has('bed'))categories.set('bed',{name:labels.bed,items:[]});
   const kinds=order.filter(kind=>categories.has(kind));
   let active=activeRoomCategories.get(name);if(!categories.has(active))active=kinds[0];
   if(kinds.length>1){
@@ -1759,6 +1827,7 @@ function renderRoomSections(sections,climate=[]){
    for(const [key,items] of devices){const selected=deviceItems(items);if(!selected.primary.length){extra.push(...items);continue;}grid.append(roomDevicePanel(items,name+':'+group.name+':'+key,kind));}
    if(grid.children.length)groupBox.append(grid);
    if(extra.length)groupBox.append(roomDetails(extra,name+':'+group.name+':extras','Weitere Werte und Einstellungen'));
+   if(kind==='bed'&&state.WaterbedEnergy)groupBox.append(renderWaterbedEnergy(state.WaterbedEnergy));
    groups.append(groupBox);
   }
   section.append(groups);root.append(section);
