@@ -401,7 +401,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $fields = [];
         foreach (['PresenceSettings' => 1, 'DoorSettings' => 2, 'LightSettings' => 5, 'CinemaSettings' => 6, 'BedroomMediaSettings' => 6, 'HeaterSettings' => 14,
             'DeviceSettings' => 4, 'PVSettings' => 7, 'OutdoorSettings' => 11, 'MotionSettings' => 8,
-            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'NetworkSettings' => 13,
+            'TemperatureSettings' => 9, 'WeatherSettings' => 10, 'RoomDeviceSettings' => 12, 'WaterbedSettings' => 12, 'NetworkSettings' => 13,
             'PresenceHistorySettings' => 18, 'LaundrySettings' => 27] as $name => $sectionView) {
             $fields[$name] = ['visible' => $own, 'expanded' => $own && ($view === $sectionView || ($name === 'PresenceSettings' && $view === 18))];
         }
