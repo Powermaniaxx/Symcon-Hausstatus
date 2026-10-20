@@ -94,6 +94,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('DiningState', 0);
         $this->RegisterPropertyInteger('DiningBrightness', 0);
         foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $this->RegisterPropertyInteger($name, 0); }
+        foreach (['LivingColor1', 'LivingColor2', 'LivingColor3', 'DiningColor1', 'DiningColor2', 'DiningColor3'] as $name) { $this->RegisterPropertyInteger($name, 0); }
         $this->RegisterPropertyBoolean('DiningEnabled', true);
         foreach (['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'] as $name) { $this->RegisterPropertyInteger($name, 0); }
         $this->RegisterPropertyString('HeaterTitle', 'Zusatzheizung Wohnzimmer');
@@ -179,6 +180,7 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12, 17], true)) {
             try { foreach ($this->DiningSources() as $id) { if ($id > 0) { $ids[] = $id; } } } catch (Throwable $e) { /* Missing sources are explained in the tile. */ }
             foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $ids[] = $this->ConfigInteger($name); }
+            foreach (['LivingColor1', 'LivingColor2', 'LivingColor3', 'DiningColor1', 'DiningColor2', 'DiningColor3'] as $name) { $ids[] = $this->ConfigInteger($name); }
         }
         if ($this->ReadPropertyInteger('View') === 12) {
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
