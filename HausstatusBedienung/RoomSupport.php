@@ -75,6 +75,25 @@ trait HausstatusRoomSupport
                 $result[] = $profile;
             }
         }
+
+        // Explicit bedroom light color: reuse a matching room entry, otherwise add it.
+        if ($view === 12 && ($filter === '' || mb_strtolower($filter, 'UTF-8') === 'schlafzimmer')) {
+            $rgb = $this->ConfigInteger('BedroomColor');
+            if ($rgb > 0 && IPS_VariableExists($rgb)) {
+                $found = false;
+                foreach ($result as &$entry) {
+                    if ($entry['id'] === $rgb && mb_strtolower($entry['room'], 'UTF-8') === 'schlafzimmer') {
+                        $entry['operate'] = true; $entry['colorSource'] = true; $entry['group'] = 'Licht'; $found = true;
+                    }
+                }
+                unset($entry);
+                if (!$found) {
+                    $result[] = ['room' => 'Schlafzimmer', 'group' => 'Licht', 'name' => 'Schlafzimmerlicht · Farbe',
+                        'id' => $rgb, 'type' => 2, 'operate' => true, 'colorSource' => true,
+                        'deviceKey' => 'device:' . IPS_GetParent($rgb), 'deviceName' => 'Schlafzimmerlicht'];
+                }
+            }
+        }
         return $result;
     }
 
@@ -259,6 +278,10 @@ trait HausstatusRoomSupport
         if (in_array($route, ['AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight'], true)
             && !$this->ConfigBoolean('OutdoorEnabled')) { throw new RuntimeException('Markise/Dachfenster-Bedienung ist deaktiviert.'); }
         if ($route !== 'Light' && !$this->HasAction($id, $type)) { return null; }
+        if (($entry['colorSource'] ?? false) === true) {
+            if ($type !== 1) { throw new RuntimeException('RGB-Farbe benötigt eine Integer-Variable.'); }
+            return ['kind' => 'color', 'route' => ''];
+        }
         $options = $this->RoomOptions($id, $type);
         if ($options) { return ['kind' => 'enum', 'options' => $options, 'route' => $route]; }
         if ($type === 0) {
@@ -345,7 +368,7 @@ trait HausstatusRoomSupport
         if ($entry['type'] !== 2) { $primary = false; }
         $role = $this->RoomItemRole($entry, $control);
         if (in_array($this->CurrentView(), [9, 12], true)) {
-            $primary = in_array($role, ['switch', 'brightness', 'setpoint', 'source', 'volume', 'temperature',
+            $primary = in_array($role, ['switch', 'brightness', 'color', 'setpoint', 'source', 'volume', 'temperature',
                 'humidity', 'motion', 'presence', 'illuminance', 'position', 'power', 'control', 'heos'], true);
         }
         return ['id' => $id, 'name' => $entry['name'], 'label' => $label, 'value' => $value, 'control' => $control, 'note' => $note,
@@ -362,6 +385,7 @@ trait HausstatusRoomSupport
         $roles = ['Light' => 'switch', 'Dining' => 'switch', 'Cinema' => 'switch', 'Brightness' => 'brightness',
             'DiningBrightness' => 'brightness', 'CinemaVolume' => 'volume', 'CinemaSource' => 'source'];
         if (isset($roles[$route])) { return $roles[$route]; }
+        if (($control['kind'] ?? '') === 'color') { return 'color'; }
         if (in_array($id, [$this->ConfigInteger('CinemaState'), $this->ConfigInteger('CinemaControl')], true)) { return 'switch'; }
         if ($this->IsHeosSelection($id)) { return 'heos'; }
         if (($entry['temperature'] ?? false) || $this->IsRoomSetpoint($entry)) { return 'setpoint'; }
