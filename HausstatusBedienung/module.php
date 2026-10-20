@@ -93,6 +93,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('DiningInstance', 0);
         $this->RegisterPropertyInteger('DiningState', 0);
         $this->RegisterPropertyInteger('DiningBrightness', 0);
+        foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $this->RegisterPropertyInteger($name, 0); }
         $this->RegisterPropertyBoolean('DiningEnabled', true);
         foreach (['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'] as $name) { $this->RegisterPropertyInteger($name, 0); }
         $this->RegisterPropertyString('HeaterTitle', 'Zusatzheizung Wohnzimmer');
@@ -177,6 +178,7 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
         if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12, 17], true)) {
             try { foreach ($this->DiningSources() as $id) { if ($id > 0) { $ids[] = $id; } } } catch (Throwable $e) { /* Missing sources are explained in the tile. */ }
+            foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $ids[] = $this->ConfigInteger($name); }
         }
         if ($this->ReadPropertyInteger('View') === 12) {
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
@@ -511,6 +513,9 @@ class HausstatusBedienung extends IPSModuleStrict
             'moduleVersion' => $this->HausstatusReleaseVersion(),
             'sourceInstance' => $owner,
             'lightEnabled' => $this->ConfigBoolean('LightEnabled'),
+            'rgbSources' => ['living' => $variableInfo($this->ConfigInteger('LivingColor')),
+                'dining' => $variableInfo($this->ConfigInteger('DiningColor')),
+                'bedroom' => $variableInfo($this->ConfigInteger('BedroomColor'))],
             'livingRoom' => [
                 'switch' => $variableInfo($this->ConfigInteger('LightState')),
                 'brightness' => $variableInfo($this->ConfigInteger('Brightness')),
@@ -612,7 +617,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+        if (!in_array($Ident, ['Light', 'Brightness', 'LivingColor', 'DiningColor', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
             'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
@@ -643,6 +648,8 @@ class HausstatusBedienung extends IPSModuleStrict
                 $this->SetHeater($Ident, $Value);
             } elseif (in_array($Ident, ['Dining', 'DiningBrightness'], true)) {
                 $this->SetDining($Ident, $Value);
+            } elseif (in_array($Ident, ['LivingColor', 'DiningColor'], true)) {
+                $this->SetLightColor($Ident, $Value);
             } elseif ($Ident === 'HeosSelection') {
                 $this->SetHeosSelection($Value);
             } elseif ($Ident === 'HeosRadio' || $Ident === 'HeosNAS') {
@@ -1389,6 +1396,10 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $state['SeparateHomepageTiles'] = $this->ConfigBoolean('SeparateHomepageTiles');
         $state['Heater'] = $shows([9]) && in_array($this->CurrentView(), [0, 14], true) ? $this->HeaterState() : null;
+        $state['LightColors'] = [
+            'living' => $shows([4]) && in_array($this->CurrentView(), [0, 5], true) ? $this->LightColorState('LivingColor') : null,
+            'dining' => $shows([4]) && in_array($this->CurrentView(), [0, 5, 17], true) ? $this->LightColorState('DiningColor') : null
+        ];
         $state['Dining'] = $shows([4]) && in_array($this->CurrentView(), [0, 5, 17], true)
             && ($this->ConfigInteger('DiningInstance') > 0 || $this->ConfigInteger('DiningState') > 0) ? $this->DiningState() : null;
         $state['PVInverters'] = $shows([2]) ? $this->PVInverters() : [];
