@@ -55,25 +55,46 @@ trait HausstatusComfortSupport
     }
 
 
-    // RGB controls only use explicitly configured writable integer variables.
+    // Explicitly configured individual Hue RGB variables are driven together.
+    private function ColorTargets(string $source): array
+    {
+        if (!in_array($source, ['LivingColor', 'DiningColor', 'BedroomColor'], true)) { return []; }
+        if ($source === 'BedroomColor') {
+            $id = $this->ConfigInteger('BedroomColor');
+            return $id > 0 ? [$id] : [];
+        }
+        $names = [$source . '1', $source . '2', $source . '3'];
+        $ids = array_values(array_filter(array_map(fn(string $name): int => $this->ConfigInteger($name), $names),
+            static fn(int $id): bool => $id > 0));
+        if ($ids) { return array_values(array_unique($ids)); }
+        // Existing single-source setup stays valid until the new lamps are configured.
+        $legacy = $this->ConfigInteger($source);
+        return $legacy > 0 ? [$legacy] : [];
+    }
+
     private function LightColorState(string $source): ?array
     {
-        $id = $this->ConfigInteger($source);
-        if ($id <= 0) { return null; }
-        $result = ['id' => $id, 'value' => ['raw' => null, 'text' => 'Unbekannt'], 'canChange' => false, 'reason' => ''];
-        if (!IPS_VariableExists($id) || (int) IPS_GetVariable($id)['VariableType'] !== 1) {
-            $result['reason'] = 'RGB-Farbe benötigt eine Integer-Variable.'; return $result;
-        }
-        $result['value'] = $this->Read($id);
-        $rgb = $result['value']['raw'];
-        if (!is_int($rgb) || $rgb < 0 || $rgb > 16777215) {
-            $result['reason'] = 'Aktueller RGB-Farbwert ist ungültig.'; return $result;
-        }
+        $targets = $this->ColorTargets($source);
+        if (!$targets) { return null; }
+        $result = ['id' => $targets[0], 'targets' => $targets,
+            'value' => ['raw' => null, 'text' => 'Unbekannt'], 'canChange' => false, 'reason' => ''];
         $enabled = $source === 'DiningColor' ? $this->ConfigBoolean('DiningEnabled') : $this->ConfigBoolean('LightEnabled');
         if ($source === 'BedroomColor') { $enabled = $this->ConfigBoolean('RoomControlsEnabled'); }
         if (!$enabled) { $result['reason'] = 'Lichtbedienung ist deaktiviert.'; return $result; }
-        $result['canChange'] = $this->HasAction($id, 1);
-        if (!$result['canChange']) { $result['reason'] = 'Farbvariable ohne aktive Symcon-Aktion.'; }
+        foreach ($targets as $id) {
+            if (!IPS_VariableExists($id) || (int) IPS_GetVariable($id)['VariableType'] !== 1) {
+                $result['reason'] = 'RGB-Variable ' . $id . ' fehlt oder ist kein Integer.'; return $result;
+            }
+            $rgb = GetValue($id);
+            if (!is_int($rgb) || $rgb < 0 || $rgb > 16777215) {
+                $result['reason'] = 'Ungültiger RGB-Wert in Variable ' . $id . '.'; return $result;
+            }
+            if (!$this->HasAction($id, 1)) {
+                $result['reason'] = 'Farbvariable ' . $id . ' hat keine schaltbare Symcon-Aktion.'; return $result;
+            }
+        }
+        $result['value'] = $this->Read($targets[0]);
+        $result['canChange'] = true;
         return $result;
     }
 
@@ -82,8 +103,16 @@ trait HausstatusComfortSupport
         if (!in_array($source, ['LivingColor', 'DiningColor'], true)) { throw new InvalidArgumentException('Unbekannte Farbsteuerung.'); }
         if (!is_int($value) || $value < 0 || $value > 16777215) { throw new InvalidArgumentException('Ungültiger RGB-Farbwert.'); }
         $state = $this->LightColorState($source);
-        if ($state === null || !$state['canChange']) { throw new RuntimeException($state['reason'] ?? 'RGB-Variable ist nicht eingerichtet.'); }
-        if (!RequestAction($state['id'], $value)) { throw new RuntimeException('Gerät hat die Farbänderung nicht angenommen.'); }
+        if ($state === null || !$state['canChange']) {
+            throw new RuntimeException($state['reason'] ?? 'RGB-Variablen sind nicht eingerichtet.');
+        }
+        // Validate all targets before sending any command; report partial failures explicitly.
+        $failed = [];
+        foreach ($state['targets'] as $id) {
+            try { if (!RequestAction($id, $value)) { $failed[] = $id; } }
+            catch (Throwable $e) { $failed[] = $id; }
+        }
+        if ($failed) { throw new RuntimeException('Farbe nicht bei allen Lampen übernommen (IDs: ' . implode(', ', $failed) . ').'); }
     }
 
     private function DiningSources(): array
