@@ -62,6 +62,110 @@ trait HausstatusWaterbedSupport
         return count($archives) === 1 ? (int)$archives[0] : 0;
     }
 
+    /**
+     * Current year vs. previous year, by calendar month in Europe/Berlin.
+     * Uses the cumulative meter (never sums daily or monthly counters).
+     * A missing boundary yields null, not an invented zero.
+     */
+    private function WaterbedYearComparison(int $archive, int $totalID, int $now): array
+    {
+        $zone = new DateTimeZone('Europe/Berlin');
+        $localNow = (new DateTimeImmutable('@' . $now))->setTimezone($zone);
+        $year = (int)$localNow->format('Y');
+        $previousYear = $year - 1;
+        $unit = $this->ConfigString('WaterbedEnergyUnit');
+        $factor = $unit === 'Wh' ? 0.001 : 1.0;
+
+        $cached = json_decode($this->GetBuffer('WaterbedYearComparisonCache'), true);
+        if (is_array($cached)
+            && ($cached['until'] ?? 0) > $now
+            && ($cached['year'] ?? 0) === $year
+            && ($cached['archive'] ?? 0) === $archive
+            && ($cached['source'] ?? 0) === $totalID
+            && ($cached['unit'] ?? '') === $unit
+            && isset($cached['result']) && is_array($cached['result'])) {
+            return $cached['result'];
+        }
+
+        // Reuse the same archive reading for shared month/year boundaries.
+        $readings = [];
+        $meterAt = static function (int $timestamp) use ($archive, $totalID, &$readings): ?float {
+            if (array_key_exists($timestamp, $readings)) { return $readings[$timestamp]; }
+            $values = AC_GetLoggedValues($archive, $totalID, max(1, $timestamp - 172800), $timestamp, 1);
+            $reading = is_array($values) ? ($values[0] ?? null) : null;
+            $time = (int)($reading['TimeStamp'] ?? 0);
+            $raw = $reading['Value'] ?? null;
+            return $readings[$timestamp] = $time > 0 && $time <= $timestamp
+                && $timestamp - $time <= 172800 && is_numeric($raw)
+                && is_finite((float)$raw) && (float)$raw >= 0
+                ? (float)$raw : null;
+        };
+
+        $valuesByYear = [];
+        $allMonthsComplete = [];
+        foreach ([$previousYear, $year] as $whichYear) {
+            $valuesByYear[$whichYear] = [];
+            $complete = true;
+            for ($month = 1; $month <= 12; $month++) {
+                $start = new DateTimeImmutable(sprintf('%04d-%02d-01 00:00:00', $whichYear, $month), $zone);
+                $next = $start->modify('first day of next month');
+                if ($start->getTimestamp() >= $now) {
+                    $valuesByYear[$whichYear][$month] = null;
+                    continue; // Future months are intentionally empty.
+                }
+                $end = min($now, $next->getTimestamp());
+                $from = $meterAt($start->getTimestamp());
+                $to = $meterAt($end);
+                $consumption = $from !== null && $to !== null ? ($to - $from) * $factor : null;
+                if ($consumption === null || !is_finite($consumption) || $consumption < -0.00001) {
+                    $valuesByYear[$whichYear][$month] = null;
+                    $complete = false;
+                } else {
+                    $valuesByYear[$whichYear][$month] = round(max(0.0, $consumption), 3);
+                }
+            }
+            $allMonthsComplete[$whichYear] = $complete;
+        }
+
+        $names = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+        $months = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $months[] = [
+                'name' => $names[$month - 1],
+                'current' => $valuesByYear[$year][$month],
+                'previous' => $valuesByYear[$previousYear][$month],
+                'partial' => $month === (int)$localNow->format('n')
+            ];
+        }
+
+        $startPrevious = (new DateTimeImmutable($previousYear . '-01-01 00:00:00', $zone))->getTimestamp();
+        $startCurrent = (new DateTimeImmutable($year . '-01-01 00:00:00', $zone))->getTimestamp();
+        $endPrevious = $startCurrent;
+        $previousStartReading = $meterAt($startPrevious);
+        $previousEndReading = $meterAt($endPrevious);
+        $currentStartReading = $previousEndReading;
+        $currentEndReading = $meterAt($now);
+        $total = static function (?float $start, ?float $end, bool $complete) use ($factor): ?float {
+            if (!$complete || $start === null || $end === null) { return null; }
+            $delta = ($end - $start) * $factor;
+            return is_finite($delta) && $delta >= -0.00001 ? round(max(0.0, $delta), 3) : null;
+        };
+        $result = [
+            'currentYear' => $year,
+            'previousYear' => $previousYear,
+            'currentTotal' => $total($currentStartReading, $currentEndReading, $allMonthsComplete[$year]),
+            'previousTotal' => $total($previousStartReading, $previousEndReading, $allMonthsComplete[$previousYear]),
+            'months' => $months,
+            'note' => 'Das laufende Jahr und der aktuelle Monat sind noch unvollständig. Alle Werte beruhen auf archivierten Zählerständen.'
+        ];
+
+        $this->SetBuffer('WaterbedYearComparisonCache', json_encode([
+            'until' => $now + 1800, 'archive' => $archive, 'source' => $totalID,
+            'unit' => $unit, 'year' => $year, 'result' => $result
+        ], JSON_THROW_ON_ERROR));
+        return $result;
+    }
+
     private function WaterbedEnergyState(): ?array
     {
         if (!$this->WaterbedVisible()) { return null; }
@@ -75,7 +179,7 @@ trait HausstatusWaterbedSupport
             $sources[$key] = $id > 0 && IPS_VariableExists($id)
                 ? $this->Read($id) : ['raw' => null, 'text' => 'Nicht eingerichtet'];
         }
-        $result = ['values' => $sources, 'days' => [], 'note' => ''];
+        $result = ['values' => $sources, 'days' => [], 'annual' => null, 'note' => ''];
         $archive = $this->WaterbedArchiveID();
         $totalID = $this->ConfigInteger('WaterbedTotal');
         if ($archive <= 0 || $totalID <= 0 || !IPS_VariableExists($totalID)) {
@@ -87,9 +191,14 @@ trait HausstatusWaterbedSupport
                 $result['note'] = 'Archivierung für den Gesamtverbrauchszähler (ID ' . $totalID . ') aktivieren. Vergangene Werte lassen sich nicht nachträglich herstellen.';
                 return $result;
             }
-            $zone = new DateTimeZone('Europe/Berlin');
-            $today = (new DateTimeImmutable('now', $zone))->setTime(0, 0);
             $now = time();
+            try {
+                $result['annual'] = $this->WaterbedYearComparison($archive, $totalID, $now);
+            } catch (Throwable $e) {
+                $this->SendDebug('Wasserbett Jahresverlauf', $e->getMessage(), 0);
+            }
+            $zone = new DateTimeZone('Europe/Berlin');
+            $today = (new DateTimeImmutable('@' . $now))->setTimezone($zone)->setTime(0, 0);
             $cache = json_decode($this->GetBuffer('WaterbedEnergyHistoryCache'), true);
             if (is_array($cache) && ($cache['until'] ?? 0) > $now
                 && ($cache['today'] ?? 0) === $today->getTimestamp()
