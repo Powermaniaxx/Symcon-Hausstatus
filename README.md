@@ -1,5 +1,9 @@
 # Hausstatus 0.63 für IP-Symcon
 
+## 0.101: Farbe beim Wohnzimmerlicht
+
+Die Lichtkachel enthält eine freie RGB-Farbauswahl sowie Rot, Weiß, Blau und Grün. Beim ausgewählten Licht-Bedienskript wird ausschließlich `COMMAND=Color`, `VALUE` als RGB-Integer von 0 bis 16777215 und `SOURCE=HausstatusBedienung` gesendet. Dafür muss das vorhandene Skript Color unterstützen (Wohnzimmer-Lichtautomatik ab Version 3.6). Eine manuelle Farbwahl wird dort als geschützte manuelle Bedienung übernommen. Ohne Bedienskript wird nur die konfigurierte RGB-Farbvariable über ihre Bedienaktion geschaltet. Die optionale Quelle `LightColor` liefert außerdem die aktuelle Farbrückmeldung; ohne Rückmeldung dient das Feld nur der Auswahl. Es werden keine Farbvariablen automatisch gesucht oder fremde Geräte geschaltet. Nachtlicht bleibt Rot 50 %; die zusätzliche Esstischlampe erhält keine ungeprüfte RGB-Steuerung.
+
 ## Heizungszentrale in der Raumübersicht (ab 0.80)
 
 Mit Heizungszentrale ab Version 1.8.2 zeigt die Raumübersicht Betriebsart, tatsächliche Regelungsaktivität beziehungsweise Testmodus und die aktuelle Saison. Aufgeklappt lassen sich Automatik oder Manuell und der manuelle Saisonplan wählen. Eine angehaltene Regelung wird dadurch nicht gestartet; hierzu die Heizungszentrale öffnen.
@@ -257,3 +261,4 @@ Zur aktuellen Version über dasselbe Zahnrad wieder **main** wählen. Die Quelle
 ## Nvidia Shield Status
 
 Separate, nur lesbare Shield-Kachel innerhalb Cinema/HEOS; eigenständiger Node-RED-Flow mit 15-Sekunden-Poll und automatischem Timeout. Vollständige Einrichtung einschließlich dauerhaftem ADB: [docs/integrations/shield/README.md](docs/integrations/shield/README.md).
+

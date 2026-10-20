@@ -876,6 +876,7 @@ function render(){
  const level=document.createElement('div');level.className='small';text(level,Number.isInteger(s.Brightness.raw)?`Helligkeit ${s.Brightness.raw} %`:'Helligkeit unbekannt');
  safeRange(range,valueNow=>text(level,`Helligkeit ${valueNow} %`),valueNow=>send('Brightness',valueNow));
  light.append(range,level);
+ renderLightColor(light,s);
  if(s.View!==17&&!(s.View===5&&s.SeparateHomepageTiles))renderDining(light,s.Dining);
  if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
  renderHeater(s.Heater);
@@ -1792,6 +1793,23 @@ function renderRoomControl(box,item,valueLabel){
   const b=document.createElement('button');b.type='button';text(b,'Bedienung öffnen');b.disabled=busy||typeof openObject!=='function';b.style.marginTop='8px';b.addEventListener('click',()=>{try{openObject(c.id);}catch(e){showStatus('Native Bedienung konnte nicht geöffnet werden.');}});box.append(b);
  }
 }
+function renderLightColor(parent,s){
+ const row=document.createElement('div');row.className='lightColorControl';row.style.marginTop='12px';
+ const label=document.createElement('label');text(label,'Farbe wählen ');
+ const input=document.createElement('input');input.type='color';input.setAttribute('aria-label','Farbe Wohnzimmerlicht');
+ const raw=s.LightColor?.raw;input.value=Number.isInteger(raw)&&raw>=0&&raw<=0xffffff?'#'+raw.toString(16).padStart(6,'0'):'#ffffff';
+ input.disabled=busy||!s.Controls?.LightColor;
+ input.addEventListener('input',()=>{editing=true;});
+ input.addEventListener('change',()=>{editing=false;if(!busy&&!input.disabled&&/^#[0-9a-f]{6}$/i.test(input.value))send('LightColor',parseInt(input.value.slice(1),16));});
+ input.addEventListener('blur',()=>{if(editing){editing=false;render();}});
+ label.append(input);row.append(label);
+ const presets=document.createElement('div');presets.className='buttons';
+ for(const [caption,color] of [['Rot',0xff0000],['Weiß',0xffffff],['Blau',0x0000ff],['Grün',0x00ff00]]){
+  const button=document.createElement('button');button.type='button';text(button,caption);button.disabled=input.disabled;
+  button.addEventListener('click',()=>{if(!busy&&!button.disabled)send('LightColor',color);});presets.append(button);
+ }
+ row.append(presets);parent.append(row);
+}
 function motionTime(t){return new Date(t*1000).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function renderMotion(m){
  el('motion').replaceChildren();if(!m)return;
@@ -1926,3 +1944,4 @@ firstRenderComplete=true;
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
 </script></body></html>
+
