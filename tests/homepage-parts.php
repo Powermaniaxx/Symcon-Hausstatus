@@ -38,6 +38,7 @@ class HomeFixture {
  private function ReadPropertyInteger($key){return (int)IPS_GetProperty($this->InstanceID,$key);}
  private function ReadPropertyBoolean($key){return (bool)IPS_GetProperty($this->InstanceID,$key);}
  private function ReadPropertyString($key){return (string)IPS_GetProperty($this->InstanceID,$key);}
+ private function PresentationBaseName(string $name): string {return $name;}
  private function ReadAttributeString($key){return $this->attributes[$key];}
  private function WriteAttributeString($key,$value){$this->attributes[$key]=$value;}
  private function GetBuffer($key){return $this->buffers[$key]??'';}
