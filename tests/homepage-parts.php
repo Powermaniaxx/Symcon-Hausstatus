@@ -12,6 +12,9 @@ function IPS_InstanceExists($id){return ($GLOBALS['objects'][$id]['ObjectType']?
 function IPS_LinkExists($id){return ($GLOBALS['objects'][$id]['ObjectType']??null)===6;}
 function IPS_GetLink($id){return ['TargetID'=>$GLOBALS['objects'][$id]['target']];}
 function IPS_GetInstance($id){return ['ModuleInfo'=>['ModuleID'=>MODULE]];}
+function IPS_GetInstanceListByModuleID(string $module): array {
+    return $module===MODULE ? array_values(array_filter(IPS_GetObjectList(),fn($id)=>IPS_InstanceExists($id))) : [];
+}
 function IPS_GetProperty($id,$key){return $GLOBALS['props'][$id][$key]??0;}
 function IPS_SetProperty($id,$key,$value){$GLOBALS['props'][$id][$key]=$value;}
 function IPS_GetParent($id){return $GLOBALS['objects'][$id]['parent'];}
