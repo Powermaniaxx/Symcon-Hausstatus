@@ -66,6 +66,10 @@ check($data['devices'][1]['running'] === false && $data['devices'][1]['since'] =
 check(invoke($module, 'LaundrySourceIDs') === [15161, 1001, 12920, 1002], 'Subscribe to power AND detected state');
 
 // A stuck TRUE flag must not show hours of washing at zero watts.
+// Finish the prior 1.2 W observation before starting a separate 40-minute
+// zero-watt scenario; otherwise its fresh idle cache masks the older fixture time.
+$GLOBALS['variables'][15161]['raw'] = 900.0;
+check(invoke($module, 'LaundryState')['devices'][0]['running'] === true, 'Motor power resets earlier low-power observation');
 $GLOBALS['variables'][15161]['raw'] = 0.0;
 $GLOBALS['variables'][15161]['VariableChanged'] = time() - 2400;
 $stuck = invoke($module, 'LaundryState')['devices'][0];
