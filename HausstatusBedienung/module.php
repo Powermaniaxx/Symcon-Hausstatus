@@ -14,6 +14,7 @@ require_once __DIR__ . '/DockerSupport.php';
 require_once __DIR__ . '/LaundrySupport.php';
 require_once __DIR__ . '/ShieldSupport.php';
 require_once __DIR__ . '/BedroomMediaSupport.php';
+require_once __DIR__ . '/WaterbedSupport.php';
 
 class HausstatusBedienung extends IPSModuleStrict
 {
@@ -31,6 +32,7 @@ class HausstatusBedienung extends IPSModuleStrict
     use HausstatusLaundrySupport;
     use HausstatusShieldSupport;
     use HausstatusBedroomMediaSupport;
+    use HausstatusWaterbedSupport;
     private const SOURCES = [
         
         'NetworkConnection' => 0, 'NetworkDownload' => 0, 'NetworkUpload' => 0, 'NetworkDownloadUsage' => 0, 'NetworkUploadUsage' => 0, 'NetworkActiveDevices' => 0, 'NetworkDevices' => 0, 'NetworkUptime' => 0, 'NetworkModel' => 0, 'NetworkFirmware' => 0,
@@ -58,6 +60,7 @@ class HausstatusBedienung extends IPSModuleStrict
         parent::Create();
         $this->CreateShield();
         $this->CreateBedroomMedia();
+        $this->CreateWaterbed();
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
@@ -182,6 +185,11 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
+        if ($this->ReadPropertyInteger('View') === 12 && mb_strtolower($this->ReadPropertyString('RoomFilter'), 'UTF-8') === 'schlafzimmer') {
+            foreach (array_keys(self::WATERBED_SOURCES) as $property) { $ids[] = $this->ConfigInteger($property); }
+            $waterbedArchive = $this->WaterbedArchiveID();
+            if ($waterbedArchive > 0) { $this->RegisterReference($waterbedArchive); }
+        }
         if (in_array($this->ReadPropertyInteger('View'), [0, 5, 12, 17], true)) {
             try { foreach ($this->DiningSources() as $id) { if ($id > 0) { $ids[] = $id; } } } catch (Throwable $e) { /* Missing sources are explained in the tile. */ }
             foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $ids[] = $this->ConfigInteger($name); }
@@ -1395,6 +1403,7 @@ class HausstatusBedienung extends IPSModuleStrict
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
         $state['RoomSections'] = $shows([11]) ? $this->RoomSections() : [];
+        $state['WaterbedEnergy'] = $this->WaterbedEnergyState();
         $state['TemperatureRows'] = $shows([11]) ? $this->TemperatureRows() : [];
         $state['RoomSummary'] = [];
         if ($state['View'] === 12 && $state['PageRoom'] === '') {
