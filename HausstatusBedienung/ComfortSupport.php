@@ -54,6 +54,38 @@ trait HausstatusComfortSupport
         if (!RequestAction($id, $value)) { throw new RuntimeException('Heizungsaktion fehlgeschlagen.'); }
     }
 
+
+    // RGB controls only use explicitly configured writable integer variables.
+    private function LightColorState(string $source): ?array
+    {
+        $id = $this->ConfigInteger($source);
+        if ($id <= 0) { return null; }
+        $result = ['id' => $id, 'value' => ['raw' => null, 'text' => 'Unbekannt'], 'canChange' => false, 'reason' => ''];
+        if (!IPS_VariableExists($id) || (int) IPS_GetVariable($id)['VariableType'] !== 1) {
+            $result['reason'] = 'RGB-Farbe benötigt eine Integer-Variable.'; return $result;
+        }
+        $result['value'] = $this->Read($id);
+        $rgb = $result['value']['raw'];
+        if (!is_int($rgb) || $rgb < 0 || $rgb > 16777215) {
+            $result['reason'] = 'Aktueller RGB-Farbwert ist ungültig.'; return $result;
+        }
+        $enabled = $source === 'DiningColor' ? $this->ConfigBoolean('DiningEnabled') : $this->ConfigBoolean('LightEnabled');
+        if ($source === 'BedroomColor') { $enabled = $this->ConfigBoolean('RoomControlsEnabled'); }
+        if (!$enabled) { $result['reason'] = 'Lichtbedienung ist deaktiviert.'; return $result; }
+        $result['canChange'] = $this->HasAction($id, 1);
+        if (!$result['canChange']) { $result['reason'] = 'Farbvariable ohne aktive Symcon-Aktion.'; }
+        return $result;
+    }
+
+    private function SetLightColor(string $source, mixed $value): void
+    {
+        if (!in_array($source, ['LivingColor', 'DiningColor'], true)) { throw new InvalidArgumentException('Unbekannte Farbsteuerung.'); }
+        if (!is_int($value) || $value < 0 || $value > 16777215) { throw new InvalidArgumentException('Ungültiger RGB-Farbwert.'); }
+        $state = $this->LightColorState($source);
+        if ($state === null || !$state['canChange']) { throw new RuntimeException($state['reason'] ?? 'RGB-Variable ist nicht eingerichtet.'); }
+        if (!RequestAction($state['id'], $value)) { throw new RuntimeException('Gerät hat die Farbänderung nicht angenommen.'); }
+    }
+
     private function DiningSources(): array
     {
         $instance = $this->ConfigInteger('DiningInstance');
