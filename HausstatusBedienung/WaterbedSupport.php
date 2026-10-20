@@ -156,7 +156,7 @@ trait HausstatusWaterbedSupport
             'currentTotal' => $total($currentStartReading, $currentEndReading, $allMonthsComplete[$year]),
             'previousTotal' => $total($previousStartReading, $previousEndReading, $allMonthsComplete[$previousYear]),
             'months' => $months,
-            'note' => 'Das laufende Jahr und der aktuelle Monat sind noch unvollständig. Alle Werte beruhen auf archivierten Zählerständen.'
+            'note' => 'Das aktuelle Jahr und der laufende Monat sind noch nicht abgeschlossen. Monatswerte aus archivierten Zählerständen nahe den Monatsgrenzen sind Näherungswerte; fehlende Daten bleiben leer.'
         ];
 
         $this->SetBuffer('WaterbedYearComparisonCache', json_encode([
