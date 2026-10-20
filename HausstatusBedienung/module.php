@@ -93,8 +93,13 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('DiningInstance', 0);
         $this->RegisterPropertyInteger('DiningState', 0);
         $this->RegisterPropertyInteger('DiningBrightness', 0);
-        foreach (['LivingColor', 'DiningColor', 'BedroomColor'] as $name) { $this->RegisterPropertyInteger($name, 0); }
-        foreach (['LivingColor1', 'LivingColor2', 'LivingColor3', 'DiningColor1', 'DiningColor2', 'DiningColor3'] as $name) { $this->RegisterPropertyInteger($name, 0); }
+        foreach (['LivingColor', 'DiningColor'] as $name) { $this->RegisterPropertyInteger($name, 0); }
+        $this->RegisterPropertyInteger('BedroomColor', 15645);
+        // Installation-specific Hue targets: editable per lamp; group color is not used.
+        foreach (['LivingColor1' => 40852, 'LivingColor2' => 21768, 'LivingColor3' => 41186,
+            'DiningColor1' => 50603, 'DiningColor2' => 30828, 'DiningColor3' => 27644] as $name => $id) {
+            $this->RegisterPropertyInteger($name, $id);
+        }
         $this->RegisterPropertyBoolean('DiningEnabled', true);
         foreach (['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'] as $name) { $this->RegisterPropertyInteger($name, 0); }
         $this->RegisterPropertyString('HeaterTitle', 'Zusatzheizung Wohnzimmer');
