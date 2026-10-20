@@ -3,7 +3,14 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 class Element {
- constructor(){this.children=[];this.textContent='';}
+ constructor(){
+  this.children=[];this.textContent='';this.className='';
+  this.classList={
+   add:(...names)=>{this.className=[...new Set([...this.className.split(/\s+/).filter(Boolean),...names])].join(' ');},
+   remove:(...names)=>{this.className=this.className.split(/\s+/).filter(n=>n&&!names.includes(n)).join(' ');},
+   contains:name=>this.className.split(/\s+/).includes(name)
+  };
+ }
  append(...nodes){this.children.push(...nodes);}
  replaceChildren(...nodes){this.children=[...nodes];}
  setAttribute(){}
