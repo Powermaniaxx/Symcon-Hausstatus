@@ -558,6 +558,27 @@ body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
 .waterbedBar{height:100%;border-radius:6px;background:#218a80}
 .waterbedAmount{min-width:85px;text-align:right}
 .waterbedEnergy .roomNote{margin:9px 0 0}
+.waterbedAnnual{margin-bottom:14px}
+.waterbedAnnual h4{margin-top:12px}
+.waterbedYearTotals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:9px 0}
+.waterbedYearTotal{padding:9px;border:1px solid #8883;border-radius:9px;background:#8881;min-width:0}
+.waterbedYearTotal span{display:block;font-size:11px;opacity:.75}
+.waterbedYearTotal strong{display:block;margin-top:5px;font-size:17px;font-variant-numeric:tabular-nums}
+.waterbedLegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:10px 0 5px}
+.waterbedLegendItem{display:inline-flex;align-items:center;gap:6px}
+.waterbedLegendSample{display:inline-block;width:18px;height:4px;border-radius:3px}
+.waterbedLegendSample.current{background:#218a80}
+.waterbedLegendSample.previous{background:#7185bf}
+.waterbedChartViewport{overflow-x:auto;max-width:100%;border:1px solid #8883;border-radius:9px;padding:4px;background:#8881}
+.waterbedChartViewport svg{display:block;width:100%;min-width:500px;height:auto;max-height:350px}
+.waterbedMonthDetails{margin-top:6px}
+.waterbedMonthDetails summary{cursor:pointer;padding:8px 0;font-size:12px}
+.waterbedMonthlyTable{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.waterbedMonthlyTable th,.waterbedMonthlyTable td{padding:6px;border-bottom:1px solid #8883}
+.waterbedMonthlyTable th{text-align:left}
+.waterbedMonthlyTable td:not(:first-child),.waterbedMonthlyTable th:not(:first-child){text-align:right}
+.waterbedAnnual .roomNote{font-size:11px;line-height:1.4}
+
 @media(max-width:600px){
  body.hausstatusSingleTile.roomDetailView main{padding-top:76px}
  .waterbedTotals{gap:5px}
@@ -1683,6 +1704,106 @@ function groupKind(name){
  if(/energie|strom|pv/.test(value))return 'energy';
  return 'other';
 }
+function renderWaterbedYearComparison(data){
+ const section=document.createElement('div');section.className='waterbedAnnual';
+ const title=document.createElement('h4');text(title,'Jahresverbrauch und Monatsvergleich');section.append(title);
+ const now=new Date();
+ const currentYear=Number(data?.currentYear)||now.getFullYear();
+ const previousYear=Number(data?.previousYear)||currentYear-1;
+ const kwh=value=>typeof value==='number'&&Number.isFinite(value)
+  ?value.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—';
+ const years=document.createElement('div');years.className='waterbedYearTotals';
+ for(const [label,value] of [[currentYear+' · bisher',data?.currentTotal],[String(previousYear)+' · Gesamtjahr',data?.previousTotal]]){
+  const card=document.createElement('div');card.className='waterbedYearTotal';
+  const name=document.createElement('span'),amount=document.createElement('strong');
+  text(name,label);text(amount,kwh(value));card.append(name,amount);years.append(card);
+ }
+ section.append(years);
+ const months=Array.isArray(data?.months)?data.months:[];
+ const amounts=months.flatMap(month=>[month.current,month.previous]).filter(value=>typeof value==='number'&&Number.isFinite(value)&&value>=0);
+ if(!amounts.length){
+  const note=document.createElement('p');note.className='roomNote';
+  text(note,'Ein Monatsdiagramm ist erst möglich, wenn archivierte Zählerstände vorhanden sind.');
+  section.append(note);return section;
+ }
+ const legend=document.createElement('div');legend.className='waterbedLegend';
+ for(const [key,label] of [['current',String(currentYear)],['previous',String(previousYear)]]){
+  const item=document.createElement('span');item.className='waterbedLegendItem';
+  const sample=document.createElement('span');sample.className='waterbedLegendSample '+key;
+  const caption=document.createElement('span');text(caption,label);
+  item.append(sample,caption);legend.append(item);
+ }
+ section.append(legend);
+ const viewport=document.createElement('div');viewport.className='waterbedChartViewport';
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 610 255');svg.setAttribute('role','img');
+ svg.setAttribute('aria-label','Monatlicher Wasserbettverbrauch '+currentYear+' im Vergleich zu '+previousYear+', in Kilowattstunden');
+ const make=(tag,attributes={})=>{
+  const node=document.createElementNS(ns,tag);
+  for(const [name,value] of Object.entries(attributes))node.setAttribute(name,String(value));
+  return node;
+ };
+ const top=24,bottom=200,left=48,right=590;
+ const max=Math.max(0,...amounts);
+ const scale=Math.max(.5,Math.ceil(max*1.10*2)/2);
+ const y=value=>bottom-(value/scale)*(bottom-top);
+ const x=index=>left+(right-left)*index/11;
+ for(let i=0;i<=4;i++){
+  const value=scale*i/4,position=y(value);
+  svg.append(make('line',{x1:left,y1:position,x2:right,y2:position,stroke:'currentColor','stroke-opacity':'.15','stroke-width':1}));
+  const label=make('text',{x:left-7,y:position+4,'text-anchor':'end',fill:'currentColor','font-size':12});
+  text(label,value.toLocaleString('de-DE',{maximumFractionDigits:1}));svg.append(label);
+ }
+ for(let i=0;i<months.length;i++){
+  const label=make('text',{x:x(i),y:222,'text-anchor':'middle',fill:'currentColor','font-size':13});
+  text(label,months[i].name);svg.append(label);
+ }
+ const draw=(key,year,color)=>{
+  let path=[];
+  const flush=()=>{
+   if(!path.length)return;
+   const polyline=make('polyline',{points:path.join(' '),fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'});
+   svg.append(polyline);path=[];
+  };
+  for(let i=0;i<months.length;i++){
+   const month=months[i],value=month[key];
+   if(typeof value!=='number'||!Number.isFinite(value)){flush();continue;}
+   const positionX=x(i),positionY=y(value);
+   path.push(positionX+','+positionY);
+   const dot=make('circle',{cx:positionX,cy:positionY,r:4,fill:color,stroke:'currentColor','stroke-width':'.4'});
+   const tooltip=make('title');
+   text(tooltip,month.name+' '+year+(key==='current'&&month.partial?' (laufender Monat)':'')+': '+kwh(value));
+   dot.append(tooltip);svg.append(dot);
+  }
+  flush();
+ };
+ // Draw the older year first, then the current year over it.
+ // Polyline paths are intentionally broken at missing months.
+ draw('previous',previousYear,'#7185bf');
+ draw('current',currentYear,'#218a80');
+ viewport.append(svg);section.append(viewport);
+ const details=document.createElement('details');details.className='waterbedMonthDetails';
+ const summary=document.createElement('summary');text(summary,'Monatswerte als Tabelle anzeigen');details.append(summary);
+ const table=document.createElement('table');table.className='waterbedMonthlyTable';
+ const header=document.createElement('tr');
+ for(const caption of ['Monat',String(previousYear),String(currentYear)]){
+  const th=document.createElement('th');text(th,caption);header.append(th);
+ }
+ const thead=document.createElement('thead');thead.append(header);table.append(thead);
+ const tbody=document.createElement('tbody');
+ for(const month of months){
+  const row=document.createElement('tr');
+  for(const value of [month.name,kwh(month.previous),kwh(month.current)]){
+   const cell=document.createElement('td');text(cell,value);row.append(cell);
+  }
+  tbody.append(row);
+ }
+ table.append(tbody);details.append(table);section.append(details);
+ const note=document.createElement('p');note.className='roomNote';
+ text(note,data.note||'Fehlende Archivdaten werden nicht als Nullverbrauch dargestellt.');
+ section.append(note);
+ return section;
+}
 function renderWaterbedEnergy(data){
  const section=document.createElement('div');section.className='waterbedEnergy';
  const title=document.createElement('h4');text(title,'Stromverbrauch');section.append(title);
@@ -1693,6 +1814,7 @@ function renderWaterbedEnergy(data){
   text(name,label);text(value,data.values?.[key]?.text??'—');item.append(name,value);totals.append(item);
  }
  section.append(totals);
+ section.append(renderWaterbedYearComparison(data.annual));
  const subtitle=document.createElement('h4');text(subtitle,'Verlauf · letzte 7 Tage');section.append(subtitle);
  const table=document.createElement('table');table.className='waterbedHistory';
  const thead=document.createElement('thead'),header=document.createElement('tr');
