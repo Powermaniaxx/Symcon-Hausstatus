@@ -681,6 +681,88 @@
     },
     {
       "type": "ExpansionPanel",
+      "name": "WaterbedSettings",
+      "caption": "Schlafzimmer: Wasserbett und Stromverbrauch",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Im Schlafzimmer erscheint ein eigener Bereich Wasserbett mit getrennten Temperaturen für Sven/Susi, Ein/Aus, Urlaubsmodus und Stromverbrauch. Die Originalvariablen und ihre vorhandenen Aktionen werden verwendet."
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedPowerSwitch",
+          "caption": "Ein/Aus (14711)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedSvenTemperature",
+          "caption": "Temperatur Sven (30213)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedSusiTemperature",
+          "caption": "Temperatur Susi (43240)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedHoliday",
+          "caption": "Urlaubsmodus (19840)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedPower",
+          "caption": "Aktuelle Leistung (33520)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedToday",
+          "caption": "Verbrauch heute (41104)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedWeek",
+          "caption": "Verbrauch diese Woche (39312)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedMonth",
+          "caption": "Verbrauch diesen Monat (13879)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "WaterbedTotal",
+          "caption": "Gesamtverbrauchszähler für den Tagesverlauf (23622)"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "WaterbedArchive",
+          "caption": "Archiv für den täglichen Verbrauchsverlauf (leer = automatisch)",
+          "moduleID": "{43192F0B-135B-4CE7-A0A7-1475603F3060}"
+        },
+        {
+          "type": "Select",
+          "name": "WaterbedEnergyUnit",
+          "caption": "Einheit des Gesamtverbrauchszählers",
+          "options": [
+            {
+              "value": "kWh",
+              "caption": "kWh (Standard)"
+            },
+            {
+              "value": "Wh",
+              "caption": "Wh"
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "Für den Verlauf unter Symcon die Archivierung des Gesamtverbrauchszählers einschalten. Die Tabelle zeigt nur vorhandene Daten; alte Tage ohne Aufzeichnung können nicht berechnet werden."
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "name": "LightSettings",
       "caption": "Licht und Esstisch",
       "expanded": false,
