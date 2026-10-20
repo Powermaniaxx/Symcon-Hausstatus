@@ -701,6 +701,21 @@
           "caption": "Wohnzimmerlicht – RGB-Farbe (Integer-Variable)"
         },
         {
+          "type": "SelectVariable",
+          "name": "LivingColor1",
+          "caption": "Wohnzimmer – Hue-Lampe 1 · Farbe (40852)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingColor2",
+          "caption": "Wohnzimmer – Hue-Lampe 2 · Farbe (21768)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "LivingColor3",
+          "caption": "Wohnzimmer – Hue-Lampe 3 · Farbe (41186)"
+        },
+        {
           "type": "CheckBox",
           "name": "LightEnabled",
           "caption": "Lichtbedienung aktivieren"
@@ -739,6 +754,21 @@
           "caption": "Essbereich / Esstisch – RGB-Farbe (Integer-Variable)"
         },
         {
+          "type": "SelectVariable",
+          "name": "DiningColor1",
+          "caption": "Essbereich – Hue-Lampe 1 · Farbe (50603)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DiningColor2",
+          "caption": "Essbereich – Hue-Lampe 2 · Farbe (30828)"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DiningColor3",
+          "caption": "Essbereich – Hue-Lampe 3 · Farbe (27644)"
+        },
+        {
           "type": "CheckBox",
           "name": "DiningEnabled",
           "caption": "Zusätzliche Lampe bedienen"
@@ -759,7 +789,7 @@
         },
         {
           "type": "Label",
-          "caption": "Die drei Farben werden nur angeboten, wenn eine RGB-Integer-Variable (0–16777215) mit schaltbarer Symcon-Aktion ausgewählt wurde. Im Schlafzimmer wird die Farbauswahl auf der Raumseite direkt bei der Lampe angezeigt. Bestehende Schalter und Dimmer bleiben unverändert."
+          "caption": "Wohnzimmer und Essbereich: genau drei einzelne RGB-Integer-Farbvariablen statt der nicht funktionierenden Hue-Gruppenfarbe. Eine Farbauswahl sendet denselben Wert an alle drei Lampen. Ein/Aus und Helligkeit bleiben unverändert über die Hue-Gruppen steuerbar. Schlafzimmerfarbe einzeln über 15645."
         }
       ]
     },
