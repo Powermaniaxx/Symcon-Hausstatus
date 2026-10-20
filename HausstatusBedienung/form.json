@@ -696,6 +696,11 @@
           "caption": "Helligkeit – Variable von 1 bis 100 %"
         },
         {
+          "type": "SelectVariable",
+          "name": "LightColor",
+          "caption": "Farbe – RGB-Integer-Variable (optional für Rückmeldung; ohne Bedienskript auch Bedienziel)"
+        },
+        {
           "type": "CheckBox",
           "name": "LightEnabled",
           "caption": "Lichtbedienung aktivieren"
@@ -707,7 +712,7 @@
         },
         {
           "type": "Label",
-          "caption": "Optionales Bedienskript: erhält COMMAND (Light oder Brightness), VALUE und SOURCE. Ohne Skript werden die vorhandenen Variablenaktionen verwendet. Bei einer bestehenden Lichtautomatik das dafür eingerichtete Bedienskript beibehalten."
+          "caption": "Optionales Bedienskript: erhält COMMAND (Light, Brightness oder Color), VALUE und SOURCE. Color braucht einen RGB-Integer von 0 bis 16777215; dafür das Bedienskript auf eine Version mit Color-Unterstützung aktualisieren. Ohne Skript werden die vorhandenen Variablenaktionen verwendet."
         },
         {
           "type": "Label",
@@ -1730,3 +1735,4 @@
     }
   ]
 }
+

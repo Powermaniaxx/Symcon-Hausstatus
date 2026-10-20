@@ -102,6 +102,10 @@ trait HausstatusDisplaySupport
     private function SetLight(string $command, mixed $value): void
     {
         if (!$this->ConfigBoolean('LightEnabled')) { throw new RuntimeException('Lichtbedienung ist deaktiviert.'); }
+        if (!in_array($command, ['Light', 'Brightness', 'LightColor'], true)) { throw new InvalidArgumentException('Unbekannter Lichtbefehl.'); }
+        if ($command === 'LightColor' && (!is_int($value) || $value < 0 || $value > 0xFFFFFF)) {
+            throw new InvalidArgumentException('Farbe muss ein RGB-Farbwert von 0 bis 16777215 sein.');
+        }
         if ($command === 'Light' && !is_bool($value)) { throw new InvalidArgumentException('Ein/Aus erwartet einen Boolean-Wert.'); }
         if ($command === 'Brightness' && (!is_int($value) || $value < 1 || $value > 100)) {
             throw new InvalidArgumentException('Helligkeit muss zwischen 1 und 100 liegen.');
@@ -110,13 +114,14 @@ trait HausstatusDisplaySupport
         if ($script > 0) {
             if (!IPS_ScriptExists($script)) { throw new RuntimeException('Licht-Bedienskript fehlt.'); }
             // A selected script remains the only command path, including its automation protection.
-            if (!IPS_RunScriptEx($script, ['COMMAND' => $command, 'VALUE' => $value, 'SOURCE' => 'HausstatusBedienung'])) {
+            if (!IPS_RunScriptEx($script, ['COMMAND' => $command === 'LightColor' ? 'Color' : $command, 'VALUE' => $value, 'SOURCE' => 'HausstatusBedienung'])) {
                 throw new RuntimeException('Licht-Bedienskript konnte nicht gestartet werden.');
             }
             return;
         }
-        $id = $this->ConfigInteger($command === 'Light' ? 'LightState' : 'Brightness');
+        $id = $this->ConfigInteger($command === 'Light' ? 'LightState' : ($command === 'LightColor' ? 'LightColor' : 'Brightness'));
         $this->ValidateAction($id, $command === 'Light' ? 0 : 1);
         if (!RequestAction($id, $value)) { throw new RuntimeException('Lichtaktion fehlgeschlagen.'); }
     }
 }
+

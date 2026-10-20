@@ -42,7 +42,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'WasherPower' => 15161, 'DryerPower' => 12920, 'WasherRunning' => 0, 'DryerRunning' => 0,
         'HeatingProfile' => 31603, 'Presence' => 52726, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
-        'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
+        'LightState' => 0, 'Brightness' => 0, 'LightColor' => 0, 'CinemaState' => 0,
         'CinemaControl' => 0, 'CinemaSource' => 0, 'CinemaVolume' => 0, 'HeosSelection' => 0, 'HeosRadio' => 14121, 'HeosNAS' => 45081, 'HeosStatus' => 0, 'PVPower' => 0, 'PVEnergy' => 0,
         'Weather' => 0, 'Wind' => 0, 'Rain' => 0, 'Warning' => 0,
         'OutdoorTemperature' => 0, 'FeelsLikeTemperature' => 0, 'TodayLowTemperature' => 0, 'TodayHighTemperature' => 0,
@@ -552,7 +552,7 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing', 'WetterComRefresh'], true)) {
             $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value)
-                . (in_array($Ident, ['Light', 'Dining', 'Brightness', 'DiningBrightness'], true)
+                . (in_array($Ident, ['Light', 'LightColor', 'Dining', 'Brightness', 'DiningBrightness'], true)
                     ? ' | value=' . json_encode($Value, JSON_INVALID_UTF8_SUBSTITUTE) : ''));
         }
         if (preg_match('/^RoomValue:([1-9][0-9]{0,9})$/D', $Ident, $match) === 1) {
@@ -612,7 +612,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+        if (!in_array($Ident, ['Light', 'LightColor', 'Brightness', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
             'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
@@ -837,7 +837,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function SourceNames(): array
     {
         $views = [1 => ['Presence', 'Alarm'], 2 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'DoorOpened', 'DoorClosed'],
-            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
+            4 => ['BatteryWarnings'], 5 => ['LightState', 'Brightness', 'LightColor'], 18 => ['Presence', 'SvenPresence', 'SusiPresence', 'Alarm'], 19 => [],
             26 => ['Lock', 'DoorContact', 'DoorPermission', 'DoorControl', 'Alarm'],
             29 => ['PVPower', 'PVEnergy', 'BatteryWarnings'],
             27 => ['WasherPower', 'DryerPower', 'WasherRunning', 'DryerRunning'],
@@ -1408,9 +1408,12 @@ class HausstatusBedienung extends IPSModuleStrict
                 && ($script > 0 ? $scriptOK : $this->HasAction($this->ConfigInteger('LightState'), 0)),
             'Brightness' => $this->ConfigBoolean('LightEnabled')
                 && ($script > 0 ? $scriptOK : $this->HasAction($this->ConfigInteger('Brightness'), 1)),
+            'LightColor' => $this->ConfigBoolean('LightEnabled')
+                && ($script > 0 ? $scriptOK : $this->HasAction($this->ConfigInteger('LightColor'), 1)),
             'Cinema' => $this->ConfigBoolean('CinemaEnabled')
                 && $this->HasAction($this->ConfigInteger('CinemaControl'), 0)
         ];
         return $state;
     }
 }
+
