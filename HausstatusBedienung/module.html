@@ -48,7 +48,7 @@
 .overview-door #card-permission .value{margin:0;text-align:right}.overview-door #card-permission .buttons{margin:0;min-width:0}
 .overview-door #card-permission>button{width:auto;margin:0!important}.overview-door #card-permission>.small{grid-column:1/-1}
 .overview-door .doorHistory{margin-top:7px}.overview-door button{min-height:44px}
-.diningLamp{margin-top:12px;padding-top:10px;border-top:1px solid #8883}.diningLamp h3{font-size:13px;margin:0}.diningLamp .row{align-items:center;border:0;padding:0}.diningLamp .row span{font-size:13px}.diningLamp button{min-height:44px}
+.lightColorPicker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}.lightColorPicker label{flex:1 1 110px;font-size:12px}.lightColorPicker input[type=color]{width:92px;height:46px;border:1px solid #8885;border-radius:9px;padding:3px;background:Canvas}.lightColorPicker input[type=color]:disabled{opacity:.45}.lightColorPicker .small{flex-basis:100%;margin:0}.diningLamp{margin-top:12px;padding-top:10px;border-top:1px solid #8883}.diningLamp h3{font-size:13px;margin:0}.diningLamp .row{align-items:center;border:0;padding:0}.diningLamp .row span{font-size:13px}.diningLamp button{min-height:44px}
 .roomSurface{font-size:14px}.roomGroupGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;align-items:start}.roomGroup h3{margin:10px 0 8px;font-size:14px}
 .roomDeviceGrid{display:grid;grid-template-columns:1fr;gap:8px}.roomDevice h4{margin:0 0 7px;font-size:14px;font-weight:600}.roomItem{padding:7px 0;border-top:1px solid #8882;min-width:0}.roomItem>.row{font-size:13px;line-height:1.4;align-items:center;border:0;padding:0}.roomItem .buttons{margin-top:6px}.roomItem .row span:last-child{font-weight:600;font-variant-numeric:tabular-nums}
 .roomSurface button,.roomSurface select{min-height:48px;font-size:13px}.roomSurface input[type=range]{height:38px;margin:5px 0 0}.roomSurface .buttons{gap:5px}.roomSurface input[type=color]{width:100%;height:48px;margin-top:6px}.roomSurface .roomNote{font-size:12px;line-height:1.45}
@@ -876,8 +876,9 @@ function render(){
  const level=document.createElement('div');level.className='small';text(level,Number.isInteger(s.Brightness.raw)?`Helligkeit ${s.Brightness.raw} %`:'Helligkeit unbekannt');
  safeRange(range,valueNow=>text(level,`Helligkeit ${valueNow} %`),valueNow=>send('Brightness',valueNow));
  light.append(range,level);
- if(s.View!==17&&!(s.View===5&&s.SeparateHomepageTiles))renderDining(light,s.Dining);
- if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining);}
+ renderLightColorPicker(light,'Wohnzimmer · Farbe',s.LightColors?.living,'LivingColor');
+ if(s.View!==17&&!(s.View===5&&s.SeparateHomepageTiles))renderDining(light,s.Dining,s.LightColors?.dining);
+ if(s.View===17&&s.Dining){const dining=card('dining','💡',displayText('Dining','Esstisch'),'');renderDining(dining,s.Dining,s.LightColors?.dining);}
  renderHeater(s.Heater);
  renderLaundry(s.Laundry);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus,s.PhilipsTv);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
@@ -1473,7 +1474,22 @@ function renderHeater(data){
  }
  if(data.note){const note=document.createElement('div');note.className='small';text(note,data.note);box.append(note);}
 }
-function renderDining(box,d){
+
+function renderLightColorPicker(box,label,color,command){
+ if(!color)return;
+ const line=document.createElement('div');line.className='lightColorPicker';
+ const title=document.createElement('label');text(title,label);
+ const input=document.createElement('input');input.type='color';
+ const current=color.value?.raw;
+ input.value=Number.isInteger(current)&&current>=0&&current<=16777215?'#'+current.toString(16).padStart(6,'0'):'#ffffff';
+ input.disabled=busy||color.canChange!==true;input.setAttribute('aria-label',label);
+ const message=document.createElement('span');message.className='small';text(message,color.reason||'Farbe auswählen');
+ input.addEventListener('input',()=>{editing=true;});
+ input.addEventListener('change',()=>{editing=false;if(!input.disabled)send(command,parseInt(input.value.slice(1),16));});
+ input.addEventListener('blur',()=>{if(editing){editing=false;render();}});
+ line.append(title,input,message);box.append(line);
+}
+function renderDining(box,d,color){
  if(!d)return;
  const lamp=document.createElement('div');lamp.className='diningLamp';lamp.id='diningLamp';
  const row=document.createElement('div');row.className='row';const title=document.createElement('h3'),value=document.createElement('span');text(title,displayText('Dining','Esstisch'));text(value,displayBool('Dining',d.state));row.append(title,value);lamp.append(row);
@@ -1483,6 +1499,7 @@ function renderDining(box,d){
   const range=document.createElement('input');range.type='range';range.min=String(c.min);range.max=String(c.max);range.step=String(c.step);range.value=String(d.brightness.raw);range.disabled=busy;range.setAttribute('aria-label','Helligkeit '+displayText('Dining','Esstisch'));
   safeRange(range,valueNow=>text(level,'Helligkeit '+sliderText(valueNow,c,d.brightness.text)),valueNow=>send('DiningBrightness',valueNow));lamp.append(range,level);
  }
+ renderLightColorPicker(lamp,'Essbereich · Farbe',color,'DiningColor');
  if(d.reason){const note=document.createElement('div');note.className='small';text(note,d.reason);lamp.append(note);}displayDescription(lamp,'Dining');box.append(lamp);
 }
 function rememberPanel(panel,key){
@@ -1636,7 +1653,7 @@ function groupKind(name){
 function deviceItems(items){
  const frequent=items.filter(item=>item.primary!==false);
  // Keep the everyday controls first; cap visible metadata per device.
- const roles=['switch','brightness','setpoint','source','volume','temperature','humidity','motion','presence','power','position','illuminance','control'];
+ const roles=['switch','brightness','color','setpoint','source','volume','temperature','humidity','motion','presence','power','position','illuminance','control'];
  const rank=item=>{const i=roles.indexOf(item.role);return i<0?roles.length:i;};
  frequent.sort((a,b)=>rank(a)-rank(b));
  const primary=frequent.slice(0,2);
@@ -1668,11 +1685,13 @@ function roomDevicePanel(items,key,kind){
  const heos=items.filter(item=>['heos','heosStatus'].includes(item.role));
  for(const item of heos)box.append(roomItemBox(item));
  const remaining=items.filter(item=>item!==toggle&&!heos.includes(item));
- if(remaining.length){
-  const preview=selected.primary.find(item=>item!==toggle)??remaining.find(item=>['brightness','volume','temperature','position','power'].includes(item.role));
+ for(const item of remaining.filter(item=>item.control?.kind==='color'))box.append(roomItemBox(item));
+ const details=remaining.filter(item=>item.control?.kind!=='color');
+ if(details.length){
+  const preview=selected.primary.find(item=>item!==toggle&&item.control?.kind!=='color')??details.find(item=>['brightness','volume','temperature','position','power'].includes(item.role));
   const caption=preview?(preview.label??preview.name)+' · '+preview.value.text:'Weitere Werte';
   if(!toggle&&preview){const value=document.createElement('span');value.className='roomDeviceValue';text(value,preview.value.text);header.append(value);}
-  box.append(roomDetails(remaining,key,caption+(remaining.some(item=>item.control)?' · einstellen':' · Details')));
+  box.append(roomDetails(details,key,caption+(details.some(item=>item.control)?' · einstellen':' · Details')));
  }
  return box;
 }
