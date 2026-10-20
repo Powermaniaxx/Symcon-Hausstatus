@@ -696,6 +696,11 @@
           "caption": "Helligkeit – Variable von 1 bis 100 %"
         },
         {
+          "type": "SelectVariable",
+          "name": "LivingColor",
+          "caption": "Wohnzimmerlicht – RGB-Farbe (Integer-Variable)"
+        },
+        {
           "type": "CheckBox",
           "name": "LightEnabled",
           "caption": "Lichtbedienung aktivieren"
@@ -729,6 +734,11 @@
           "caption": "Zusätzliche Lampe – Helligkeit"
         },
         {
+          "type": "SelectVariable",
+          "name": "DiningColor",
+          "caption": "Essbereich / Esstisch – RGB-Farbe (Integer-Variable)"
+        },
+        {
           "type": "CheckBox",
           "name": "DiningEnabled",
           "caption": "Zusätzliche Lampe bedienen"
@@ -741,6 +751,15 @@
           "type": "ValidationTextBox",
           "name": "DiningRoom",
           "caption": "Raumname für die zusätzliche Lampe"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "BedroomColor",
+          "caption": "Schlafzimmerlicht – RGB-Farbe (Integer-Variable)"
+        },
+        {
+          "type": "Label",
+          "caption": "Die drei Farben werden nur angeboten, wenn eine RGB-Integer-Variable (0–16777215) mit schaltbarer Symcon-Aktion ausgewählt wurde. Im Schlafzimmer wird die Farbauswahl auf der Raumseite direkt bei der Lampe angezeigt. Bestehende Schalter und Dimmer bleiben unverändert."
         }
       ]
     },
