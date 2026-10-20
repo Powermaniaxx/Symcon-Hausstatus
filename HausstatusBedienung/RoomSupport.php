@@ -76,21 +76,31 @@ trait HausstatusRoomSupport
             }
         }
 
-        // Explicit bedroom light color: reuse a matching room entry, otherwise add it.
-        if ($view === 12 && ($filter === '' || mb_strtolower($filter, 'UTF-8') === 'schlafzimmer')) {
-            $rgb = $this->ConfigInteger('BedroomColor');
-            if ($rgb > 0 && IPS_VariableExists($rgb)) {
+        // Optional RGB controls are also available directly on the respective room page.
+        // Reuse configured room entries rather than displaying the same color twice.
+        if ($view === 12) {
+            $colorRooms = [
+                'LivingColor' => ['Wohnzimmer', 'Wohnzimmerlicht'],
+                'DiningColor' => [$this->ConfigString('DiningRoom'), $this->DisplayText('Dining')],
+                'BedroomColor' => ['Schlafzimmer', 'Schlafzimmerlicht']
+            ];
+            foreach ($colorRooms as $source => [$roomName, $lightName]) {
+                if ($filter !== '' && mb_strtolower($filter, 'UTF-8') !== mb_strtolower($roomName, 'UTF-8')) { continue; }
+                $rgb = $this->ConfigInteger($source);
+                if ($rgb <= 0 || !IPS_VariableExists($rgb)) { continue; }
                 $found = false;
                 foreach ($result as &$entry) {
-                    if ($entry['id'] === $rgb && mb_strtolower($entry['room'], 'UTF-8') === 'schlafzimmer') {
-                        $entry['operate'] = true; $entry['colorSource'] = true; $entry['group'] = 'Licht'; $found = true;
+                    if ($entry['id'] === $rgb && $entry['room'] === $roomName) {
+                        $entry['operate'] = true; $entry['colorSource'] = true;
+                        $entry['colorSourceName'] = $source; $entry['group'] = 'Licht'; $found = true;
                     }
                 }
                 unset($entry);
                 if (!$found) {
-                    $result[] = ['room' => 'Schlafzimmer', 'group' => 'Licht', 'name' => 'Schlafzimmerlicht · Farbe',
+                    $result[] = ['room' => $roomName, 'group' => 'Licht', 'name' => $lightName . ' · Farbe',
                         'id' => $rgb, 'type' => 2, 'operate' => true, 'colorSource' => true,
-                        'deviceKey' => 'device:' . IPS_GetParent($rgb), 'deviceName' => 'Schlafzimmerlicht'];
+                        'colorSourceName' => $source,
+                        'deviceKey' => 'device:' . IPS_GetParent($rgb), 'deviceName' => $lightName];
                 }
             }
         }
@@ -280,6 +290,9 @@ trait HausstatusRoomSupport
         if ($route !== 'Light' && !$this->HasAction($id, $type)) { return null; }
         if (($entry['colorSource'] ?? false) === true) {
             if ($type !== 1) { throw new RuntimeException('RGB-Farbe benötigt eine Integer-Variable.'); }
+            $source = $entry['colorSourceName'] ?? '';
+            if (($source === 'DiningColor' && !$this->ConfigBoolean('DiningEnabled'))
+                || ($source === 'LivingColor' && !$this->ConfigBoolean('LightEnabled'))) { return null; }
             return ['kind' => 'color', 'route' => ''];
         }
         $options = $this->RoomOptions($id, $type);
