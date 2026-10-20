@@ -882,8 +882,8 @@ function render(){
  renderLaundry(s.Laundry);
  const cinema=card('cinema','\u{1f50a}','Cinema 40',displayBool('CinemaState',s.CinemaState),s.CinemaState.raw===true?'info':'');buttons(cinema,'Cinema',s.Controls.Cinema,s.CinemaState.raw);renderCinemaFields(cinema,s);renderMediaLiving(cinema,s.Shield,s.LivingMediaStatus,s.PhilipsTv);renderOtherShields(s.Shield?.devices,s.BedroomMedia);
  const pvPower=typeof s.PVPower.raw==='number'?s.PVPower.raw:null;
- const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion (Ruhestrom)':s.PVPower.text;
- const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');if(![0,15,29].includes(s.View)){const energy=document.createElement('div');energy.className='small';text(energy,'Heute '+s.PVEnergy.text);pv.append(energy);}
+ const pvDisplay=pvPower!==null&&pvPower<3?'Keine Produktion':s.PVPower.text;
+ const pv=card('pv','\u2600','PV-Anlage',pvDisplay,'info');const energy=document.createElement('div');energy.className='small';text(energy,'Heute produziert: '+s.PVEnergy.text);pv.append(energy);
  if([0,15,29].includes(s.View))renderPVInverters(pv,s.PVInverters??[]);
  if([0,15,29].includes(s.View)&&(s.InlinePages===true||(Number.isInteger(s.PVDetailsTarget)&&s.PVDetailsTarget>0))){const b=document.createElement('a');b.href='#';b.className='pvDetailLink';text(b,'Details');const disabled=busy||(s.InlinePages===true?typeof requestAction!=='function':typeof openObject!=='function');b.setAttribute('aria-disabled',String(disabled));b.tabIndex=disabled?-1:0;b.addEventListener('click',event=>{event.preventDefault();if(disabled)return;s.InlinePages===true?readInlinePage({view:7,room:''},'navigate'):openDetail(s.PVDetailsTarget,'PV-Details');});pv.append(b);}
  renderOutdoor(s.Outdoor);
