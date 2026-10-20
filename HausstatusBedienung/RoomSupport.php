@@ -76,6 +76,18 @@ trait HausstatusRoomSupport
             }
         }
 
+        if ($view === 12) {
+            foreach ($this->WaterbedRoomEntries() as $waterbedEntry) {
+                $exists = false;
+                foreach ($result as $existingEntry) {
+                    if ($existingEntry['id'] === $waterbedEntry['id'] && $existingEntry['room'] === $waterbedEntry['room']) {
+                        $exists = true; break;
+                    }
+                }
+                if (!$exists) { $result[] = $waterbedEntry; }
+            }
+        }
+
         // Optional RGB controls are also available directly on the respective room page.
         // Reuse configured room entries rather than displaying the same color twice.
         if ($view === 12) {
