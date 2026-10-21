@@ -72,7 +72,9 @@ async function collect() {
 }
 
 async function send(status) {
-    const url = new URL(process.env.SYMCON_RPC_URL || 'http://192.168.178.140:3777/api/');
+    const url = new URL(process.env.SYMCON_RPC_URL || 'http://192.168.178.90:3777/api/');
+    // Local service migration: also accept containers still configured with the old address.
+    if(url.hostname === '192.168.178.140' && url.port === '3777') url.hostname = '192.168.178.90';
     const id = Number(process.env.SYMCON_INSTANCE_ID || 52627);
     if(url.hostname === 'unconfigured' || !Number.isInteger(id) || id <= 0) throw new Error('SYMCON_RPC_URL und SYMCON_INSTANCE_ID fehlen.');
     if(!['http:','https:'].includes(url.protocol) || url.username || url.password) throw new Error('RPC-URL ungültig. Zugangsdaten separat hinterlegen.');
