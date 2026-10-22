@@ -206,6 +206,9 @@ class HausstatusBedienung extends IPSModuleStrict
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) {
             foreach ([40020, 26961, 16673, 40887, 55619, 35915, 25551, 38129] as $id) { $ids[] = $id; }
         }
+        if ($this->ReadPropertyInteger('View') === 31) {
+            foreach ([33763, 53624, 21012, 23009, 38996, 46284, 48316, 54068] as $upsID) { $ids[] = $upsID; }
+        }
         foreach ($this->SourceNames() as $name) { $ids[] = $this->ConfigInteger($name); }
         foreach ($this->ExtraTileVariableIDs() as $id) { $ids[] = $id; }
         foreach ($this->BedroomMediaIDs() as $id) { $ids[] = $id; }
@@ -1426,6 +1429,14 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['DisplaySettings'] = $this->DisplaySettings();
         $state['Network'] = $this->NetworkState();
         $state['Docker'] = $this->DockerState();
+        if ($state['View'] === 31) {
+            $upsSources = ['power' => 33763, 'load' => 53624, 'battery' => 21012, 'runtime' => 23009, 'status' => 38996, 'inputVoltage' => 46284, 'batteryVoltage' => 48316, 'dataStatus' => 54068];
+            $ups = [];
+            foreach ($upsSources as $key => $upsID) {
+                $ups[$key] = IPS_VariableExists($upsID) ? GetValue($upsID) : null;
+            }
+            $state['UPS'] = $ups;
+        }
         $state['Laundry'] = $shows([3]) ? $this->LaundryState() : null;
         $state['HeatingProfileItem'] = $shows([9]) ? $this->HeatingProfileItem() : null;
         $state['DoorReason'] = $this->DoorReason();
