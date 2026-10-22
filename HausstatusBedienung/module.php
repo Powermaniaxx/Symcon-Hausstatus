@@ -816,7 +816,8 @@ class HausstatusBedienung extends IPSModuleStrict
     private function HasMotionView(): bool
     {
         $view = $this->CurrentView();
-        return $view === 8 || ($view === 0 && !$this->ConfigBoolean('SeparateDetails'));
+        // Movement remains available on the homepage, including its dedicated split tile.
+        return $view === 8 || $view === 0;
     }
     private function HasTemperatureView(): bool
     {
