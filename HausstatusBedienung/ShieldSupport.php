@@ -94,6 +94,34 @@ trait HausstatusShieldSupport
      * The original variables MUST remain direct children of this module,
      * because RegisterVariable* and SetValue use their original idents.
      */
+    // Remove only module-owned presentation links; never delete status source variables.
+    private function RemoveShieldStatusLinks(): void
+    {
+        if ($this->ReadPropertyInteger('ConfigSource') !== 0 || $this->ReadPropertyInteger('View') !== 0) { return; }
+        foreach (array_unique(array_filter([$this->ReadPropertyInteger('HomepageCategory'), IPS_GetParent($this->InstanceID)])) as $root) {
+            if (!IPS_ObjectExists($root)) { continue; }
+            foreach (IPS_GetChildrenIDs($root) as $system) {
+                if (!IPS_ObjectExists($system) || (int)IPS_GetObject($system)['ObjectType'] !== 0) { continue; }
+                if ((string)IPS_GetObject($system)['ObjectIdent'] !== 'SVHSSystemPage'
+                    && $this->PresentationBaseName(IPS_GetName($system)) !== 'System') { continue; }
+                $status = @IPS_GetObjectIDByIdent('SVHSMediaStatus', $system);
+                if ($status === false || (int)IPS_GetObject($status)['ObjectType'] !== 0) { continue; }
+                foreach (IPS_GetChildrenIDs($status) as $group) {
+                    if ((int)IPS_GetObject($group)['ObjectType'] !== 0
+                        || !str_starts_with((string)IPS_GetObject($group)['ObjectIdent'], 'SVHSMedia_')) { continue; }
+                    foreach (IPS_GetChildrenIDs($group) as $link) {
+                        if (IPS_LinkExists($link)
+                            && str_starts_with((string)IPS_GetObject($link)['ObjectIdent'], 'SVHSMediaLink_')) {
+                            IPS_DeleteLink($link);
+                        }
+                    }
+                    if (count(IPS_GetChildrenIDs($group)) === 0) { IPS_DeleteCategory($group); }
+                }
+                if (count(IPS_GetChildrenIDs($status)) === 0) { IPS_DeleteCategory($status); }
+            }
+        }
+    }
+
     private function OrganizeShieldStatusLinks(): void
     {
         if ($this->ReadPropertyInteger('ConfigSource') !== 0
