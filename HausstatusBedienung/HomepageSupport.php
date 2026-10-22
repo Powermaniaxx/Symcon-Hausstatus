@@ -200,7 +200,7 @@ trait HausstatusHomepageSupport
             5 => [$this->DisplayText('LightState'), $has(['LightState', 'Brightness'])],
             17 => [$this->DisplayText('Dining'), $has(['DiningInstance', 'DiningState'])],
             6 => [$this->DisplayText('CinemaState'), $has(['CinemaState', 'CinemaControl'])],
-            14 => [$this->ConfigString('HeaterTitle'), $has(['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'])],
+            14 => ['Zusatzheizung Wohnzimmer · Dreo 720S', true],
             11 => [$this->DisplayText('OutdoorTitle'), $has(['AwningPosition', 'AwningStatus', 'RoofPosition', 'RoofStatus'])],
             16 => [$this->DisplayText('WeatherTitle'), $has(['Weather', 'Wind', 'Rain', 'Raining'])],
             8 => [$this->DisplayText('MotionTitle'), count($this->MotionSensors()) > 0],
