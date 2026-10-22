@@ -1328,7 +1328,7 @@ function applyView(view){
  el('dockerSection').hidden=![25,31].includes(view);
  el('systemOverviewSection').hidden=![13,20,21,22,23,24,25,31].includes(view);
  document.body.classList.toggle('systemCombinedView',view===31);el('cards').className=view===0?'dashboard':view===26?'grid sophieView':view===1||view===2?'grid':'grid single';
- for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?state.SeparateDetails===true:view!==v&&!(id==='weatherSection'&&view===16);
+ for(const [id,v] of [['motionSection',8],['roomsSection',9],['weatherSection',10]])el(id).hidden=view===0?(id==='motionSection'?false:state.SeparateDetails===true):view!==v&&!(id==='weatherSection'&&view===16);
  if(view===0&&state.RainHistory)el('weatherSection').hidden=false;
  if(view===0)pairOverviewSections();
 }
