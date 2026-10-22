@@ -80,6 +80,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyString('NewTileTitle', '');
         $this->RegisterPropertyString('NewTileRoomFilter', '');
         $this->RegisterAttributeString('HomepageLayout', '');
+        $this->RegisterAttributeString('WatchVariableIDs', '[]');
         $this->RegisterPropertyBoolean('ActiveView', true);
         $this->RegisterPropertyBoolean('SeparateDetails', false);
         $this->RegisterPropertyBoolean('OutdoorEnabled', true);
@@ -124,6 +125,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->RegisterPropertyInteger('LightCommandScript', 0);
         $this->RegisterPropertyString('Rooms', '[]');
         $this->RegisterTimer('Refresh', 0, 'SVHS_Refresh($_IPS["TARGET"]);');
+        $this->RegisterTimer('ViewerWatchdog', 0, 'SVHS_ExpireViewers($_IPS["TARGET"]);');
     }
 
     public function ApplyChanges(): void
@@ -131,8 +133,11 @@ class HausstatusBedienung extends IPSModuleStrict
         parent::ApplyChanges();
         // Keine zyklischen Hintergrundchecks: Shield-Ablauf nur bei sichtbarer Medienkachel.
         $this->SetTimerInterval('ShieldWatchdog', 0);
+        $this->SetTimerInterval('ViewerWatchdog', 0);
+        $this->SetBuffer('ViewerSubscriptionsActive', '0');
         if (!$this->ReadPropertyBoolean('ActiveView')) {
             $this->SetTimerInterval('Refresh', 0);
+            $this->WriteAttributeString('WatchVariableIDs', '[]');
             $this->SetBuffer('DoorChallenges', '{}');
             foreach ($this->GetMessageList() as $id => $messages) {
                 foreach ($messages as $message) { $this->UnregisterMessage($id, $message); }
@@ -237,13 +242,14 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $detailsID = $this->BatteryWarningDetailsID();
         if ($detailsID > 0) { $ids[] = $detailsID; }
+        $watchIDs = [];
         foreach (array_unique($ids) as $id) {
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterReference($id);
-                $this->RegisterMessage($id, VM_UPDATE);
-                $this->RegisterMessage($id, VM_DELETE);
+                $watchIDs[] = (int)$id;
             }
         }
+        $this->WriteAttributeString('WatchVariableIDs', json_encode($watchIDs, JSON_THROW_ON_ERROR));
         $script = $this->ConfigInteger('LightCommandScript');
         if ($script > 0 && IPS_ScriptExists($script)) { $this->RegisterReference($script); }
         $this->HideTileMaximize();
@@ -271,6 +277,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->SetStatus(102);
         $this->SetSummary($this->GetBuffer('HomepageLayoutError') ?: 'Hausstatus mit HTML-Bedienung');
         $this->SetBuffer('LastState', '');
+        if ($this->HasLiveViewers()) { $this->EnableViewerSubscriptions(); }
         $this->Refresh();
         if ($this->ReadPropertyInteger('ConfigSource') === 0) {
             foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $child) {
@@ -299,6 +306,44 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         $last = (int)$this->GetBuffer('LastViewerSeen');
         return $last > 0 && (time() - $last) <= 75;
+    }
+
+    // Nachrichten sind nur waehrend einer tatsaechlich sichtbaren WebFront-Kachel noetig.
+    private function EnableViewerSubscriptions(): bool
+    {
+        if ($this->GetBuffer('ViewerSubscriptionsActive') === '1') { return false; }
+        $ids = json_decode($this->ReadAttributeString('WatchVariableIDs'), true);
+        if (!is_array($ids)) { return false; }
+        foreach ($ids as $id) {
+            $id = (int)$id;
+            if ($id > 0 && IPS_VariableExists($id)) {
+                $this->RegisterMessage($id, VM_UPDATE);
+                $this->RegisterMessage($id, VM_DELETE);
+            }
+        }
+        $this->SetBuffer('ViewerSubscriptionsActive', '1');
+        $this->SetTimerInterval('ViewerWatchdog', 30000);
+        return true;
+    }
+
+    private function DisableViewerSubscriptions(): void
+    {
+        $this->SetTimerInterval('ViewerWatchdog', 0);
+        if ($this->GetBuffer('ViewerSubscriptionsActive') !== '1') { return; }
+        foreach ($this->GetMessageList() as $id => $messages) {
+            foreach ($messages as $message) {
+                if ($message === VM_UPDATE || $message === VM_DELETE) {
+                    $this->UnregisterMessage((int)$id, $message);
+                }
+            }
+        }
+        $this->SetBuffer('ViewerSubscriptionsActive', '0');
+        $this->SetBuffer('LastState', '');
+    }
+
+    public function ExpireViewers(): void
+    {
+        if (!$this->HasLiveViewers()) { $this->DisableViewerSubscriptions(); }
     }
 
     /**
@@ -335,7 +380,8 @@ class HausstatusBedienung extends IPSModuleStrict
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         if ($Message === VM_UPDATE || $Message === VM_DELETE) {
-            if (!$this->HasLiveViewers()) { return; }
+            if (!$this->HasLiveViewers()) { $this->DisableViewerSubscriptions(); return; }
+            if ($Message === VM_UPDATE && array_key_exists(1, $Data) && !$Data[1]) { return; }
             if ($SenderID === $this->ConfigInteger('Raining')) { $this->SetBuffer('RainCache', ''); }
             if ($this->ReadPropertyInteger('View') === 18) {
                 $historySourceIDs = array_column($this->PresenceHistorySources(), 'id');
@@ -587,9 +633,10 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         if ($Ident === 'ViewerPing') {
             $this->SetBuffer('LastViewerSeen', (string)time());
+            $subscriptionsStarted = $this->EnableViewerSubscriptions();
             $this->ForwardViewerPingToNodeRed();
             $this->ExpireShieldOnViewerPing();
-            if ($this->HasTemperatureView() && count($this->HeatingCenterIDs())===1) { $this->Refresh(); }
+            if ($subscriptionsStarted || ($this->HasTemperatureView() && count($this->HeatingCenterIDs()) === 1)) { $this->Refresh(); }
             return;
         }
         // A remote weather fetch must never delay loading the HTML tile.
