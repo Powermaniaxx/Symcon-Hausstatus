@@ -17,6 +17,52 @@ trait HausstatusComfortSupport
 
     private function HeaterState(): ?array
     {
+        // Display only Dreo; legacy heater properties remain stored and untouched.
+        $dreo = ['DreoPower' => [40020, 'Ein/Aus', true], 'DreoTarget' => [26961, 'Solltemperatur', false],
+            'DreoActual' => [16673, 'Isttemperatur', false], 'DreoHeating' => [40887, 'Heizstatus', false],
+            'DreoMode' => [55619, 'Modus', true], 'DreoPreset' => [35915, 'Voreinstellung', true],
+            'DreoOscillation' => [25551, '360°-Luftstrom', true], 'DreoDisplay' => [38129, 'Displaybeleuchtung', true]];
+        $result = ['title' => 'Zusatzheizung Wohnzimmer · Dreo 720S', 'items' => []];
+        foreach ($dreo as $key => [$id, $label, $writable]) {
+            if (!IPS_VariableExists($id)) {
+                $result['items'][$key] = ['name' => $label, 'value' => ['raw' => null, 'text' => 'Quelle fehlt'], 'control' => null];
+                continue;
+            }
+            $item = $this->RoomItem(['id' => $id, 'type' => 2, 'name' => $label,
+                'operate' => $writable && $this->ConfigBoolean('HeaterEnabled')]);
+            $item['command'] = $writable ? $key : null;
+            if (!$writable) { $item['control'] = null; }
+            $result['items'][$key] = $item;
+        }
+        return $result;
+    }
+
+    private function SetDreo(string $command, mixed $value): void
+    {
+        $targets = ['DreoPower' => 40020, 'DreoMode' => 55619, 'DreoPreset' => 35915,
+            'DreoOscillation' => 25551, 'DreoDisplay' => 38129];
+        if (!isset($targets[$command]) || !in_array($this->CurrentView(), [0, 14], true)
+            || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
+            throw new RuntimeException('Dreo-Steuerung ist nicht freigegeben.');
+        }
+        $id = $targets[$command];
+        if (!IPS_VariableExists($id) || $this->ProtectedDoorTarget($id)) {
+            throw new RuntimeException('Dreo-Variable nicht vorhanden.');
+        }
+        $type = (int)IPS_GetVariable($id)['VariableType'];
+        $this->ValidateAction($id, $type);
+        if (in_array($command, ['DreoPower', 'DreoOscillation', 'DreoDisplay'], true) && ($type !== 0 || !is_bool($value))) {
+            throw new InvalidArgumentException('Dreo-Schalter erwartet Boolean.');
+        }
+        if (($command === 'DreoMode' || $command === 'DreoPreset') &&
+            !(($type === 3 && is_string($value)) || ($type === 1 && is_int($value)) || ($type === 2 && is_numeric($value)))) {
+            throw new InvalidArgumentException('Ungültiger Dreo-Auswahlwert.');
+        }
+        if (!RequestAction($id, $value)) { throw new RuntimeException('Dreo-Aktion fehlgeschlagen.'); }
+    }
+
+    private function LegacyHeaterState(): ?array
+    {
         $ids = $this->HeaterIDs();
         if (!array_filter($ids) && $this->ConfigInteger('HeaterInstance') === 0) { return null; }
         $result = ['title' => $this->ConfigString('HeaterTitle'), 'items' => []];
