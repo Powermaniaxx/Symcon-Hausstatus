@@ -262,7 +262,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->OrganizeSeparateHomepage();
         // Safe presentation only: status variables stay at the data receiver;
         // stable links group them below the visualization's System category.
-        try { $this->OrganizeShieldStatusLinks(); }
+        try { $this->RemoveShieldStatusLinks(); }
         catch (Throwable $e) {
             $this->SendDebug('Medienstatus-Navigation', $e->getMessage(), 0);
             IPS_LogMessage('Hausstatus', 'Medienstatus-Verknuepfungen: ' . $e->getMessage());
