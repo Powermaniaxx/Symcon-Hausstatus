@@ -317,7 +317,7 @@ button.state-on{background:#16733b;color:#fff;border-color:#16733b}button.state-
 /* Die Anwesenheitskachel braucht Abstand unter dem nativen Symcon-Titel.
    Spezifischer als body.hausstatusSingleTile main, das sonst 8px erzwingt. */
 body.presenceHistoryView main,
-body.hausstatusSingleTile.presenceHistoryView main{padding-top:80px}
+body.hausstatusSingleTile.presenceHistoryView main{padding-top:54px}
 #presenceHistorySection:not([hidden]){padding-top:10px;margin-top:0}
 /* Hohe 24h-Verlaeufe machen auch kuerzere Statuswechsel lesbar. */
 .presencePerson .presenceTrack{height:26px;margin-top:10px;border-radius:7px}
@@ -502,16 +502,16 @@ textarea{
 /* Heater tiles use a solid light surface like the other homepage cards.
    This overrides transparent dark-looking backgrounds in standalone views. */
 body.hausstatusHeaterTile{background:#f8f8f8;color:#202124;color-scheme:light}
-body.hausstatusHeaterTile main{padding-top:8px}
+body.hausstatusHeaterTile main{padding-top:54px}
 #card-heater{background:#fff;color:#202124;color-scheme:light;border:1px solid #8883}
 #card-heater select{background:#fff;color:#202124}
 #card-heater .roomDetails,.homeEnvironmentPair #card-heater{background:#fff}
 /* Remove the old 56px headroom when Symcon already displays its own tile title. */
-body.hausstatusSingleTile main{padding-top:8px}
+body.hausstatusSingleTile main{padding-top:54px}
 /* Switch knobs and circular indicators retain their original geometry. */
 /* System overview: one opaque surface containing FritzBox and Docker. */
 body.systemCombinedView{background:#f5f7f9;color:#202124;color-scheme:light}
-body.systemCombinedView main{padding:44px 8px 8px}
+body.systemCombinedView main{padding:54px 8px 8px}
 body.systemCombinedView .systemOverviewSection{
  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));
  gap:12px;padding:12px;border:1px solid #d5dbe0;border-radius:14px;
@@ -544,7 +544,7 @@ body.pvDetailsView .section h2{background:#e5ebef;color:#202124;border-radius:10
 /* Separate Hausstatus tiles use automatic loading; the repeated manual-refresh footer wastes space. */
 body.hausstatusSingleTile .head{display:none}
 /* Symcon draws its native tile title over HTML: keep the selector below it. */
-body.hausstatusSingleTile.roomDetailView main{padding-top:74px}
+body.hausstatusSingleTile.roomDetailView main{padding-top:54px}
 body.roomDetailView .roomNavigation{display:block;margin:0 0 8px}
 body.roomDetailView .roomNavigation label{display:none}
 body.roomDetailView .roomNavigation select{width:100%;max-width:none;min-height:48px}
@@ -588,7 +588,7 @@ body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
 .waterbedAnnual .roomNote{font-size:11px;line-height:1.4}
 
 @media(max-width:600px){
- body.hausstatusSingleTile.roomDetailView main{padding-top:76px}
+ body.hausstatusSingleTile.roomDetailView main{padding-top:54px}
  .waterbedTotals{gap:5px}
  .waterbedTotal{padding:6px}
  .waterbedBarTrack{width:28%}
