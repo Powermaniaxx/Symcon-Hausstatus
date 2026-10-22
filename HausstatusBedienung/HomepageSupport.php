@@ -203,7 +203,7 @@ trait HausstatusHomepageSupport
             14 => [$this->ConfigString('HeaterTitle'), $has(['HeaterInstance', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'])],
             11 => [$this->DisplayText('OutdoorTitle'), $has(['AwningPosition', 'AwningStatus', 'RoofPosition', 'RoofStatus'])],
             16 => [$this->DisplayText('WeatherTitle'), $has(['Weather', 'Wind', 'Rain', 'Raining'])],
-            8 => [$this->DisplayText('MotionTitle'), !$this->ConfigBoolean('SeparateDetails') && count($this->MotionSensors()) > 0],
+            8 => [$this->DisplayText('MotionTitle'), count($this->MotionSensors()) > 0],
             9 => [$this->DisplayText('TemperatureTitle'), !$this->ConfigBoolean('SeparateDetails') && count($this->Rooms()) > 0]
         ];
         if (!array_filter($tiles, static fn(array $tile): bool => $tile[1])) { $this->RestoreCombinedHomepage(); return; }
@@ -350,7 +350,7 @@ trait HausstatusHomepageSupport
             return match ($part) {
                 3 => $this->ConfigInteger('WasherPower') > 0 || $this->ConfigInteger('DryerPower') > 0,
                 6, 7 => $this->ConfigBoolean('ShieldEnabled'),
-                10 => !$this->ConfigBoolean('SeparateDetails') && count($this->MotionSensors()) > 0,
+                10 => count($this->MotionSensors()) > 0,
                 11 => count($this->RoomSections()) > 0,
                 12 => count($this->ExtraTileVariables()) > 0,
                 default => true
