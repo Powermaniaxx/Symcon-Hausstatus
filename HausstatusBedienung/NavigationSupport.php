@@ -65,6 +65,12 @@ trait HausstatusNavigationSupport
                         }
                         continue;
                     }
+                    if (IPS_InstanceExists($id) && !($object['ObjectIsHidden'] ?? false) && $belongs($id)) {
+                        $existing = IPS_GetName($id);
+                        $versioned = $this->VersionedPresentationName($existing);
+                        if ($existing !== $versioned) { IPS_SetName($id, $versioned); }
+                        continue;
+                    }
                     if (!IPS_LinkExists($id) || ($object['ObjectIsHidden'] ?? false)) { continue; }
                     $target = (int)IPS_GetLink($id)['TargetID'];
                     // Link-to-link chains occasionally occur after old mirrors.
@@ -280,8 +286,8 @@ trait HausstatusNavigationSupport
                 }
             }
             if ($changed) { IPS_ApplyChanges($id); }
-            if (IPS_GetName($id) !== 'Systeme · FritzBox und Docker') {
-                IPS_SetName($id, 'Systeme · FritzBox und Docker');
+            if (IPS_GetName($id) !== $this->VersionedPresentationName('Systeme · FritzBox und Docker und USV')) {
+                IPS_SetName($id, $this->VersionedPresentationName('Systeme · FritzBox und Docker und USV'));
             }
             if (IPS_GetObject($id)['ObjectIsHidden']) { IPS_SetHidden($id, false); }
             foreach (array_merge($network, $docker, $combined) as $old) {
