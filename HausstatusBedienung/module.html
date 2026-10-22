@@ -589,11 +589,15 @@ body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
 
 
 /* Dreo heater: touch-friendly portrait/landscape without horizontal overflow. */
-.dreoGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;width:100%;min-width:0}
-.dreoGrid .roomItem{min-width:0}.dreoGrid .roomItem select{width:100%;max-width:100%;min-height:44px}
-.dreoGrid .roomItem>.row{grid-template-columns:minmax(0,1fr) auto;gap:8px}
-.dreoGrid .roomItem .buttons{display:flex;flex-wrap:wrap}.dreoGrid .roomItem button{min-height:44px;flex:1}
-@media(max-width:520px){.dreoGrid{grid-template-columns:1fr;gap:4px}}
+.dreoGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;width:100%;min-width:0}
+#card-heater .dreoGrid .roomItem{min-width:0;padding:5px 0}
+#card-heater .dreoGrid .roomItem>.row{display:flex;justify-content:space-between;gap:5px;align-items:center;font-size:12px;flex-wrap:wrap}
+#card-heater .dreoGrid .roomItem>.row span:last-child{font-size:13px;font-weight:600}
+#card-heater .dreoGrid .roomItem select{box-sizing:border-box;width:100%;max-width:100%;min-height:40px;margin-top:4px}
+#card-heater .dreoGrid .roomItem .buttons{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+#card-heater .dreoGrid .roomItem button{min-height:40px;flex:1;padding:6px 8px}
+@media(max-width:390px){.dreoGrid{gap:3px 7px}#card-heater .dreoGrid .roomItem[data-dreo="DreoMode"],#card-heater .dreoGrid .roomItem[data-dreo="DreoPreset"]{grid-column:1/-1}}
+@media(min-width:391px) and (max-width:600px){.dreoGrid{gap:4px 8px}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1527,7 +1531,7 @@ function renderHeater(data){
  const box=card('heater','♨️',data.title,'');
  const grid=document.createElement('div');grid.className='dreoGrid';box.append(grid);
  for(const [key,item] of Object.entries(data.items??{})){
-  const target=key==='HeaterWeekplan'?document.createElement('details'):document.createElement('div');target.className=key==='HeaterWeekplan'?'roomDetails':'roomItem';
+  const target=key==='HeaterWeekplan'?document.createElement('details'):document.createElement('div');target.className=key==='HeaterWeekplan'?'roomDetails':'roomItem';target.dataset.dreo=key;
   if(key==='HeaterWeekplan'){const summary=document.createElement('summary');text(summary,'Wochenplan · '+item.value.text);target.append(summary);rememberPanel(target,'heater-weekplan');}
   const row=document.createElement('div');row.className='row';const name=document.createElement('span'),value=document.createElement('span');text(name,item.name);text(value,item.value.text);row.append(name,value);target.append(row);
   renderRoomControl(target,item,value);
