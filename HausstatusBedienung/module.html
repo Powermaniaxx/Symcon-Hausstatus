@@ -646,6 +646,18 @@ let doorRequest=null,doorToken=null,doorExpiryTimer=null;
 let dockerPending=null;
 let outdoorPending=null;
 let busy=false, pendingTimer=null, timeoutTimer=null, editing=false, messageTimer=null;
+let commandRequest=null,settleTimers=[],lockedControls=[];
+function cancelSettling(){settleTimers.forEach(clearTimeout);settleTimers=[];}
+function scheduleSettling(){
+ cancelSettling();
+ // Bounded reads for devices that report their new value after accepting a command.
+ settleTimers=[400,1500,3500].map(delay=>setTimeout(()=>{
+  if(document.visibilityState!=='visible'||busy||editing)return;
+  if(inlinePage!==null){if(pageRequest===null)readInlinePage(inlinePage,'background');}
+  else if(refreshRequest===null){try{requestAction('Refresh',false);}catch(e){}}
+ },delay));
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')cancelSettling();});
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
 const openPanels=new Set();
@@ -1713,7 +1725,7 @@ function readInlinePage(page,reason,value){
   else if(pending.reason!=='background')showStatus(command?'Keine Bestätigung empfangen. Status prüfen.':'Seite konnte nicht geladen werden. Bitte erneut öffnen.');
   render();
  },8000);
- try{requestAction(command?'PageValue':'PageRead',JSON.stringify({request,view:page.view,room:page.room,...(command?{value}:{})}));}
+ try{requestAction(command?'PageValue':'PageRead',JSON.stringify({request,view:page.view,room:page.room,reason,...(command?{value}:{})}));}
  catch(e){cancelPageRequest();if(reason==='navigate'||command)busy=false;if(reason==='refresh')text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');else if(reason!=='background')showStatus('Seitenanfrage konnte nicht gesendet werden.');render();}
 }
 function receivePageReply(message){
@@ -1724,7 +1736,7 @@ function receivePageReply(message){
  const error=message.error||(!valid?'Die Unterseite hat keine gültigen Werte geliefert.':'');
  if(pending.reason==='refresh')text(el('refreshStatus'),error?'Aktualisierung fehlgeschlagen: '+error:'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
  else if(error)showStatus(error);
- else if(pending.reason==='value')showStatus('Befehl übergeben.',true);
+ else if(pending.reason==='value'){showStatus('Befehl übergeben.',true);scheduleSettling();}
  else if(pending.reason==='navigate')showStatus('');
  schedulePagePoll();
  if(!editing)render();
@@ -2064,17 +2076,22 @@ function renderMotion(m){
 }
 function send(command,value){
  if(busy)return;
+ cancelSettling();
  if(inlinePage!==null){
   if(command!=='RoomValue'){showStatus('Diese Aktion gehört nicht zur Raumansicht.');return;}
   if(pageRequest?.reason==='refresh')text(el('refreshStatus'),'');
   cancelPageRequest();readInlinePage(inlinePage,'value',value);return;
  }
  if(typeof requestAction!=='function'){showStatus('Die Bedienung ist nur innerhalb der Symcon-Kachel verf\u00fcgbar.');return;}
- busy=true;editing=false;showStatus('Befehl wird gesendet ...');render();
- timeoutTimer=setTimeout(()=>{busy=false;pendingTimer=null;showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
- try{requestAction(command==='RoomValue'?'RoomValue:'+value.id:command,command==='RoomValue'?value.value:['DoorConfirm','DoorOpen','DockerControl'].includes(command)?JSON.stringify(value):value);if(busy)pendingTimer=setTimeout(()=>{pendingTimer=null;try{requestAction('Refresh',true);}catch(e){showStatus('Status konnte nicht nachgeladen werden.');}},1200);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
+ commandRequest=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,14);
+ busy=true;editing=false;showStatus('Befehl wird gesendet ...');
+ // Lock existing controls without rebuilding the entire DOM before dispatch.
+ lockedControls=Array.from(document.querySelectorAll('button,input,select')).filter(control=>!control.disabled);
+ lockedControls.forEach(control=>{control.disabled=true;});
+ timeoutTimer=setTimeout(()=>{finish();showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
+ try{const action=command==='RoomValue'?'RoomValue:'+value.id:command;requestAction('Command:'+commandRequest+':'+action,command==='RoomValue'?value.value:['DoorConfirm','DoorOpen','DockerControl'].includes(command)?JSON.stringify(value):value);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
 }
-function finish(){busy=false;clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
+function finish(){busy=false;commandRequest=null;lockedControls.forEach(control=>{control.disabled=false;});lockedControls=[];clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
 function updateRefreshButton(){
  const waiting=refreshRequest!==null||pageRequest?.reason==='refresh';el('refresh').disabled=busy||waiting;
  el('refresh').setAttribute('aria-busy',String(waiting));text(el('refresh'),waiting?'Aktualisiere ...':'\u21bb Aktualisieren');
@@ -2128,6 +2145,7 @@ el('refresh').addEventListener('click',requestRefresh);
 const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
+ if(message?.commandDone&&Object.prototype.hasOwnProperty.call(message,'commandRequest')&&(commandRequest===null||message.commandRequest!==commandRequest))return;
  if(message&&Object.prototype.hasOwnProperty.call(message,'wetterComUpdate')){
   if(homeState)homeState.WetterComForecast=message.wetterComUpdate;
   if(state)state.WetterComForecast=message.wetterComUpdate;
@@ -2160,12 +2178,12 @@ handleMessage=function(data){
  }
  if(message?.doorConfirmation){
   const c=message.doorConfirmation;if(c.request!==doorRequest)return;
-  finish();doorToken=c.token;const remaining=(c.ttl??20)*1000;
+  finish();render();doorToken=c.token;const remaining=(c.ttl??20)*1000;
   if(remaining<=0){closeDoorDialog();showStatus('Bestätigung abgelaufen.');render();return;}
   showStatus('');el('doorDialog').showModal();el('doorCancel').focus();
   clearTimeout(doorExpiryTimer);doorExpiryTimer=setTimeout(()=>{closeDoorDialog();showStatus('Best\u00e4tigung abgelaufen. Bitte erneut beginnen.');render();},Math.min(remaining,20000));return;
  }
- if(message?.commandDone){finish();showStatus(message.error||'Befehl \u00fcbergeben.',!message.error);if(message.state)state=message.state;render();return;}
+ if(message?.commandDone){finish();showStatus(message.error||'Befehl \u00fcbergeben.',!message.error);if(message.state)state=message.state;render();if(!message.error)scheduleSettling();return;}
  receiveState(data);
 };
 const renderContents=render;render=function(){try{renderContents();}catch(e){showStatus('Darstellung konnte nicht geladen werden: '+String(e?.message??e));}};
@@ -2175,3 +2193,4 @@ firstRenderComplete=true;
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
 </script></body></html>
+

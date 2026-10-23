@@ -136,8 +136,15 @@ trait HausstatusPageSupport
                 // Door actions remain exclusively in the homepage confirmation flow.
                 $this->SetRoomValue($payload['value'] ?? null);
             }
-            $this->SetBuffer('MotionCache', '');
-            $this->SetBuffer('RainCache', '');
+            if ($action === 'PageValue') {
+                // Release the command lock before constructing the page response.
+                IPS_SemaphoreLeave($key);
+                $locked = false;
+            }
+            if (($payload['reason'] ?? '') === 'refresh') {
+                $this->SetBuffer('MotionCache', '');
+                $this->SetBuffer('RainCache', '');
+            }
             $reply['state'] = $this->State();
             $this->SetBuffer('LastPageError', '');
         } catch (Throwable $e) {
@@ -187,3 +194,4 @@ trait HausstatusPageSupport
         return implode(PHP_EOL, $lines);
     }
 }
+

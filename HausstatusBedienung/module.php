@@ -131,6 +131,7 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        $this->SetBuffer('RefreshQueued', '0');
         // Keine zyklischen Hintergrundchecks: Shield-Ablauf nur bei sichtbarer Medienkachel.
         $this->SetTimerInterval('ShieldWatchdog', 0);
         $this->SetTimerInterval('ViewerWatchdog', 0);
@@ -331,6 +332,8 @@ class HausstatusBedienung extends IPSModuleStrict
 
     private function DisableViewerSubscriptions(): void
     {
+        $this->SetTimerInterval('Refresh', 0);
+        $this->SetBuffer('RefreshQueued', '0');
         $this->SetTimerInterval('ViewerWatchdog', 0);
         if ($this->GetBuffer('ViewerSubscriptionsActive') !== '1') { return; }
         foreach ($this->GetMessageList() as $id => $messages) {
@@ -395,12 +398,22 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
             }
-            $this->Refresh();
+            $this->QueueRefresh();
         }
+    }
+
+    private function QueueRefresh(): void
+    {
+        if (!$this->HasLiveViewers() || $this->GetBuffer('RefreshQueued') === '1') { return; }
+        $this->SetBuffer('RefreshQueued', '1');
+        $this->SetTimerInterval('Refresh', 100);
     }
 
     public function Refresh(): void
     {
+        // One shot: never keep a periodic refresh alive after the viewer closes.
+        $this->SetTimerInterval('Refresh', 0);
+        $this->SetBuffer('RefreshQueued', '0');
         if (!$this->HasLiveViewers()) { return; }
         $state = $this->BaseState();
         $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -621,6 +634,12 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function RequestAction(string $Ident, mixed $Value): void
     {
+        // Correlate broadcasts so mirrored browser tiles cannot acknowledge each other.
+        $commandRequest = null;
+        if (preg_match('/^Command:([a-z0-9-]{1,80}):(.+)$/D', $Ident, $commandMatch) === 1) {
+            $commandRequest = $commandMatch[1];
+            $Ident = $commandMatch[2];
+        }
         if (!in_array($Ident, ['Refresh', 'PageRead', 'ViewerPing', 'WetterComRefresh'], true)) {
             $this->SetBuffer('LastCommandReceipt', date('c') . ' | ' . $Ident . ' | ' . get_debug_type($Value)
                 . (in_array($Ident, ['Light', 'Dining', 'Brightness', 'DiningBrightness'], true)
@@ -672,8 +691,14 @@ class HausstatusBedienung extends IPSModuleStrict
             // A manual refresh must also bypass the cached archive history.
             $request = is_string($Value) && preg_match('/^refresh-[a-z0-9-]{1,80}$/D', $Value) === 1 ? $Value : null;
             try {
-                $state = $this->FreshState();
+                // Automatic post-command reads retain archive caches; manual refresh stays fresh.
+                $state = $Value === false ? $this->BaseState() : $this->FreshState();
                 $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                if ($Value === false) {
+                    // Silent background reads need not rebuild every mirror's unchanged DOM.
+                    if ($this->GetBuffer('LastState') === $encoded) { return; }
+                    $this->SetBuffer('LastState', $encoded);
+                }
                 $reply = $request === null ? $encoded : json_encode(['refreshDone' => $request, 'state' => $state],
                     JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
                 $this->UpdateVisualizationValue($reply);
@@ -690,7 +715,7 @@ class HausstatusBedienung extends IPSModuleStrict
         }
         $key = 'SVHSCommand' . $this->InstanceID;
         if (!IPS_SemaphoreEnter($key, 1000)) {
-            $this->UpdateVisualizationValue(json_encode(['error' => 'Bitte kurz warten und erneut bedienen.']));
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'commandRequest' => $commandRequest, 'error' => 'Bitte kurz warten und erneut bedienen.']));
             return;
         }
         try {
@@ -747,11 +772,14 @@ class HausstatusBedienung extends IPSModuleStrict
             } else {
                 $this->SetLight($Ident, $Value);
             }
-            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'state' => $this->BaseState()], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+            // Acknowledge the device call before rebuilding charts and unrelated sections.
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'commandRequest' => $commandRequest], JSON_THROW_ON_ERROR));
+            $this->SetBuffer('LastState', '');
+            $this->QueueRefresh();
         } catch (Throwable $e) {
             $this->SetBuffer('LastCommandError', get_class($e) . ': ' . $e->getMessage());
             $this->SendDebug('Bedienfehler', $e->getMessage(), 0);
-            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'error' => $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE));
+            $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'commandRequest' => $commandRequest, 'error' => $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE));
         } finally {
             IPS_SemaphoreLeave($key);
         }
@@ -1504,3 +1532,4 @@ class HausstatusBedienung extends IPSModuleStrict
         return $state;
     }
 }
+
