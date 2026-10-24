@@ -67,8 +67,8 @@ trait HausstatusWaterbedSupport
 
     /**
      * Current year vs. previous year, by calendar month in Europe/Berlin.
-     * Uses the cumulative meter (never sums daily or monthly counters).
-     * A missing boundary yields null, not an invented zero.
+     * Uses counter archive monthly consumption, including resets handled by the archive.
+     * A missing month yields null, not an invented zero.
      */
     private function WaterbedYearComparison(int $archive, int $totalID, int $now): array
     {
@@ -90,44 +90,28 @@ trait HausstatusWaterbedSupport
             return $cached['result'];
         }
 
-        // Reuse the same archive reading for shared month/year boundaries.
-        $readings = [];
-        $meterAt = static function (int $timestamp) use ($archive, $totalID, &$readings): ?float {
-            if (array_key_exists($timestamp, $readings)) { return $readings[$timestamp]; }
-            $values = AC_GetLoggedValues($archive, $totalID, max(1, $timestamp - 172800), $timestamp, 1);
-            $reading = is_array($values) ? ($values[0] ?? null) : null;
-            $time = (int)($reading['TimeStamp'] ?? 0);
-            $raw = $reading['Value'] ?? null;
-            return $readings[$timestamp] = $time > 0 && $time <= $timestamp
-                && $timestamp - $time <= 172800 && is_numeric($raw)
-                && is_finite((float)$raw) && (float)$raw >= 0
-                ? (float)$raw : null;
-        };
-
-        $valuesByYear = [];
-        $allMonthsComplete = [];
+        $valuesByYear = []; $allMonthsComplete = [];
+        if (AC_GetAggregationType($archive, $totalID) !== 1) {
+            return ['currentYear'=>$year,'previousYear'=>$previousYear,'months'=>[],
+                'currentTotal'=>null,'previousTotal'=>null,
+                'note'=>'Verbrauch ID 17732 benötigt im Archiv den Aggregationstyp Zähler.'];
+        }
         foreach ([$previousYear, $year] as $whichYear) {
-            $valuesByYear[$whichYear] = [];
-            $complete = true;
-            for ($month = 1; $month <= 12; $month++) {
-                $start = new DateTimeImmutable(sprintf('%04d-%02d-01 00:00:00', $whichYear, $month), $zone);
-                $next = $start->modify('first day of next month');
-                if ($start->getTimestamp() >= $now) {
-                    $valuesByYear[$whichYear][$month] = null;
-                    continue; // Future months are intentionally empty.
-                }
-                $end = min($now, $next->getTimestamp());
-                $from = $meterAt($start->getTimestamp());
-                $to = $meterAt($end);
-                $consumption = $from !== null && $to !== null ? ($to - $from) * $factor : null;
-                if ($consumption === null || !is_finite($consumption) || $consumption < -0.00001) {
-                    $valuesByYear[$whichYear][$month] = null;
-                    $complete = false;
-                } else {
-                    $valuesByYear[$whichYear][$month] = round(max(0.0, $consumption), 3);
+            $valuesByYear[$whichYear] = array_fill(1, 12, null);
+            $start = new DateTimeImmutable($whichYear . '-01-01 00:00:00', $zone);
+            $end = min($now, $start->modify('+1 year')->getTimestamp() - 1);
+            $rows = AC_GetAggregatedValues($archive, $totalID, 3, $start->getTimestamp(), $end, 0);
+            foreach (is_array($rows) ? $rows : [] as $row) {
+                $timestamp = (int)($row['TimeStamp'] ?? 0);
+                if ($timestamp < $start->getTimestamp() || $timestamp > $end) { continue; }
+                $month = (int)(new DateTimeImmutable('@' . $timestamp))->setTimezone($zone)->format('n');
+                $value = $row['Avg'] ?? null;
+                if (is_numeric($value) && is_finite((float)$value) && (float)$value >= 0) {
+                    $valuesByYear[$whichYear][$month] = round((float)$value * $factor, 3);
                 }
             }
-            $allMonthsComplete[$whichYear] = $complete;
+            $lastMonth = $whichYear === $year ? (int)$localNow->format('n') : 12;
+            $allMonthsComplete[$whichYear] = !in_array(null, array_slice($valuesByYear[$whichYear], 0, $lastMonth), true);
         }
 
         $names = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -141,25 +125,13 @@ trait HausstatusWaterbedSupport
             ];
         }
 
-        $startPrevious = (new DateTimeImmutable($previousYear . '-01-01 00:00:00', $zone))->getTimestamp();
-        $startCurrent = (new DateTimeImmutable($year . '-01-01 00:00:00', $zone))->getTimestamp();
-        $endPrevious = $startCurrent;
-        $previousStartReading = $meterAt($startPrevious);
-        $previousEndReading = $meterAt($endPrevious);
-        $currentStartReading = $previousEndReading;
-        $currentEndReading = $meterAt($now);
-        $total = static function (?float $start, ?float $end, bool $complete) use ($factor): ?float {
-            if (!$complete || $start === null || $end === null) { return null; }
-            $delta = ($end - $start) * $factor;
-            return is_finite($delta) && $delta >= -0.00001 ? round(max(0.0, $delta), 3) : null;
-        };
         $result = [
             'currentYear' => $year,
             'previousYear' => $previousYear,
-            'currentTotal' => $total($currentStartReading, $currentEndReading, $allMonthsComplete[$year]),
-            'previousTotal' => $total($previousStartReading, $previousEndReading, $allMonthsComplete[$previousYear]),
+            'currentTotal' => $allMonthsComplete[$year] ? round(array_sum($valuesByYear[$year]), 3) : null,
+            'previousTotal' => $allMonthsComplete[$previousYear] ? round(array_sum($valuesByYear[$previousYear]), 3) : null,
             'months' => $months,
-            'note' => 'Das aktuelle Jahr und der laufende Monat sind noch nicht abgeschlossen. Monatswerte aus archivierten Zählerständen nahe den Monatsgrenzen sind Näherungswerte; fehlende Daten bleiben leer.'
+            'note' => 'Das aktuelle Jahr und der laufende Monat sind noch nicht abgeschlossen. Einzelne Monatsverbräuche aus Energiezähler ID 17732; Jahressummen sind die Summe dieser Monate. Fehlende Monate bleiben leer; bei Datenlücken wird keine vollständige Jahressumme ausgewiesen.'
         ];
 
         $this->SetBuffer('WaterbedYearComparisonCache', json_encode([
@@ -185,7 +157,7 @@ trait HausstatusWaterbedSupport
         $result = ['values' => $sources, 'days' => [], 'annual' => null, 'note' => '',
             'history' => $this->WaterbedChartHistory()];
         $archive = $this->WaterbedArchiveID();
-        $totalID = $this->ConfigInteger('WaterbedTotal');
+        $totalID = 17732;
         if ($archive <= 0 || $totalID <= 0 || !IPS_VariableExists($totalID)) {
             $result['note'] = 'Für den Tagesverlauf muss der Gesamtverbrauchszähler im Symcon-Archiv verfügbar sein.';
             return $result;

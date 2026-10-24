@@ -29,12 +29,13 @@ class Fixture {
 }
 function check($v,$message){if(!$v)throw new Exception($message);}
 $f=new Fixture; $data=$f->run();
-check(array_keys($data)===['day','week','month','year'],'All periods');
+check(array_keys($data)===['day','week','month','year','previousYear'],'All periods');
 check($data['day']['series']['kwh'][1]['v']===1.25,'Wh conversion');
 check($data['day']['series']['kwh'][0]['v']===null,'Missing stays null');
 check($data['day']['series']['w'][1]['v']===28.0,'Watt mean preserved without conversion');
-check($calls===16,'Bounded archive calls');
-$f->run();check($calls===16,'Cache reuse');
+check($calls===20,'Bounded archive calls');
+check($data['previousYear']['end'] === (new DateTimeImmutable(date('Y').'-01-01 00:00:00',new DateTimeZone('Europe/Berlin')))->getTimestamp()-1,'Previous year excludes current readings');
+$f->run();check($calls===20,'Cache reuse');
 $f->unit='kWh';$data=$f->run();check($data['day']['series']['kwh'][1]['v']===1250.0,'Unit invalidates cache');
 $counter=false;$f->buffers=[];$data=$f->run();check($data['day']['series']['kwh']===[],'Reject standard mean for cumulative counter');
 check(str_contains($data['day']['note'],'Zähler'),'Counter setup note');

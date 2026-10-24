@@ -619,7 +619,7 @@ body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
 .waterbedChoices{display:flex;gap:4px;flex-wrap:wrap}
 .waterbedChoices button{min-height:38px;padding:5px 9px;font-size:12px}
 .waterbedChoices button[aria-pressed=true]{background:#218a8020;border-color:#218a80;font-weight:600}
-.waterbedTimeline .waterbedChartViewport svg{min-width:0}
+.waterbedTimeline .waterbedChartViewport svg{min-width:640px;max-height:none}
 .waterbedTotals{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
 .waterbedTotal,.waterbedYearTotal,.waterbedChartViewport{border-radius:var(--svhs-radius-inner)}
 
@@ -675,8 +675,7 @@ body.roomDetailView .waterbedAnnual{margin:0}
  body.roomDetailView .roomCategoryTabs button{flex:1 1 auto;padding:7px 9px}
 }
 
-.waterbedTimeline .waterbedFineScale svg{min-width:640px;max-height:none}
-.waterbedTimeline .waterbedMonthScale svg{min-width:840px}
+
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1827,9 +1826,9 @@ function groupKind(name){
  if(/energie|strom|pv/.test(value))return 'energy';
  return 'other';
 }
-function renderWaterbedYearComparison(data){
+function renderWaterbedYearComparison(data,temperatureSeries={},visible={sven:true,susi:true},selectedYear=null){
  const section=document.createElement('div');section.className='waterbedAnnual';
- const title=document.createElement('h4');text(title,'Jahresverbrauch und Monatsvergleich');section.append(title);
+ const title=document.createElement('h4');text(title,selectedYear===null?'Jahresvergleich · einzelne Monatsverbräuche':'Jahr '+selectedYear+' · einzelne Monatsverbräuche');section.append(title);
  const now=new Date();
  const currentYear=Number(data?.currentYear)||now.getFullYear();
  const previousYear=Number(data?.previousYear)||currentYear-1;
@@ -1837,6 +1836,7 @@ function renderWaterbedYearComparison(data){
   ?value.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—';
  const years=document.createElement('div');years.className='waterbedYearTotals';
  for(const [label,value] of [[currentYear+' · bisher',data?.currentTotal],[String(previousYear)+' · Gesamtjahr',data?.previousTotal]]){
+  if(selectedYear!==null&&!label.startsWith(String(selectedYear)))continue;
   const card=document.createElement('div');card.className='waterbedYearTotal';
   const name=document.createElement('span'),amount=document.createElement('strong');
   text(name,label);text(amount,kwh(value));card.append(name,amount);years.append(card);
@@ -1846,11 +1846,12 @@ function renderWaterbedYearComparison(data){
  const amounts=months.flatMap(month=>[month.current,month.previous]).filter(value=>typeof value==='number'&&Number.isFinite(value)&&value>=0);
  if(!amounts.length){
   const note=document.createElement('p');note.className='roomNote';
-  text(note,'Ein Monatsdiagramm ist erst möglich, wenn archivierte Zählerstände vorhanden sind.');
+  text(note,data?.note||'Ein Monatsdiagramm ist erst möglich, wenn archivierte Zählerstände vorhanden sind.');
   section.append(note);return section;
  }
  const legend=document.createElement('div');legend.className='waterbedLegend';
  for(const [key,label] of [['current',String(currentYear)],['previous',String(previousYear)]]){
+  if(selectedYear!==null&&label!==String(selectedYear))continue;
   const item=document.createElement('span');item.className='waterbedLegendItem';
   const sample=document.createElement('span');sample.className='waterbedLegendSample '+key;
   const caption=document.createElement('span');text(caption,label);
@@ -1859,18 +1860,17 @@ function renderWaterbedYearComparison(data){
  section.append(legend);
  const viewport=document.createElement('div');viewport.className='waterbedChartViewport';
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
- svg.setAttribute('viewBox','0 0 610 255');svg.setAttribute('role','img');
+ svg.setAttribute('viewBox','0 0 640 260');svg.setAttribute('role','img');
  svg.setAttribute('aria-label','Monatlicher Wasserbettverbrauch '+currentYear+' im Vergleich zu '+previousYear+', in Kilowattstunden');
  const make=(tag,attributes={})=>{
   const node=document.createElementNS(ns,tag);
   for(const [name,value] of Object.entries(attributes))node.setAttribute(name,String(value));
   return node;
  };
- const top=24,bottom=200,left=48,right=590;
- const max=Math.max(0,...amounts);
- const scale=Math.max(.5,Math.ceil(max*1.10*2)/2);
+ const top=30,bottom=210,left=52,right=584;
+ const scale=150;
  const y=value=>bottom-(value/scale)*(bottom-top);
- const x=index=>left+(right-left)*index/11;
+ const x=index=>left+(right-left)*(index+.5)/12;
  for(let i=0;i<=4;i++){
   const value=scale*i/4,position=y(value);
   svg.append(make('line',{x1:left,y1:position,x2:right,y2:position,stroke:'currentColor','stroke-opacity':'.15','stroke-width':1}));
@@ -1878,56 +1878,68 @@ function renderWaterbedYearComparison(data){
   text(label,value.toLocaleString('de-DE',{maximumFractionDigits:1}));svg.append(label);
  }
  for(let i=0;i<months.length;i++){
-  const label=make('text',{x:x(i),y:222,'text-anchor':'middle',fill:'currentColor','font-size':13});
+  const label=make('text',{x:x(i),y:232,'text-anchor':'middle',fill:'currentColor','font-size':13});
   text(label,months[i].name);svg.append(label);
  }
- const draw=(key,year,color)=>{
-  let path=[];
-  const flush=()=>{
-   if(!path.length)return;
-   const polyline=make('polyline',{points:path.join(' '),fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'});
-   svg.append(polyline);path=[];
-  };
-  for(let i=0;i<months.length;i++){
-   const month=months[i],value=month[key];
-   if(typeof value!=='number'||!Number.isFinite(value)){flush();continue;}
-   const positionX=x(i),positionY=y(value);
-   path.push(positionX+','+positionY);
-   const dot=make('circle',{cx:positionX,cy:positionY,r:4,fill:color,stroke:'currentColor','stroke-width':'.4'});
-   const tooltip=make('title');
-   text(tooltip,month.name+' '+year+(key==='current'&&month.partial?' (laufender Monat)':'')+': '+kwh(value));
-   dot.append(tooltip);svg.append(dot);
-  }
-  flush();
- };
- // Draw the older year first, then the current year over it.
- // Polyline paths are intentionally broken at missing months.
- draw('previous',previousYear,'#7185bf');
- draw('current',currentYear,'#218a80');
+ const slot=(right-left)/12,width=slot*.32;
+ const unitLabel=make('text',{x:left,y:14,fill:'currentColor','font-size':11});text(unitLabel,'Verbrauch · kWh/Monat');svg.append(unitLabel);
+ for(const [key,year,color,offset] of [['previous',previousYear,'#7185bf',-width],['current',currentYear,'#218a80',0]]){
+  if(selectedYear!==null&&year!==selectedYear)continue;
+  months.forEach((month,i)=>{
+   const value=month[key];if(typeof value!=='number'||!Number.isFinite(value)||value<0)return;
+   const bar=make('rect',{x:x(i)+(selectedYear===null?offset:-width/2),y:y(Math.min(scale,value)),width:width-1,height:bottom-y(Math.min(scale,value)),fill:color,'data-year':year,'data-month':i+1,'data-kwh':value});
+   const tip=make('title');text(tip,month.name+' '+year+(key==='current'&&month.partial?' (laufender Monat)':'')+': '+kwh(value)+(value>scale?' · oberhalb der Skala':''));
+   bar.append(tip);svg.append(bar);
+  });
+ }
+ const axis=make('text',{x:632,y:17,'text-anchor':'end',fill:'currentColor','font-size':11});text(axis,'Temperatur · °C');svg.append(axis);
+ for(let i=0;i<=7;i++){const label=make('text',{x:592,y:bottom-i/7*(bottom-top)+4,fill:'currentColor','font-size':11});text(label,String(i*5));svg.append(label);}
+ for(const [key,color] of [['sven','#b56818'],['susi','#9a58a7']]){
+  if(!visible[key])continue;let points=[];
+  const flush=()=>{if(points.length)svg.append(make('polyline',{points:points.join(' '),fill:'none',stroke:color,'stroke-width':2,'data-temperature':key}));points=[];};
+  for(const point of temperatureSeries[key]??[]){
+   if(typeof point.v!=='number'||!Number.isFinite(point.v)){flush();continue;}
+   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'numeric'}).formatToParts(new Date(point.t*1000));
+   if(Number(parts.find(p=>p.type==='year').value)!==(selectedYear??currentYear))continue;
+   const index=Number(parts.find(p=>p.type==='month').value)-1;
+   points.push(x(index)+','+(bottom-Math.max(0,Math.min(35,point.v))/35*(bottom-top)));
+  }flush();
+ }
  viewport.append(svg);section.append(viewport);
  const details=document.createElement('details');details.className='waterbedMonthDetails';
  const summary=document.createElement('summary');text(summary,'Monatswerte als Tabelle anzeigen');details.append(summary);
  const table=document.createElement('table');table.className='waterbedMonthlyTable';
  const header=document.createElement('tr');
- for(const caption of ['Monat',String(previousYear),String(currentYear)]){
+ for(const caption of ['Monat',...(selectedYear===null?[String(previousYear),String(currentYear)]:[String(selectedYear)])]){
   const th=document.createElement('th');text(th,caption);header.append(th);
  }
  const thead=document.createElement('thead');thead.append(header);table.append(thead);
  const tbody=document.createElement('tbody');
  for(const month of months){
   const row=document.createElement('tr');
-  for(const value of [month.name,kwh(month.previous),kwh(month.current)]){
+  for(const value of [month.name,...(selectedYear===null?[kwh(month.previous),kwh(month.current)]:[kwh(selectedYear===currentYear?month.current:month.previous)])]){
    const cell=document.createElement('td');text(cell,value);row.append(cell);
   }
   tbody.append(row);
  }
  table.append(tbody);details.append(table);section.append(details);
  const note=document.createElement('p');note.className='roomNote';
- text(note,data.note||'Fehlende Archivdaten werden nicht als Nullverbrauch dargestellt.');
+ text(note,(data?.note||'Fehlende Archivdaten werden nicht als Nullverbrauch dargestellt.')+' Skala: 0–150 kWh je Monat; höhere Werte sind am oberen Rand begrenzt und im Tooltip sowie in der Tabelle vollständig lesbar.');
  section.append(note);
  return section;
 }
-let waterbedRange='day',waterbedUnit='w';
+const waterbedSettingsKey='hausstatus.waterbed.v1:'+ (typeof location==='undefined'?'default':location.pathname+location.search);
+let waterbedSelectedYear=null;
+let waterbedRange='day',waterbedUnit='w',waterbedVisible={sven:true,susi:true};
+try{
+ const saved=JSON.parse(localStorage.getItem(waterbedSettingsKey)||'null');
+ if(['day','week','month','year','compare'].includes(saved?.range))waterbedRange=saved.range;
+ if(Number.isInteger(saved?.year))waterbedSelectedYear=saved.year;
+ if(['w','kwh'].includes(saved?.unit))waterbedUnit=saved.unit;
+ for(const key of ['sven','susi'])if(typeof saved?.visible?.[key]==='boolean')waterbedVisible[key]=saved.visible[key];
+}catch{}
+function saveWaterbedSettings(){try{localStorage.setItem(waterbedSettingsKey,JSON.stringify({range:waterbedRange,unit:waterbedUnit,visible:waterbedVisible,year:waterbedSelectedYear}));}catch{}}
+
 function renderWaterbedChart(history,annual,power){
  const box=document.createElement('div');box.className='waterbedTimeline';
  const toolbar=document.createElement('div');toolbar.className='waterbedToolbar';
@@ -1939,25 +1951,33 @@ function renderWaterbedChart(history,annual,power){
    ['Einheit',[['w','W'],['kwh','kWh']],waterbedUnit,v=>waterbedUnit=v]]){
    if(label==='Einheit'&&waterbedRange==='compare')continue;
    const group=document.createElement('div');group.className='waterbedChoices';group.setAttribute('role','group');group.setAttribute('aria-label',label);
-   for(const [key,title] of options){const b=document.createElement('button');b.type='button';text(b,title);b.setAttribute('aria-pressed',String(key===current));b.addEventListener('click',()=>{set(key);draw();});group.append(b);}toolbar.append(group);
+   for(const [key,title] of options){const b=document.createElement('button');b.type='button';text(b,title);b.setAttribute('aria-pressed',String(key===current));b.addEventListener('click',()=>{set(key);saveWaterbedSettings();draw();});group.append(b);}toolbar.append(group);
   }
-  if(waterbedRange==='compare'){body.append(renderWaterbedYearComparison(annual));return;}
-  const data=history?.[waterbedRange],series=data?.series??{},unit=waterbedUnit==='w'?'W':'kWh';
+  const toggles=document.createElement('div');toggles.className='waterbedChoices';toggles.setAttribute('role','group');toggles.setAttribute('aria-label','Temperaturen');
+  for(const [key,label] of [['sven','Sven · °C'],['susi','Susi · °C']]){
+   const button=document.createElement('button');button.type='button';text(button,label);button.style.borderColor=key==='sven'?'#b56818':'#9a58a7';button.setAttribute('aria-pressed',String(waterbedVisible[key]));
+   button.addEventListener('click',()=>{waterbedVisible[key]=!waterbedVisible[key];saveWaterbedSettings();draw();});toggles.append(button);
+  }toolbar.append(toggles);
+
+
+  const current=Number(annual?.currentYear)||new Date().getFullYear(),previous=Number(annual?.previousYear)||current-1;
+  if(![current,previous].includes(waterbedSelectedYear))waterbedSelectedYear=current;
+  if(waterbedRange==='year'){
+   const group=document.createElement('div');group.className='waterbedChoices';group.setAttribute('role','group');group.setAttribute('aria-label','Jahr auswählen');
+   for(const year of [previous,current]){const button=document.createElement('button');button.type='button';text(button,String(year));button.setAttribute('aria-pressed',String(year===waterbedSelectedYear));button.addEventListener('click',()=>{waterbedSelectedYear=year;saveWaterbedSettings();draw();});group.append(button);}toolbar.append(group);
+  }
+  const selectedHistory=waterbedSelectedYear===previous?history?.previousYear:history?.year;
+  if(waterbedRange==='compare'){body.append(renderWaterbedYearComparison(annual,history?.year?.series,waterbedVisible));return;}
+  if(waterbedRange==='year'&&waterbedUnit==='kwh'){body.append(renderWaterbedYearComparison(annual,selectedHistory?.series,waterbedVisible,waterbedSelectedYear));return;}
+  const data=waterbedRange==='year'?selectedHistory:history?.[waterbedRange],series=data?.series??{},unit=waterbedUnit==='w'?'W':'kWh';
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 640 260');svg.setAttribute('role','img');svg.setAttribute('aria-label','Wasserbett: '+unit+' und Temperatur Sven und Susi in °C');
   const add=(tag,attrs,content)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(content!==undefined)e.textContent=content;svg.append(e);return e;};
   const valid=p=>typeof p.v==='number'&&Number.isFinite(p.v);
-  const energy=series[waterbedUnit]??[],temperatures=[...(series.sven??[]),...(series.susi??[])].filter(valid);
-  const live=waterbedUnit==='w'&&typeof power?.raw==='number'&&Number.isFinite(power.raw)&&power.raw>=0?power.raw:null;
-  const measured=energy.filter(valid),hasScale=measured.length>0||live!==null;
-  const peak=Math.max(0,live??0,...measured.map(p=>p.v));
-  const magnitude=peak>0?10**Math.floor(Math.log10(peak)):1;
-  // At most about seven labels across the fixed plot height.
-  const desiredStep=Math.max(10,peak*1.1/6),stepMagnitude=10**Math.floor(Math.log10(desiredStep));
-  const wattStep=[1,2,2.5,5,10].find(step=>step*stepMagnitude>=desiredStep)*stepMagnitude;
-  const max=waterbedUnit==='w'?Math.max(wattStep,Math.ceil(peak*1.1/wattStep)*wattStep):peak>0?Math.ceil(peak*1.1/magnitude)*magnitude:1;
-
-  const low=temperatures.length?Math.floor(Math.min(...temperatures.map(p=>p.v))-1):20;
-  const high=temperatures.length?Math.ceil(Math.max(...temperatures.map(p=>p.v))+1):35;
+  const energy=series[waterbedUnit]??[];
+  const live=!(waterbedRange==='year'&&waterbedSelectedYear===previous)&&waterbedUnit==='w'&&typeof power?.raw==='number'&&Number.isFinite(power.raw)&&power.raw>=0?power.raw:null;
+  const measured=energy.filter(valid);
+  const wattStep=500,max=waterbedUnit==='w'?2000:({day:10,week:70,month:150,year:150}[waterbedRange]);
+  const low=0,high=35;
   const start=data?.start??0;
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'numeric'}).formatToParts(new Date(start*1000));
   const year=Number(parts.find(p=>p.type==='year').value),month=Number(parts.find(p=>p.type==='month').value)-1;
@@ -1977,14 +1997,15 @@ function renderWaterbedChart(history,annual,power){
    }
    for(let i=0;i<=4;i++)add('text',{x:592,y:34+i*45,fill:'currentColor','font-size':11},(high-(high-low)*i/4).toFixed(1));
   }else{
-   for(let i=0;i<=steps;i++){const y=30+i*180/steps;add('line',{x1:52,x2:584,y1:y,y2:y,stroke:'currentColor',opacity:i%2===0?.16:.08});add('text',{x:46,y:y+4,'text-anchor':'end',fill:'currentColor','font-size':11},hasScale?(max*(1-i/steps)).toLocaleString('de-DE',{maximumFractionDigits:2}):'—');add('text',{x:592,y:y+4,fill:'currentColor','font-size':11},(high-(high-low)*i/steps).toFixed(1));}
+   for(let i=0;i<=steps;i++){const y=30+i*180/steps;add('line',{x1:52,x2:584,y1:y,y2:y,stroke:'currentColor',opacity:i%2===0?.16:.08});add('text',{x:46,y:y+4,'text-anchor':'end',fill:'currentColor','font-size':11},(max*(1-i/steps)).toLocaleString('de-DE',{maximumFractionDigits:2}));add('text',{x:592,y:y+4,fill:'currentColor','font-size':11},(high-(high-low)*i/steps).toFixed(1));}
   }
 
 
-  const legends=[[waterbedUnit,unit,'#218a80'],['sven','Sven · °C','#b56818'],['susi','Susi · °C','#7185bf']];
+  const legends=[[waterbedUnit,unit,'#218a80'],['sven','Sven · °C','#b56818'],['susi','Susi · °C','#9a58a7']];
   for(const [key,label,color] of legends){
+   if(key!==waterbedUnit&&!waterbedVisible[key])continue;
    const points=series[key]??[];let path='',last=null;
-   for(const p of points){if(!valid(p)){last=null;continue;}const y=key===waterbedUnit?210-p.v/max*180:210-(p.v-low)/(high-low)*180;
+   for(const p of points){if(!valid(p)){last=null;continue;}const y=key===waterbedUnit?210-Math.max(0,Math.min(max,p.v))/max*180:210-Math.max(0,Math.min(35,p.v))/35*180;
     const limit=waterbedRange==='day'?7200:waterbedRange==='year'?32*86400:2*86400;
     path+=(last!==null&&p.t-last<=limit?' L':' M')+x(p.t).toFixed(2)+' '+y.toFixed(2);last=p.t;
     const dot=add('circle',{cx:x(p.t),cy:y,r:2.4,fill:color});const tip=document.createElementNS(ns,'title');tip.textContent=new Date(p.t*1000).toLocaleString('de-DE',{timeZone:'Europe/Berlin'})+' · '+label+': '+p.v.toLocaleString('de-DE');dot.append(tip);

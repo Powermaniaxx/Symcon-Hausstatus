@@ -23,3 +23,20 @@ Leistung ID 16905 verwendet bei Standardarchivierung die aggregierten Watt-Mitte
 Ohne archivierte Leistungswerte orientiert sich die Watt-Skala am aktuellen Wert (beispielsweise 0–60 W bei aktuell 51 W). Leistung und Temperatur sind ausdrücklich an ihren getrennten Achsen beschriftet.
 
 Ab v0.119 beginnt die Watt-Achse weiterhin bei 0 und wählt die Schrittweite automatisch für höchstens etwa sieben Beschriftungen. Bei etwa 51 W bleiben 10-W-Schritte mit 5-W-Zwischenlinien; bei etwa 260 W erscheinen 50-W-Schritte mit 25-W-Zwischenlinien (0–300 W). Größere Werte erhalten entsprechend größere Schritte. Fehlende Archivwerte sind ausdrücklich gekennzeichnet. Die obere Grenze folgt Verlauf und aktuellem Wert.
+
+
+## v0.120
+Tag/Woche/Monat/Jahr und W/kWh bleiben in einer Ansicht. Feste Achsen: Leistung 0–2000 W, Verbrauch Tag 0–10 kWh, Woche 0–70 kWh, Monat 0–150 kWh, Temperatur rechts 0–35 °C. Die Jahresansicht in kWh zeigt je Kalendermonat zwei einzelne Balken für Vorjahr und aktuelles Jahr (2025/2026), Skala 0–150 kWh/Monat. Die beiden Jahressummen stehen getrennt darüber. Keine kumulierten Monatswerte. Jahr in W zeigt weiterhin Monatsmittel der Leistung.
+
+Alle Verbrauchsverläufe und der Jahresvergleich stammen aus ID 17732 mit Zähleraggregation. Monatswerte verwenden die archivierten Monatsverbräuche; Jahressummen addieren diese Monate. Bei fehlenden vergangenen Monaten bleibt die vollständige Jahressumme unbekannt. Zukünftige Monate bleiben leer. Sven und Susi lassen sich unabhängig per Schaltfläche ein-/ausblenden. Zeitraum, Einheit und Sichtbarkeit werden je Browser und Ansichtsadresse lokal gespeichert; gesperrter Browserspeicher verhindert die Bedienung nicht.
+
+Das vorhandene helle Raum-/Kacheldesign bleibt erhalten. Mobile Diagramme scrollen innerhalb der Kachel. Werte oberhalb fester Achsengrenzen werden am Rand begrenzt; Tooltip und Monatstabelle enthalten die tatsächlichen Messwerte.
+
+Validierung: Diagrammtests für acht Modi, Monatsbalken, feste Achsen, Schalter und gespeicherte Einstellungen; PHP-Archivtests einschließlich Monatsaggregation, Wh-Umrechnung, Datenlücken und Cache; vorhandene Licht-/Raum-/Shield-Layouttests; Browserprüfung bei 840/390 px einschließlich Neuladen. Browserdaten sind simuliert; keine Live-Prüfung am Symcon-Server.
+
+
+Nach der abschließenden Aufteilung: **Jahr** bietet eine Jahreswahl (2025/2026) für einzelne Monatsbalken in kWh oder Monatsmittel in W. Leistung und Temperaturen folgen dem gewählten Jahr. **Jahresvergleich** zeigt beide Jahre nebeneinander in kWh und getrennte Jahressummen; die optionalen Temperaturkurven gehören hier zum aktuellen Jahr. Die Jahreswahl wird ebenfalls gespeichert. Für das Vorjahr werden zusätzlich vier Archivserien gelesen, damit sind es höchstens 20 Aggregationsabfragen pro fünf Minuten zuzüglich zwei Monatsverbrauchsabfragen für die Jahressummen (30-Minuten-Cache).
+
+Alle fünf Ansichten haben identische Diagrammabmessungen (viewBox 640 × 260, Mindestbreite 640 px). Separate Größen für Monat/Jahr entfallen. Die Browserprüfung vergleicht die tatsächlichen Breiten und Höhen aller Ansichten bei 840 und 390 px.
+
+Ein zusätzlich ausgeführter bestehender Test tests/homepage-parts.js scheitert sowohl mit dem unveränderten Ausgangsmodul v0.119 als auch mit v0.120: Im Test-DOM fehlt presenceHistorySection. Dieser bereits vorhandene Testfehler gehört nicht zum Wasserbett-Umbau. Alle Wasserbett-, Licht-, Raum-, Shield-Layout-, Shield-Parser-, Philips- und Interaktionstests, die hier ausgeführt wurden, bestehen.
