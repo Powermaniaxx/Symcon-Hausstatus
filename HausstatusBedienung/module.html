@@ -623,6 +623,65 @@ body.roomDetailView #heatingProfileSection>p.small{margin:2px 0 6px}
 .waterbedTotals{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
 .waterbedTotal,.waterbedYearTotal,.waterbedChartViewport{border-radius:var(--svhs-radius-inner)}
 
+/* Room detail: a single aligned surface, quiet controls and compact device cards. */
+body.roomDetailView{background:#f6f8fa;color:#25313b;color-scheme:light}
+body.roomDetailView main{max-width:1060px;margin-inline:auto;padding-inline:20px;padding-bottom:24px}
+body.roomDetailView .roomNavigation{display:flex;align-items:center;gap:16px;margin:0 0 14px}
+body.roomDetailView .roomNavigation label{display:block;font-size:12px;font-weight:500;color:#647480}
+body.roomDetailView .roomNavigation select{max-width:320px;min-height:44px;padding:10px 14px;background:#fff;border-color:#dce3e8;font-weight:600;border-radius:12px}
+body.roomDetailView #heatingProfileSection{display:grid;grid-template-columns:170px minmax(0,1fr);column-gap:24px;align-items:center;margin:0 0 20px;padding:14px 18px;background:#edf2f5;border:1px solid #e0e7ec;border-radius:14px}
+body.roomDetailView #heatingProfileSection>h2{grid-column:1;font-size:13px;font-weight:650;margin:0;align-self:end}
+body.roomDetailView #heatingProfileSection>p.small{grid-column:1;margin:4px 0 0;font-size:11px;line-height:1.4;align-self:start}
+body.roomDetailView #heatingProfile{grid-column:2;grid-row:1/3;min-width:0}
+body.roomDetailView #heatingProfile>.roomItem{display:grid;grid-template-columns:minmax(0,1fr) 170px;align-items:center;gap:8px 18px;padding:0;border:0}
+body.roomDetailView #heatingProfile .row{border:0;padding:0;min-width:0;font-size:12px}
+body.roomDetailView #heatingProfile .row>span:first-child{display:none}
+body.roomDetailView #heatingProfile .row>span:last-child{max-width:100%;text-align:left;font-weight:500;color:#49616f}
+body.roomDetailView #heatingProfile select{min-height:40px;background:#fff;border-color:#d5dfe5;border-radius:10px;font-size:12px}
+body.roomDetailView #heatingProfile .roomNote{grid-column:1/-1;margin:0;font-size:11px}
+body.roomDetailView .roomPage{max-width:none;padding:0;margin:0}
+body.roomDetailView .roomOverview{gap:8px;margin:0 0 18px}
+body.roomDetailView .roomMetric{background:#fff;border:1px solid #e2e8ed;border-radius:10px;padding:8px 11px;gap:8px;font-size:12px}
+body.roomDetailView .roomMetric>span{opacity:1;color:#71808a}
+body.roomDetailView .roomMetric>strong{color:#25313b;font-variant-numeric:tabular-nums}
+body.roomDetailView .roomCategoryTabs{display:flex;gap:4px;flex-wrap:wrap;padding:4px;background:#e9eef2;border-radius:12px;width:fit-content;margin:0 0 22px}
+body.roomDetailView .roomCategoryTabs button{min-height:40px;padding:8px 17px;border:1px solid transparent;background:transparent;color:#60717d;font-size:12px;border-radius:9px}
+body.roomDetailView .roomCategoryTabs button[aria-pressed=true]{background:#fff;border-color:#dce5ea;color:#18766e;box-shadow:0 1px 3px #2335410b;font-weight:650}
+body.roomDetailView .roomPage .roomGroup>h3{margin:0 0 10px;font-size:12px;letter-spacing:.025em;color:#657581;font-weight:600}
+body.roomDetailView .roomPage .roomDevice,body.roomDetailView .roomPage .roomGroup-light .roomDevice{padding:14px 16px;margin:0;background:#fff;border:1px solid #e0e7ec;border-radius:14px;box-shadow:0 2px 6px #25313b03}
+body.roomDetailView .roomPage .roomGroup-light .roomDevice.isOn{background:#fffef9;border-color:#e8ddbb}
+body.roomDetailView .roomPage .roomDeviceGrid{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+body.roomDetailView .roomPage .deviceHeader{min-height:38px;gap:10px;flex-wrap:nowrap}
+body.roomDetailView .roomPage .deviceHeader>h4{font-size:14px;line-height:1.4;font-weight:600;flex:1;min-width:0}
+body.roomDetailView .roomPage .deviceState{font-size:11px;color:#78858e;opacity:1}
+body.roomDetailView .roomPage .deviceToggle{height:40px;width:44px;min-width:44px;min-height:40px;background:transparent;border:0}
+body.roomDetailView .roomPage .toggleTrack[data-state=false]{background:#c4ced5;border-color:#c4ced5}
+body.roomDetailView .roomPage .toggleTrack[data-state=true]{background:#218a80;border-color:#218a80}
+body.roomDetailView .roomPage .roomItem[data-kind=color]{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:10px 0;border-top:1px solid #edf1f4}
+body.roomDetailView .roomPage .roomItem[data-kind=color]>.row{flex:1;padding:0;border:0;font-size:12px;color:#657581}
+body.roomDetailView .roomPage .roomItem[data-kind=color]>.row>span:last-child{display:none}
+body.roomDetailView .roomPage .roomItem[data-kind=color]>input[type=color]{flex:0 0 48px;width:48px;height:32px;min-height:32px;margin:0;padding:3px;border:1px solid #dce3e8;border-radius:9px;background:#fff;cursor:pointer}
+body.roomDetailView input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+body.roomDetailView input[type=color]::-webkit-color-swatch{border:0;border-radius:5px}
+body.roomDetailView .roomPage .roomDetails>summary{min-height:36px;padding:10px 0 0;font-size:11px;color:#6a7d89;opacity:1}
+body.roomDetailView .roomPage .roomDetails[open]>summary{margin-bottom:10px}
+@media(min-width:760px){body.roomDetailView .roomPage .roomGroup-light .roomDeviceGrid,body.roomDetailView .roomPage .roomGroup-sensor .roomDeviceGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+ body.roomDetailView main{padding-inline:12px}
+ body.roomDetailView .roomNavigation{gap:12px}
+ body.roomDetailView .roomNavigation select{max-width:none;min-width:0}
+ body.roomDetailView #heatingProfileSection{grid-template-columns:1fr;padding:12px 14px;gap:4px;margin-bottom:16px}
+ body.roomDetailView #heatingProfileSection>p.small{display:none}
+ body.roomDetailView #heatingProfile{grid-column:1;grid-row:auto}
+ body.roomDetailView #heatingProfile>.roomItem{grid-template-columns:minmax(0,1fr) 125px;gap:8px;font-size:11px}
+ body.roomDetailView #heatingProfile .row{font-size:11px}
+ body.roomDetailView .roomOverview{gap:6px;margin-bottom:14px}
+ body.roomDetailView .roomMetric{font-size:11px;padding:7px 9px;gap:6px}
+ body.roomDetailView .roomCategoryTabs{width:100%;gap:2px;margin-bottom:18px}
+ body.roomDetailView .roomCategoryTabs button{flex:1 1 auto;padding:8px 9px;min-height:40px;font-size:11px}
+ body.roomDetailView .roomPage .roomDevice{padding:12px 14px}
+}
+
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
