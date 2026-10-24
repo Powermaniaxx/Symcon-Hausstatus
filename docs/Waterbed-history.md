@@ -22,4 +22,4 @@ Leistung ID 16905 verwendet bei Standardarchivierung die aggregierten Watt-Mitte
 
 Ohne archivierte Leistungswerte orientiert sich die Watt-Skala am aktuellen Wert (beispielsweise 0–60 W bei aktuell 51 W). Leistung und Temperatur sind ausdrücklich an ihren getrennten Achsen beschriftet.
 
-Die Watt-Achse beginnt immer bei 0, beschriftet jede 10-W-Stufe und hat feine Zwischenlinien in 5-W-Abständen. Ohne Leistungsdaten beginnt der leere Rahmen bei 0–10 W; fehlende Archivwerte sind ausdrücklich gekennzeichnet. Die obere Grenze wird anhand von Verlauf und aktuellem Wert auf eine 10-W-Stufe aufgerundet.
+Ab v0.119 beginnt die Watt-Achse weiterhin bei 0 und wählt die Schrittweite automatisch für höchstens etwa sieben Beschriftungen. Bei etwa 51 W bleiben 10-W-Schritte mit 5-W-Zwischenlinien; bei etwa 260 W erscheinen 50-W-Schritte mit 25-W-Zwischenlinien (0–300 W). Größere Werte erhalten entsprechend größere Schritte. Fehlende Archivwerte sind ausdrücklich gekennzeichnet. Die obere Grenze folgt Verlauf und aktuellem Wert.

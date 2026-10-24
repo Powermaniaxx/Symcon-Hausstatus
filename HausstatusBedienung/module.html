@@ -1951,7 +1951,10 @@ function renderWaterbedChart(history,annual,power){
   const measured=energy.filter(valid),hasScale=measured.length>0||live!==null;
   const peak=Math.max(0,live??0,...measured.map(p=>p.v));
   const magnitude=peak>0?10**Math.floor(Math.log10(peak)):1;
-  const max=waterbedUnit==='w'?Math.max(10,Math.ceil(peak*1.1/10)*10):peak>0?Math.ceil(peak*1.1/magnitude)*magnitude:1;
+  // At most about seven labels across the fixed plot height.
+  const desiredStep=Math.max(10,peak*1.1/6),stepMagnitude=10**Math.floor(Math.log10(desiredStep));
+  const wattStep=[1,2,2.5,5,10].find(step=>step*stepMagnitude>=desiredStep)*stepMagnitude;
+  const max=waterbedUnit==='w'?Math.max(wattStep,Math.ceil(peak*1.1/wattStep)*wattStep):peak>0?Math.ceil(peak*1.1/magnitude)*magnitude:1;
 
   const low=temperatures.length?Math.floor(Math.min(...temperatures.map(p=>p.v))-1):20;
   const high=temperatures.length?Math.ceil(Math.max(...temperatures.map(p=>p.v))+1):35;
@@ -1966,8 +1969,9 @@ function renderWaterbedChart(history,annual,power){
   add('text',{x:8,y:17,fill:'currentColor','font-size':12},waterbedUnit==='w'?'Leistung · W':'Verbrauch · kWh');add('text',{x:632,y:17,'text-anchor':'end',fill:'currentColor','font-size':12},'Temperatur · °C');
   const fine=waterbedRange==='month'||waterbedRange==='year',steps=fine?8:4;
   if(waterbedUnit==='w'){
-   for(let watts=0;watts<=max;watts+=5){
-    const y=210-watts/max*180,major=watts%10===0;
+   const divisions=Math.round(max/wattStep)*2;
+   for(let tick=0;tick<=divisions;tick++){
+    const watts=tick*wattStep/2,y=210-watts/max*180,major=tick%2===0;
     add('line',{x1:52,x2:584,y1:y,y2:y,stroke:'currentColor',opacity:major?.16:.06,'stroke-width':major?1:.5});
     if(major)add('text',{x:46,y:y+4,'text-anchor':'end',fill:'currentColor','font-size':11},String(watts));
    }

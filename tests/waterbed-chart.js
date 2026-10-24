@@ -41,6 +41,14 @@ assert(!all(live).some(n=>n.tag==='text'&&n.attrs.x==='46'&&n.textContent==='1,1
 assert(all(live).some(n=>n.textContent.includes('Aktuell: 51 W.')),'Live power distinct from historical means');
 assert.deepEqual(all(live).filter(n=>n.tag==='text'&&n.attrs.x==='46').map(n=>n.textContent),['0','10','20','30','40','50','60'],'10 W labels from zero');
 assert.equal(all(live).filter(n=>n.tag==='line'&&n.attrs['stroke-width']==='0.5').length,6,'5 W minor grid');
+for(const peak of [51,260,600,3000,10000]){
+ const chart=context.renderWaterbedChart({day:{start:1000,end:8200,series:{w:[{t:1000,v:peak}]}}},annual,{raw:51,text:'51 W'});
+ const labels=all(chart).filter(n=>n.tag==='text'&&n.attrs.x==='46').map(n=>Number(n.textContent));
+ assert.equal(labels[0],0);assert(labels.at(-1)>=peak);
+ assert(labels.length<=7,'Bounded labels at '+peak+' W');
+ assert(all(chart).filter(n=>n.tag==='line'&&n.attrs['stroke-width']==='0.5').length<=6,'Bounded minor grid');
+ if(peak===260)assert.deepEqual(labels,[0,50,100,150,200,250,300],'50 W steps for screenshot range');
+}
 const scaleData={...data,month:{start:Date.parse('2026-03-01T00:00:00+01:00')/1000,end:Date.parse('2026-04-01T00:00:00+02:00')/1000,series:{}},year:{start:Date.parse('2026-01-01T00:00:00+01:00')/1000,end:Date.parse('2026-10-24T12:00:00+02:00')/1000,series:{}}};
 const scale=context.renderWaterbedChart(scaleData,annual);
 all(scale).find(n=>n.tag==='button'&&n.textContent==='Monat').events.click();
