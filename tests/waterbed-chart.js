@@ -34,4 +34,11 @@ const energy=context.renderWaterbedEnergy({history:data,annual,values:{},days:[{
 assert.equal(all(energy).filter(n=>n.tag==='svg').length,1,'Only one chart in complete waterbed section');
 assert(!all(energy).some(n=>n.className==='waterbedHistory'),'Legacy table removed');
 assert(!all(energy).some(n=>n.className==='waterbedAnnual'),'No second annual chart below history');
+const scaleData={...data,month:{start:Date.parse('2026-03-01T00:00:00+01:00')/1000,end:Date.parse('2026-04-01T00:00:00+02:00')/1000,series:{}},year:{start:Date.parse('2026-01-01T00:00:00+01:00')/1000,end:Date.parse('2026-10-24T12:00:00+02:00')/1000,series:{}}};
+const scale=context.renderWaterbedChart(scaleData,annual);
+all(scale).find(n=>n.tag==='button'&&n.textContent==='Monat').events.click();
+assert.equal(all(scale).filter(n=>n.tag==='line'&&n.attrs.x1==='52'&&n.attrs.x2==='584').length,9,'Fine value grid');
+assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='29.03.'),'Calendar labels across DST');
+all(scale).find(n=>n.tag==='button'&&n.textContent==='Jahr').events.click();
+assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='Okt'),'Monthly marks in yearly view');
 console.log('waterbed-chart: OK (8 combinations, single chart, annual selector, legacy table removed)');

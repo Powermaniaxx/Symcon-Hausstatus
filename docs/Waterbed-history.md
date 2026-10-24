@@ -15,3 +15,5 @@ Die Ergebnisse werden fünf Minuten zwischengespeichert. Pro Neuabfrage entstehe
 Prüfung: PHP-Syntax, isolierte Archivtests (Quellen, Einheiten, Cache, fehlende Werte, Aggregationstyp), Frontendtests für alle acht Zeitraum/Einheit-Kombinationen, bestehende Bedien-/Licht-/Heizungs-/Shield-Tests und Browserprüfung bei 840 und 390 Pixeln. Browserdaten sind simuliert; ein Test gegen das laufende Symcon-System ist nicht erfolgt.
 
 Ab v0.115 gibt es eine gemeinsame Diagrammansicht: Tag, Woche, Monat, Jahr oder Jahresvergleich. Der Jahresvergleich ist keine zusätzliche Grafik unter dem Verlauf mehr. Die Raumgestaltung verwendet dieselben weißen Flächen, grauen Titelbalken, Rahmen und Rundungen wie die Hausstatus-System- und PV-Kacheln.
+
+Ab v0.116 haben Monat und Jahr acht statt vier Wertintervalle. Die Monatsansicht zeigt Datumsmarken alle zwei Tage, die Jahresansicht einzelne Monatsnamen. Die Datumsgrenzen folgen Europe/Berlin einschließlich Zeitumstellung. Auf schmalen Bildschirmen lässt sich das feinere Diagramm horizontal scrollen. Die Messwertaggregation bleibt unverändert.
