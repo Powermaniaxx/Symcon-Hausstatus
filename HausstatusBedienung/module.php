@@ -41,7 +41,7 @@ class HausstatusBedienung extends IPSModuleStrict
         'NetworkWirelessState' => 0, 'NetworkLastRestart' => 0,
         'NetworkTotalReceived' => 0, 'NetworkTotalSent' => 0,
         'NetworkVoipDNS1' => 0, 'NetworkVoipDNS2' => 0,
-        'WasherPower' => 15161, 'DryerPower' => 12920, 'WasherRunning' => 0, 'DryerRunning' => 0,
+        'WasherPower' => 50687, 'DryerPower' => 12920, 'WasherRunning' => 0, 'DryerRunning' => 0,
         'HeatingProfile' => 31603, 'Presence' => 52726, 'SvenPresence' => 0, 'SusiPresence' => 0, 'Lock' => 0, 'DoorContact' => 0,
         'DoorControl' => 0, 'DoorPermission' => 0, 'Alarm' => 0, 'BatteryWarnings' => 0,
         'LightState' => 0, 'Brightness' => 0, 'CinemaState' => 0,
@@ -887,6 +887,8 @@ class HausstatusBedienung extends IPSModuleStrict
     private function ConfigInteger(string $name): int
     {
         $id = (int)$this->ConfigValue($name);
+        // Follow the replaced washing-machine power variable in existing and mirrored tiles.
+        if ($name === 'WasherPower' && $id === 15161) { return 50687; }
         // Google Home liefert den richtigen Hausstatus in 52726.
         // Bestehende Zuordnungen auf 12936 sowie leere Zuordnungen nutzen 52726.
         // Andere bewusst gewaehlte Anwesenheitsquellen bleiben erhalten.
