@@ -1987,28 +1987,6 @@ function renderWaterbedEnergy(data){
  section.append(totals);
  section.append(renderWaterbedChart(data.history));
  section.append(renderWaterbedYearComparison(data.annual));
- const subtitle=document.createElement('h4');text(subtitle,'Verlauf · letzte 7 Tage');section.append(subtitle);
- const table=document.createElement('table');table.className='waterbedHistory';
- const thead=document.createElement('thead'),header=document.createElement('tr');
- for(const heading of ['Tag','Verbrauch']){const th=document.createElement('th');text(th,heading);header.append(th);}
- thead.append(header);table.append(thead);
- const tbody=document.createElement('tbody'),days=Array.isArray(data.days)?data.days:[];
- const max=Math.max(0,...days.map(day=>typeof day.kwh==='number'&&Number.isFinite(day.kwh)?day.kwh:0));
- for(const day of days){
-  const tr=document.createElement('tr'),date=document.createElement('td'),consumption=document.createElement('td');
-  text(date,day.date);
-  const value=document.createElement('div');value.className='waterbedValue';
-  const track=document.createElement('span');track.className='waterbedBarTrack';
-  const bar=document.createElement('span');bar.className='waterbedBar';
-  bar.style.display='block';bar.style.width=(typeof day.kwh==='number'&&max>0?Math.max(0,Math.min(100,day.kwh/max*100)):0)+'%';
-  track.append(bar);value.append(track);
-  const amount=document.createElement('span');amount.className='waterbedAmount';
-  text(amount,typeof day.kwh==='number'?day.kwh.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—');
-  value.append(amount);consumption.append(value);tr.append(date,consumption);tbody.append(tr);
- }
- if(!days.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=2;text(td,'Noch keine Tageswerte vorhanden');tr.append(td);tbody.append(tr);}
- table.append(tbody);section.append(table);
- if(data.note){const note=document.createElement('p');note.className='roomNote';text(note,data.note);section.append(note);}
  return section;
 }
 function deviceItems(items){

@@ -4,7 +4,7 @@ Die Raumansicht verwendet kompakte Karten mit den gemeinsamen Rundungen und klar
 
 Im Schlafzimmer stehen für das Wasserbett Kalenderzeiträume Tag, Woche, Monat und Jahr zur Wahl. W zeigt mittlere Leistung aus ID 16905, kWh den Verbrauch je Intervall aus ID 17732. Tag verwendet Stundenwerte, Woche und Monat Tageswerte, Jahr Monatswerte. Sven (standardmäßig 30213) und Susi (standardmäßig 43240) werden als Temperaturkurven auf der rechten °C-Achse dargestellt. Ihre Quellen folgen den vorhandenen Temperatureinstellungen.
 
-Die Diagrammquellen 16905 und 17732 sind unabhängig von den bisherigen konfigurierbaren Statuskarten. Der bestehende Jahresvergleich und die Tageswerttabelle verwenden weiterhin den konfigurierten Gesamtzähler und bleiben erhalten.
+Die Diagrammquellen 16905 und 17732 sind unabhängig von den bisherigen konfigurierbaren Statuskarten. Der bestehende Jahresvergleich verwendet weiterhin den konfigurierten Gesamtzähler. Die alte 7-Tage-Tabelle entfällt ab v0.114; die Zeitraumauswahl im Diagramm ersetzt sie.
 
 Die vier Diagrammvariablen müssen bereits archiviert sein. ID 17732 benötigt den Archiv-Aggregationstyp **Zähler**. Bei Standardaggregation erscheint ein Hinweis statt eines falschen Verbrauchs. Die vorhandene Einstellung WaterbedEnergyUnit bestimmt, ob Verbrauchsdaten bereits in kWh vorliegen oder von Wh umgerechnet werden. Die Erweiterung verändert keine Archivierung oder Geräteaktionen. Laufende Intervalle sind unvollständig; fehlende Werte werden nicht als Null dargestellt.
 
