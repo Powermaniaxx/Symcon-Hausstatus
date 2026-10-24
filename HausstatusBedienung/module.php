@@ -65,7 +65,8 @@ class HausstatusBedienung extends IPSModuleStrict
             $this->RegisterPropertyInteger($name, $id);
         }
         $this->RegisterPropertyInteger('WasherEnergyTotal', 40662);
-        $this->RegisterPropertyFloat('WasherEnergyOffset', 7.26);
+        $this->RegisterPropertyFloat('WasherEnergyOffset', 6.15);
+        $this->RegisterAttributeBoolean('WasherHandover615Applied', false);
         $this->RegisterPropertyInteger('View', 0);
         // Sensitive maintenance action: opt-in for a separate, private System tile.
         $this->RegisterPropertyBoolean('ModuleUpdateEnabled', false);
@@ -133,6 +134,17 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        // Confirmed final balance after the last wash on the old plug.
+        // Migrate the provisional default once; preserve any other configured balance.
+        if (!$this->ReadAttributeBoolean('WasherHandover615Applied')) {
+            $this->WriteAttributeBoolean('WasherHandover615Applied', true);
+            if ($this->ReadPropertyInteger('ConfigSource') === 0
+                && abs($this->ReadPropertyFloat('WasherEnergyOffset') - 7.26) < 0.000001) {
+                IPS_SetProperty($this->InstanceID, 'WasherEnergyOffset', 6.15);
+                IPS_ApplyChanges($this->InstanceID);
+                return;
+            }
+        }
         $this->SetBuffer('RefreshQueued', '0');
         // Keine zyklischen Hintergrundchecks: Shield-Ablauf nur bei sichtbarer Medienkachel.
         $this->SetTimerInterval('ShieldWatchdog', 0);
