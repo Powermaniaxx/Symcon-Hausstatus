@@ -11,7 +11,7 @@ trait HausstatusWaterbedHistorySupport
             'sven' => $this->ConfigInteger('WaterbedSvenTemperature'),
             'susi' => $this->ConfigInteger('WaterbedSusiTemperature')];
         $now = time();
-        $key = json_encode([$archive, $ids, $this->ConfigString('WaterbedEnergyUnit')]);
+        $key = json_encode(['standard-power-v2', $archive, $ids, $this->ConfigString('WaterbedEnergyUnit')]);
         $cache = json_decode($this->GetBuffer('WaterbedChartCache'), true);
         if (($cache['key'] ?? '') === $key && ($cache['until'] ?? 0) > $now) { return $cache['data']; }
         $local = (new DateTimeImmutable('@' . $now))->setTimezone(new DateTimeZone('Europe/Berlin'));
@@ -30,6 +30,9 @@ trait HausstatusWaterbedHistorySupport
                     }
                     if ($name === 'kwh' && AC_GetAggregationType($archive, $id) !== 1) {
                         $notes[] = 'Verbrauch ID 17732 benötigt im Archiv den Aggregationstyp Zähler.'; continue;
+                    }
+                    if ($name === 'w' && AC_GetAggregationType($archive, $id) !== 0) {
+                        $notes[] = 'Leistung ID 16905 benötigt im Archiv den Aggregationstyp Standard (Mittelwert), nicht Zähler. Danach die Archivwerte neu aggregieren.'; continue;
                     }
                     $factor = $name === 'kwh' && $this->ConfigString('WaterbedEnergyUnit') === 'Wh' ? 0.001 : 1.0;
                     $rows = AC_GetAggregatedValues($archive, $id, $level, $start->getTimestamp(), $now, 0);

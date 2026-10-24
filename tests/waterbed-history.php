@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../HausstatusBedienung/WaterbedHistorySupport.php';
-$calls = 0; $counter = true; $missing = false;
+$calls = 0; $counter = true; $missing = false; $powerCounter = false;
 function IPS_VariableExists($id) { return true; }
 function AC_GetLoggingStatus($archive, $id) { global $missing; return !($missing && $id === 43240); }
-function AC_GetAggregationType($archive, $id) { global $counter; return $counter ? 1 : 0; }
+function AC_GetAggregationType($archive, $id) { global $counter, $powerCounter; return $id === 16905 ? ($powerCounter ? 1 : 0) : ($counter ? 1 : 0); }
 function AC_GetAggregatedValues($archive, $id, $level, $start, $end, $limit) {
     global $calls; $calls++;
     if (!in_array($id, [16905,17732,30213,43240], true)) { throw new Exception('Wrong source'); }
@@ -25,6 +25,7 @@ $f=new Fixture; $data=$f->run();
 check(array_keys($data)===['day','week','month','year'],'All periods');
 check($data['day']['series']['kwh'][1]['v']===1.25,'Wh conversion');
 check($data['day']['series']['kwh'][0]['v']===null,'Missing stays null');
+check($data['day']['series']['w'][1]['v']===28.0,'Watt mean preserved without conversion');
 check($calls===16,'Bounded archive calls');
 $f->run();check($calls===16,'Cache reuse');
 $f->unit='kWh';$data=$f->run();check($data['day']['series']['kwh'][1]['v']===1250.0,'Unit invalidates cache');
@@ -32,4 +33,7 @@ $counter=false;$f->buffers=[];$data=$f->run();check($data['day']['series']['kwh'
 check(str_contains($data['day']['note'],'Zähler'),'Counter setup note');
 $counter=true;$missing=true;$f->buffers=[];$data=$f->run();
 check($data['day']['series']['susi']===[] && count($data['day']['series']['sven'])===2,'Independent missing series');
+$powerCounter=true;$f->buffers=[];$data=$f->run();
+check($data['day']['series']['w']===[],'Never label counter sums as watts');
+check(str_contains($data['day']['note'],'Standard'),'Power aggregation setup note');
 echo "waterbed-history: OK\n";

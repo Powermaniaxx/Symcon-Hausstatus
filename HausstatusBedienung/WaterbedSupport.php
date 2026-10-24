@@ -178,7 +178,7 @@ trait HausstatusWaterbedSupport
             'week' => 'WaterbedWeek', 'month' => 'WaterbedMonth',
             'total' => 'WaterbedTotal'
         ] as $key => $property) {
-            $id = $this->ConfigInteger($property);
+            $id = $key === 'power' ? 16905 : $this->ConfigInteger($property);
             $sources[$key] = $id > 0 && IPS_VariableExists($id)
                 ? $this->Read($id) : ['raw' => null, 'text' => 'Nicht eingerichtet'];
         }

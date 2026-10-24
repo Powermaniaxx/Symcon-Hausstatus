@@ -38,7 +38,16 @@ const scaleData={...data,month:{start:Date.parse('2026-03-01T00:00:00+01:00')/10
 const scale=context.renderWaterbedChart(scaleData,annual);
 all(scale).find(n=>n.tag==='button'&&n.textContent==='Monat').events.click();
 assert.equal(all(scale).filter(n=>n.tag==='line'&&n.attrs.x1==='52'&&n.attrs.x2==='584').length,9,'Fine value grid');
-assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='29.03.'),'Calendar labels across DST');
+assert.equal(all(scale).filter(n=>n.tag==='text'&&n.attrs.y==='232').length,31,'All 31 calendar days');
+assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='31'),'Last day visible');
 all(scale).find(n=>n.tag==='button'&&n.textContent==='Jahr').events.click();
 assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='Okt'),'Monthly marks in yearly view');
+assert.equal(all(scale).filter(n=>n.tag==='text'&&n.attrs.y==='232').length,12,'All 12 months');
+assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='Dez'),'December visible before year end');
+for(const [year,month,days] of [[2026,4,30],[2026,2,28],[2028,2,29]]){
+ const date=String(month).padStart(2,'0');
+ const calendar=context.renderWaterbedChart({...data,month:{start:Date.parse(`${year}-${date}-01T00:00:00+01:00`)/1000,end:Date.parse(`${year}-${date}-02T00:00:00+01:00`)/1000,series:{}}},annual);
+ all(calendar).find(n=>n.tag==='button'&&n.textContent==='Monat').events.click();
+ assert.equal(all(calendar).filter(n=>n.tag==='text'&&n.attrs.y==='232').length,days,'Full calendar month');
+}
 console.log('waterbed-chart: OK (8 combinations, single chart, annual selector, legacy table removed)');
