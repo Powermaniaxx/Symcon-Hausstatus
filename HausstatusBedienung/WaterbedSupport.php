@@ -6,8 +6,11 @@ declare(strict_types=1);
  * Keine eigenen Schaltwege: Bedienung nur über vorhandene Symcon-Aktionen.
  * Historische Tageswerte stammen aus dem archivierten Gesamtzaehler.
  */
+require_once __DIR__ . '/WaterbedHistorySupport.php';
+
 trait HausstatusWaterbedSupport
 {
+    use HausstatusWaterbedHistorySupport;
     private const WATERBED_SOURCES = [
         'WaterbedPowerSwitch' => [14711, 'Ein/Aus', true, 'Wasserbett'],
         'WaterbedSvenTemperature' => [30213, 'Temperatur Sven', true, 'Sven'],
@@ -179,7 +182,8 @@ trait HausstatusWaterbedSupport
             $sources[$key] = $id > 0 && IPS_VariableExists($id)
                 ? $this->Read($id) : ['raw' => null, 'text' => 'Nicht eingerichtet'];
         }
-        $result = ['values' => $sources, 'days' => [], 'annual' => null, 'note' => ''];
+        $result = ['values' => $sources, 'days' => [], 'annual' => null, 'note' => '',
+            'history' => $this->WaterbedChartHistory()];
         $archive = $this->WaterbedArchiveID();
         $totalID = $this->ConfigInteger('WaterbedTotal');
         if ($archive <= 0 || $totalID <= 0 || !IPS_VariableExists($totalID)) {
@@ -252,3 +256,4 @@ trait HausstatusWaterbedSupport
         return $result;
     }
 }
+
