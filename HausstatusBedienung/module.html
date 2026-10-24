@@ -882,7 +882,7 @@ function renderLaundry(data){
    row.append(caption,value);energy.append(row);
   }
   if(device.energy?.totalNote){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.totalNote);energy.append(note);}
-  if(device.energy?.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.note);energy.append(note);}
+  if(device.energy?.note&&!device.energy.note.startsWith('Ca.-Werte')){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.note);energy.append(note);}
   box.append(energy);
   if(device.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.note);box.append(note);}
   devices.append(box);
