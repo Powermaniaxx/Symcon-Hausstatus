@@ -13,3 +13,5 @@ Symcon definiert Avg bei Zähleraggregation als Summe positiver Deltas, bei Stan
 Die Ergebnisse werden fünf Minuten zwischengespeichert. Pro Neuabfrage entstehen höchstens 16 Aggregationsabfragen. Fehler einer einzelnen Quelle lassen die anderen Kurven verfügbar.
 
 Prüfung: PHP-Syntax, isolierte Archivtests (Quellen, Einheiten, Cache, fehlende Werte, Aggregationstyp), Frontendtests für alle acht Zeitraum/Einheit-Kombinationen, bestehende Bedien-/Licht-/Heizungs-/Shield-Tests und Browserprüfung bei 840 und 390 Pixeln. Browserdaten sind simuliert; ein Test gegen das laufende Symcon-System ist nicht erfolgt.
+
+Ab v0.115 gibt es eine gemeinsame Diagrammansicht: Tag, Woche, Monat, Jahr oder Jahresvergleich. Der Jahresvergleich ist keine zusätzliche Grafik unter dem Verlauf mehr. Die Raumgestaltung verwendet dieselben weißen Flächen, grauen Titelbalken, Rahmen und Rundungen wie die Hausstatus-System- und PV-Kacheln.

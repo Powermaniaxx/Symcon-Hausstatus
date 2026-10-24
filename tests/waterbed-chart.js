@@ -12,10 +12,11 @@ const html=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.html','utf8
 for(const script of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(script[1]);
 const context={document:{createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t)},text:(n,t)=>n.textContent=String(t)};
 vm.createContext(context);
-vm.runInContext(html.slice(html.indexOf("let waterbedRange='day'"),html.indexOf('function renderWaterbedEnergy(')),context);
+vm.runInContext(html.slice(html.indexOf('function renderWaterbedYearComparison('),html.indexOf('function deviceItems(')),context);
 const data={};for(const range of ['day','week','month','year'])data[range]={start:1000,end:10000,series:{w:[{t:1000,v:100},{t:4600,v:null},{t:8200,v:140}],kwh:[{t:1000,v:0.1}],sven:[{t:1000,v:28}],susi:[{t:1000,v:29}]}};
 const all=node=>[node,...node.children.flatMap(all)];
-const root=context.renderWaterbedChart(data);
+const annual={currentYear:2026,previousYear:2025,currentTotal:100,previousTotal:90,months:[{name:'Jan',current:10,previous:9}]};
+const root=context.renderWaterbedChart(data,annual);
 const click=label=>{const b=all(root).find(n=>n.tag==='button'&&n.textContent===label);assert(b,label);b.events.click();};
 for(const period of ['Tag','Woche','Monat','Jahr'])for(const unit of ['W','kWh']){
  click(period);click(unit);const nodes=all(root);
@@ -24,5 +25,13 @@ for(const period of ['Tag','Woche','Monat','Jahr'])for(const unit of ['W','kWh']
  assert(!nodes.some(n=>Object.values(n.attrs).some(v=>/NaN|Infinity/.test(v))));
 }
 const empty=context.renderWaterbedChart(null);assert(all(empty).some(n=>n.textContent.includes('keine Daten')));
-assert(html.includes('section.append(renderWaterbedYearComparison(data.annual))'),'Annual comparison retained');
-console.log('waterbed-chart: OK (8 period/unit combinations, temperatures, missing values, script syntax)');
+click('Jahresvergleich');
+assert.equal(all(root).filter(n=>n.tag==='svg').length,1,'Only one chart in comparison mode');
+assert(all(root).some(n=>n.textContent==='Jahresverbrauch und Monatsvergleich'));
+assert(!all(root).some(n=>n.tag==='button'&&n.textContent==='W'),'Comparison uses kWh');
+click('Tag');assert.equal(all(root).filter(n=>n.tag==='svg').length,1);
+const energy=context.renderWaterbedEnergy({history:data,annual,values:{},days:[{date:'01.01.2026',kwh:5}]});
+assert.equal(all(energy).filter(n=>n.tag==='svg').length,1,'Only one chart in complete waterbed section');
+assert(!all(energy).some(n=>n.className==='waterbedHistory'),'Legacy table removed');
+assert(!all(energy).some(n=>n.className==='waterbedAnnual'),'No second annual chart below history');
+console.log('waterbed-chart: OK (8 combinations, single chart, annual selector, legacy table removed)');
