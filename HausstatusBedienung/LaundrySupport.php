@@ -71,61 +71,90 @@ trait HausstatusLaundrySupport
         return $result;
     }
 
-    private function LaundryEnergy(int $powerID, int $now): array
+    private function WasherPeriodEnergy(int $powerID, int $now): array
     {
-        $empty = ['today' => null, 'week' => null, 'month' => null, 'year' => null, 'note' => 'Keine Verbrauchsdaten im Symcon-Archiv.'];
+        $legacy = $this->ConfigInteger('WasherLegacyPower');
+        $cutoff = $this->ConfigInteger('WasherMeterChangedAt');
+        if ($legacy <= 0 || $cutoff <= 0 || $legacy === $powerID) { return $this->LaundryEnergy($powerID, $now); }
+        $old = $this->LaundryEnergy($legacy, $now, 0, $cutoff);
+        $new = $this->LaundryEnergy($powerID, $now, $cutoff);
+        $result = [];
+        foreach (['today', 'yesterday', 'week', 'month', 'year', 'lastYear'] as $period) {
+            $a = $old[$period] ?? null; $b = $new[$period] ?? null;
+            $result[$period] = $a === null && $b === null ? null : round((float)$a + (float)$b, 3);
+        }
+        $result['note'] = 'Ca.-Werte aus altem und neuem Leistungsarchiv; Wechsel am '
+            . (new DateTimeImmutable('@' . $cutoff))->setTimezone(new DateTimeZone('Europe/Berlin'))->format('d.m.Y H:i')
+            . '. Archivlücken werden nicht geschätzt. ' . $old['note'] . ' ' . $new['note'];
+        return $result;
+    }
+
+    private function LaundryEnergy(int $powerID, int $now, int $since = 0, int $until = 0): array
+    {
+        $keys = ['today', 'yesterday', 'week', 'month', 'year', 'lastYear'];
+        $empty = array_fill_keys($keys, null);
+        $empty['note'] = 'Keine Verbrauchsdaten im Symcon-Archiv.';
         if ($powerID <= 0 || !IPS_VariableExists($powerID)) { return $empty; }
         $archives = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
         if (count($archives) !== 1) { $empty['note'] = 'Archiv nicht eindeutig zugeordnet.'; return $empty; }
         $archive = (int)$archives[0];
         try {
             if (!AC_GetLoggingStatus($archive, $powerID)) { return $empty; }
-            $timezone = new DateTimeZone('Europe/Berlin');
-            $today = (new DateTimeImmutable('@' . $now))->setTimezone($timezone);
+            $today = (new DateTimeImmutable('@' . $now))->setTimezone(new DateTimeZone('Europe/Berlin'));
+            $midnight = $today->setTime(0, 0);
+            $yearStart = $midnight->setDate((int)$today->format('Y'), 1, 1);
             $starts = [
-                'today' => $today->setTime(0, 0)->getTimestamp(),
-                'week' => $today->modify('monday this week')->setTime(0, 0)->getTimestamp(),
-                'month' => $today->modify('first day of this month')->setTime(0, 0)->getTimestamp(),
-                'year' => $today->setDate((int)$today->format('Y'), 1, 1)->setTime(0, 0)->getTimestamp()
+                'today' => $midnight->getTimestamp(),
+                'yesterday' => $midnight->modify('-1 day')->getTimestamp(),
+                'week' => $midnight->modify('monday this week')->getTimestamp(),
+                'month' => $midnight->modify('first day of this month')->getTimestamp(),
+                'year' => $yearStart->getTimestamp(),
+                'lastYear' => $yearStart->modify('-1 year')->getTimestamp()
             ];
-            $cacheKey = 'LaundryEnergy_' . $powerID;
+            $ends = array_fill_keys($keys, $now);
+            $ends['yesterday'] = $starts['today'];
+            $ends['lastYear'] = $starts['year'];
+            $cacheKey = 'LaundryEnergyV2_' . $powerID . '_' . $since . '_' . $until;
             $cache = json_decode($this->GetBuffer($cacheKey), true);
             if (is_array($cache) && ($cache['until'] ?? 0) > $now
-                && ($cache['dayStart'] ?? null) === $starts['today']
-                && ($cache['yearStart'] ?? null) === $starts['year']) {
-                return $cache['value'];
+                && ($cache['dayStart'] ?? null) === $starts['today']) { return $cache['value']; }
+            $rangeEnd = $until > 0 ? min($until, $now) : $now;
+            $rangeStart = max($starts['lastYear'], $since);
+            $hourStart = (int)(floor($rangeStart / 3600) * 3600);
+            $values = []; $limited = false;
+            // Query each calendar year separately: two years exceed the 10000-hour limit.
+            foreach ([[$hourStart, min($rangeEnd, $starts['year'] - 1)],
+                      [max($hourStart, $starts['year']), $rangeEnd]] as [$from, $to]) {
+                if ($from >= $to) { continue; }
+                $part = AC_GetAggregatedValues($archive, $powerID, 0, $from, $to, 10000);
+                if (count($part) >= 10000) { $limited = true; }
+                foreach ($part as $entry) { $values[(int)($entry['TimeStamp'] ?? 0)] = $entry; }
             }
-            // Stündliche Archivmittelwerte als Näherung integrieren; fehlende Stunden nicht als Nullverbrauch behaupten.
-            $hourStart = (int)(floor($starts['year'] / 3600) * 3600);
-            $values = AC_GetAggregatedValues($archive, $powerID, 0, $hourStart, $now, 10000);
-            $result = ['today' => 0.0, 'week' => 0.0, 'month' => 0.0, 'year' => 0.0, 'note' => 'Ca.-Werte aus archivierten Stundenmittelwerten.'];
-            $coverage = ['today' => 0, 'week' => 0, 'month' => 0, 'year' => 0];
+            $result = array_fill_keys($keys, 0.0);
+            $coverage = array_fill_keys($keys, 0);
             foreach ($values as $entry) {
                 $start = (int)($entry['TimeStamp'] ?? 0);
                 $average = $entry['Avg'] ?? null;
                 if ($start < $hourStart || !is_numeric($average) || !is_finite((float)$average) || (float)$average < 0) { continue; }
-                $end = min($start + 3600, $now);
                 foreach ($starts as $period => $periodStart) {
-                    $seconds = max(0, $end - max($start, $periodStart));
+                    $seconds = max(0, min($start + 3600, $rangeEnd, $ends[$period]) - max($start, $periodStart, $since));
                     if ($seconds === 0) { continue; }
                     $result[$period] += (float)$average * $seconds / 3600000;
                     $coverage[$period] += $seconds;
                 }
             }
+            $result['note'] = 'Ca.-Werte aus archivierten Stundenmittelwerten.';
             foreach ($starts as $period => $periodStart) {
-                if ($coverage[$period] === 0) { $result[$period] = null; }
-                else { $result[$period] = round($result[$period], 3); }
-            }
-            if (count($values) >= 10000) { $result['note'] = 'Archivabfrage begrenzt: Verbrauch möglicherweise unvollständig.'; }
-            else {
-                foreach ($starts as $period => $periodStart) {
-                    if ($coverage[$period] < ($now - $periodStart) * 0.95) {
-                        $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
-                        break;
-                    }
+                $expected = max(0, min($rangeEnd, $ends[$period]) - max($periodStart, $since));
+                if ($expected === 0) { $result[$period] = 0.0; continue; }
+                $result[$period] = $coverage[$period] === 0 ? null : round($result[$period], 3);
+                if ($coverage[$period] < $expected * 0.95) {
+                    $result['note'] = 'Ca.-Werte; Archivlücken möglich (fehlende Messstunden werden nicht geschätzt).';
                 }
             }
-            $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'dayStart' => $starts['today'], 'yearStart' => $starts['year'], 'value' => $result], JSON_THROW_ON_ERROR));
+            if ($limited) { $result['note'] = 'Archivabfrage begrenzt: Verbrauch möglicherweise unvollständig.'; }
+            $this->SetBuffer($cacheKey, json_encode(['until' => $now + 900, 'dayStart' => $starts['today'], 'value' => $result],
+                JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION));
             return $result;
         } catch (Throwable $e) {
             $empty['note'] = 'Verbrauchsarchiv derzeit nicht lesbar.';
@@ -219,7 +248,7 @@ trait HausstatusLaundrySupport
                 $since = $checked['since'];
                 if ($checked['note'] !== '') { $notes[] = $checked['note']; }
             } catch (Throwable $e) { $notes[] = 'Quelle momentan nicht lesbar.'; }
-            $energy = $this->LaundryEnergy($source['powerID'], $now);
+            $energy = $source['key'] === 'Washer' ? $this->WasherPeriodEnergy($source['powerID'], $now) : $this->LaundryEnergy($source['powerID'], $now);
             if ($source['key'] === 'Washer') { $energy = array_merge($energy, $this->WasherTotalEnergy()); }
             $devices[] = ['key' => $source['key'], 'name' => $source['name'], 'running' => $running,
                 'watts' => $watts, 'since' => $since, 'energy' => $energy, 'note' => implode(' ', $notes)];
