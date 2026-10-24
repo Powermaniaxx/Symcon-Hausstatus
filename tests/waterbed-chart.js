@@ -34,9 +34,17 @@ const energy=context.renderWaterbedEnergy({history:data,annual,values:{},days:[{
 assert.equal(all(energy).filter(n=>n.tag==='svg').length,1,'Only one chart in complete waterbed section');
 assert(!all(energy).some(n=>n.className==='waterbedHistory'),'Legacy table removed');
 assert(!all(energy).some(n=>n.className==='waterbedAnnual'),'No second annual chart below history');
+const live=context.renderWaterbedChart({day:{start:1000,end:8200,series:{}}},annual,{raw:51,text:'51 W'});
+all(live).find(n=>n.tag==='button'&&n.textContent==='W').events.click();
+assert(all(live).some(n=>n.tag==='text'&&n.attrs.x==='46'&&n.textContent==='60'),'Live 51 W gives 0–60 W fallback scale');
+assert(!all(live).some(n=>n.tag==='text'&&n.attrs.x==='46'&&n.textContent==='1,1'),'No misleading 1.1 W scale');
+assert(all(live).some(n=>n.textContent.includes('Aktuell: 51 W.')),'Live power distinct from historical means');
+assert.deepEqual(all(live).filter(n=>n.tag==='text'&&n.attrs.x==='46').map(n=>n.textContent),['0','10','20','30','40','50','60'],'10 W labels from zero');
+assert.equal(all(live).filter(n=>n.tag==='line'&&n.attrs['stroke-width']==='0.5').length,6,'5 W minor grid');
 const scaleData={...data,month:{start:Date.parse('2026-03-01T00:00:00+01:00')/1000,end:Date.parse('2026-04-01T00:00:00+02:00')/1000,series:{}},year:{start:Date.parse('2026-01-01T00:00:00+01:00')/1000,end:Date.parse('2026-10-24T12:00:00+02:00')/1000,series:{}}};
 const scale=context.renderWaterbedChart(scaleData,annual);
 all(scale).find(n=>n.tag==='button'&&n.textContent==='Monat').events.click();
+all(scale).find(n=>n.tag==='button'&&n.textContent==='kWh').events.click();
 assert.equal(all(scale).filter(n=>n.tag==='line'&&n.attrs.x1==='52'&&n.attrs.x2==='584').length,9,'Fine value grid');
 assert.equal(all(scale).filter(n=>n.tag==='text'&&n.attrs.y==='232').length,31,'All 31 calendar days');
 assert(all(scale).some(n=>n.tag==='text'&&n.textContent==='31'),'Last day visible');
