@@ -64,6 +64,8 @@ class HausstatusBedienung extends IPSModuleStrict
         foreach (self::SOURCES as $name => $id) {
             $this->RegisterPropertyInteger($name, $id);
         }
+        $this->RegisterPropertyInteger('WasherEnergyTotal', 40662);
+        $this->RegisterPropertyFloat('WasherEnergyOffset', 7.26);
         $this->RegisterPropertyInteger('View', 0);
         // Sensitive maintenance action: opt-in for a separate, private System tile.
         $this->RegisterPropertyBoolean('ModuleUpdateEnabled', false);

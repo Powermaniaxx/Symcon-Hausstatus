@@ -50,8 +50,25 @@ trait HausstatusLaundrySupport
         foreach ($this->LaundrySources() as $source) {
             $ids[] = $source['powerID'];
             $ids[] = $source['runningID'];
+            if ($source['key'] === 'Washer') { $ids[] = $this->ConfigInteger('WasherEnergyTotal'); }
         }
         return array_values(array_unique(array_filter($ids)));
+    }
+
+    // The old meter is a fixed handover balance, never a second live counter.
+    private function WasherTotalEnergy(): array
+    {
+        $id = $this->ConfigInteger('WasherEnergyTotal');
+        $offset = (float)$this->ConfigValue('WasherEnergyOffset');
+        $result = ['total' => null, 'totalNote' => 'Gesamtzähler nicht verfügbar.'];
+        if (!is_finite($offset) || $offset < 0 || $id <= 0 || !IPS_VariableExists($id)) { return $result; }
+        try {
+            $value = GetValue($id);
+            if ((!is_int($value) && !is_float($value)) || !is_finite((float)$value) || $value < 0) { return $result; }
+            $result['total'] = round($offset + (float)$value, 3);
+            $result['totalNote'] = 'Gesamt inkl. ' . number_format($offset, 2, ',', '.') . ' kWh Altbestand (alter Zähler 44294).';
+        } catch (Throwable $e) { /* Keep unknown instead of inventing a zero reading. */ }
+        return $result;
     }
 
     private function LaundryEnergy(int $powerID, int $now): array
@@ -202,8 +219,10 @@ trait HausstatusLaundrySupport
                 $since = $checked['since'];
                 if ($checked['note'] !== '') { $notes[] = $checked['note']; }
             } catch (Throwable $e) { $notes[] = 'Quelle momentan nicht lesbar.'; }
+            $energy = $this->LaundryEnergy($source['powerID'], $now);
+            if ($source['key'] === 'Washer') { $energy = array_merge($energy, $this->WasherTotalEnergy()); }
             $devices[] = ['key' => $source['key'], 'name' => $source['name'], 'running' => $running,
-                'watts' => $watts, 'since' => $since, 'energy' => $this->LaundryEnergy($source['powerID'], $now), 'note' => implode(' ', $notes)];
+                'watts' => $watts, 'since' => $since, 'energy' => $energy, 'note' => implode(' ', $notes)];
         }
         return ['now' => $now, 'devices' => $devices];
     }

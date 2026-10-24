@@ -874,13 +874,14 @@ function renderLaundry(data){
   since.append(sinceLabel,sinceValue);box.append(since);
   const energy=document.createElement('div');energy.className='laundryEnergy';
   const energyHeading=document.createElement('div');energyHeading.className='laundryEnergyHeading';text(energyHeading,'Verbrauch');energy.append(energyHeading);
-  for(const [key,label] of [['today','Heute'],['week','Diese Woche'],['month','Diesen Monat'],['year','Dieses Jahr']]){
+  for(const [key,label] of [['today','Heute'],['week','Diese Woche'],['month','Diesen Monat'],['year','Dieses Jahr'],...(Object.prototype.hasOwnProperty.call(device.energy??{},'total')?[['total','Gesamt']]:[])]){
    const row=document.createElement('div');row.className='laundryEnergyRow';
    const caption=document.createElement('span');text(caption,label);
    const value=document.createElement('strong');const amount=device.energy?.[key];
-   text(value,typeof amount==='number'&&Number.isFinite(amount)?'≈ '+amount.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—');
+   text(value,typeof amount==='number'&&Number.isFinite(amount)?(key==='total'?'':'≈ ')+amount.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:3})+' kWh':'—');
    row.append(caption,value);energy.append(row);
   }
+  if(device.energy?.totalNote){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.totalNote);energy.append(note);}
   if(device.energy?.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.energy.note);energy.append(note);}
   box.append(energy);
   if(device.note){const note=document.createElement('p');note.className='laundryNote';text(note,device.note);box.append(note);}
