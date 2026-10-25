@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'philips-tv-fixture-'));
 process.env.PHILIPS_TV_CONFIG=path.join(directory,'credentials.json');
-const config={host:'192.168.178.190',user:'fixture',password:'not-a-real-password',mac:'02:11:22:33:44:55',broadcast:'192.168.178.255'};
+const config={host:'192.168.178.189',user:'fixture',password:'not-a-real-password',mac:'02:11:22:33:44:55',broadcast:'192.168.178.255'};
 fs.writeFileSync(process.env.PHILIPS_TV_CONFIG,JSON.stringify(config));
 const {digest,api,wakePacket,execute,applyPendingHdmi3,collect}=require('../docs/integrations/shield/philips-tv.js');
 const challenge='Digest realm="XTV", nonce="fixture-nonce", algorithm=MD5, qop="auth"';

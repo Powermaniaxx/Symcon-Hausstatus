@@ -3,7 +3,7 @@ const {execFile} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEVICES = {wohnzimmer:'192.168.178.107:5555',ankleidezimmer:'192.168.178.106:5555',schlafzimmer:'192.168.178.108:5555',philips:'192.168.178.190'};
+const DEVICES = {wohnzimmer:'192.168.178.107:5555',ankleidezimmer:'192.168.178.106:5555',schlafzimmer:'192.168.178.108:5555',philips:'192.168.178.189'};
 const device = process.argv[2] || 'wohnzimmer';
 const TARGET = DEVICES[device];
 const blank = error => ({online:false,power:'unknown',app:'',playback:'unknown',title:'',error});

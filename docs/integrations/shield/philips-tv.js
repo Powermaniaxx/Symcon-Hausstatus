@@ -1,7 +1,7 @@
 'use strict';
 // JointSPACE 6, HTTPS Digest authentication. No additional Node packages.
 const https=require('node:https'),http=require('node:http'),crypto=require('node:crypto'),fs=require('node:fs'),dgram=require('node:dgram');
-const HOST=process.env.PHILIPS_TV_HOST||'192.168.178.190';
+const HOST=process.env.PHILIPS_TV_HOST === '192.168.178.190' ? '192.168.178.189' : (process.env.PHILIPS_TV_HOST||'192.168.178.189');
 const FILE=process.env.PHILIPS_TV_CONFIG||'/data/shield/philips-tv.credentials.json';
 const HDMI_PENDING=FILE+'.hdmi3-pending';
 const BACKOFF_FILE=FILE+'.connection-backoff.json';
