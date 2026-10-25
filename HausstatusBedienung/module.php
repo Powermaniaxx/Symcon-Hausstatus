@@ -207,6 +207,20 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         foreach ($this->SelectedRoomEntries() as $entry) { if ($entry['type'] === 2) { $ids[] = $entry['id']; } }
+        // Auch bei Inline-Raumseiten alle konfigurierten Bewegungs- und Praesenzwerte abonnieren.
+        // Nur Boolean-Sensoren, keine Schalter oder anderen Raumgeraete.
+        $roomSensorIDs = [];
+        if ($this->CurrentView() === 0 && $this->UsesInlinePages()) {
+            foreach ($this->ExpandedRoomEntries('') as $entry) {
+                $sensorID = (int) $entry['id'];
+                if ($entry['type'] !== 2 || !IPS_VariableExists($sensorID)
+                    || IPS_GetVariable($sensorID)['VariableType'] !== 0) { continue; }
+                if (!in_array($this->RoomItemRole($entry, null), ['motion', 'presence'], true)) { continue; }
+                $roomSensorIDs[] = $sensorID;
+                $ids[] = $sensorID;
+            }
+        }
+        $this->SetBuffer('RoomLiveSensorIDs', json_encode(array_values(array_unique($roomSensorIDs)), JSON_THROW_ON_ERROR));
         if ($this->ReadPropertyInteger('View') === 12 && mb_strtolower($this->ReadPropertyString('RoomFilter'), 'UTF-8') === 'schlafzimmer') {
             foreach (array_keys(self::WATERBED_SOURCES) as $property) { $ids[] = $this->ConfigInteger($property); }
             $waterbedArchive = $this->WaterbedArchiveID();
@@ -413,6 +427,11 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             foreach ($this->MotionSensors() as $sensor) {
                 if ($sensor['Variable'] === $SenderID) { $this->SetBuffer('MotionCache', ''); break; }
+            }
+            // Inline-Raumseite nur bei echtem Sensorwechsel neu einlesen.
+            $roomSensorIDs = json_decode($this->GetBuffer('RoomLiveSensorIDs'), true);
+            if (is_array($roomSensorIDs) && in_array($SenderID, $roomSensorIDs, true)) {
+                $this->UpdateVisualizationValue(json_encode(['roomSensorChanged' => $SenderID], JSON_THROW_ON_ERROR));
             }
             $this->QueueRefresh();
         }
@@ -1350,7 +1369,8 @@ class HausstatusBedienung extends IPSModuleStrict
             // Der reale Variablenstatus hat Vorrang vor dem verzögerten Archiv.
             $changed = $id > 0 && IPS_VariableExists($id)
                 ? (int) IPS_GetVariable($id)['VariableChanged'] : 0;
-            $result['sensors'][] = ['name' => $sensor['Name'], 'current' => $this->Read($id)['raw'],
+            $raw = $this->Read($id)['raw'];
+            $result['sensors'][] = ['name' => $sensor['Name'], 'current' => is_bool($raw) ? $raw : null,
                 'changed' => $changed,
                 'history' => $cache['history'][(string)$id] ?? ['entries' => [], 'previous' => null, 'note' => 'Noch keine Daten.']];
         }
