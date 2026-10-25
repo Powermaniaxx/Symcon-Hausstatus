@@ -1937,6 +1937,7 @@ try{
  if(['day','week','month','year','compare'].includes(saved?.range))waterbedRange=saved.range;
  if(Number.isInteger(saved?.year))waterbedSelectedYear=saved.year;
  if(['w','kwh'].includes(saved?.unit))waterbedUnit=saved.unit;
+ if(waterbedRange==='day')waterbedUnit='w';
  for(const key of ['sven','susi'])if(typeof saved?.visible?.[key]==='boolean')waterbedVisible[key]=saved.visible[key];
 }catch{}
 function saveWaterbedSettings(){try{localStorage.setItem(waterbedSettingsKey,JSON.stringify({range:waterbedRange,unit:waterbedUnit,visible:waterbedVisible,year:waterbedSelectedYear}));}catch{}}
@@ -1948,9 +1949,9 @@ function renderWaterbedChart(history,annual,power){
  function draw(){
   toolbar.replaceChildren();body.replaceChildren();
   for(const [label,options,current,set] of [
-   ['Zeitraum',[['day','Tag'],['week','Woche'],['month','Monat'],['year','Jahr'],['compare','Jahresvergleich']],waterbedRange,v=>waterbedRange=v],
+   ['Zeitraum',[['day','Tag'],['week','Woche'],['month','Monat'],['year','Jahr'],['compare','Jahresvergleich']],waterbedRange,v=>{waterbedRange=v;if(v==='day')waterbedUnit='w';}],
    ['Einheit',[['w','W'],['kwh','kWh']],waterbedUnit,v=>waterbedUnit=v]]){
-   if(label==='Einheit'&&waterbedRange==='compare')continue;
+   if(label==='Einheit'&&(waterbedRange==='compare'||waterbedRange==='day'))continue;
    const group=document.createElement('div');group.className='waterbedChoices';group.setAttribute('role','group');group.setAttribute('aria-label',label);
    for(const [key,title] of options){const b=document.createElement('button');b.type='button';text(b,title);b.setAttribute('aria-pressed',String(key===current));b.addEventListener('click',()=>{set(key);saveWaterbedSettings();draw();});group.append(b);}toolbar.append(group);
   }
@@ -1977,7 +1978,9 @@ function renderWaterbedChart(history,annual,power){
   const energy=series[waterbedUnit]??[];
   const live=!(waterbedRange==='year'&&waterbedSelectedYear===previous)&&waterbedUnit==='w'&&typeof power?.raw==='number'&&Number.isFinite(power.raw)&&power.raw>=0?power.raw:null;
   const measured=energy.filter(valid);
-  const wattStep=500,max=waterbedUnit==='w'?2000:({day:10,week:70,month:150,year:150}[waterbedRange]);
+  const peak=Math.max(0,...measured.map(p=>p.v),...(live!==null?[live]:[]));
+  const wattsPerStep=(()=>{const desired=Math.max(1,peak/4),pow=Math.pow(10,Math.floor(Math.log10(desired)));return [1,2,5,10].find(n=>n*pow>=desired)*pow;})();
+  const wattStep=wattsPerStep,max=waterbedUnit==='w'?4*wattStep:({day:10,week:70,month:150,year:150}[waterbedRange]);
   const low=0,high=35;
   const start=data?.start??0;
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'numeric'}).formatToParts(new Date(start*1000));
@@ -1990,7 +1993,7 @@ function renderWaterbedChart(history,annual,power){
   add('text',{x:8,y:17,fill:'currentColor','font-size':12},waterbedUnit==='w'?'Leistung · W':'Verbrauch · kWh');add('text',{x:632,y:17,'text-anchor':'end',fill:'currentColor','font-size':12},'Temperatur · °C');
   const fine=waterbedRange==='month'||waterbedRange==='year',steps=fine?8:4;
   if(waterbedUnit==='w'){
-   const divisions=Math.round(max/wattStep)*2;
+   const divisions=8;
    for(let tick=0;tick<=divisions;tick++){
     const watts=tick*wattStep/2,y=210-watts/max*180,major=tick%2===0;
     add('line',{x1:52,x2:584,y1:y,y2:y,stroke:'currentColor',opacity:major?.16:.06,'stroke-width':major?1:.5});
