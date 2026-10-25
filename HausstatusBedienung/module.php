@@ -674,7 +674,9 @@ class HausstatusBedienung extends IPSModuleStrict
             $subscriptionsStarted = $this->EnableViewerSubscriptions();
             $this->ForwardViewerPingToNodeRed();
             $this->ExpireShieldOnViewerPing();
-            if ($subscriptionsStarted || ($this->HasTemperatureView() && count($this->HeatingCenterIDs()) === 1)) { $this->Refresh(); }
+            // Auf jeder sichtbaren Bewegungskachel auch ausgefallene Update-Ereignisse erkennen.
+            if ($subscriptionsStarted || $this->MotionLiveStateChanged()
+                || ($this->HasTemperatureView() && count($this->HeatingCenterIDs()) === 1)) { $this->Refresh(); }
             return;
         }
         // A remote weather fetch must never delay loading the HTML tile.
@@ -1287,6 +1289,24 @@ class HausstatusBedienung extends IPSModuleStrict
         if (!is_array($list)) { return []; }
         return array_values(array_filter($list, static fn($v): bool => is_array($v)
             && isset($v['Name'], $v['Variable']) && is_string($v['Name']) && is_int($v['Variable'])));
+    }
+
+    /** Abgleich aller eingerichteten Bewegungsmelder ohne teure Archivabfrage. */
+    private function MotionLiveStateChanged(): bool
+    {
+        if (!$this->HasMotionView()) { return false; }
+        $last = json_decode($this->GetBuffer('LastState'), true);
+        $shown = $last['Motion']['sensors'] ?? null;
+        // Andere Startseitenkacheln ohne Bewegungsansicht nicht zusaetzlich abfragen.
+        if (!is_array($shown)) { return false; }
+        $sensors = $this->MotionSensors();
+        if (count($shown) !== count($sensors)) { return true; }
+        foreach ($sensors as $index => $sensor) {
+            if (($shown[$index]['current'] ?? null) !== $this->Read($sensor['Variable'])['raw']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function MotionArchive(): int
