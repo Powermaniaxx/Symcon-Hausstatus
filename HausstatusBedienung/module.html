@@ -2115,8 +2115,12 @@ function roomOverview(section,room,climate){
  const overview=document.createElement('div');overview.className='roomOverview';
  const chip=(label,value)=>{const box=document.createElement('div');box.className='roomMetric';const name=document.createElement('span'),val=document.createElement('strong');text(name,label);text(val,value);box.append(name,val);overview.append(box);};
  const measured=climate[0]?.actual;if(measured&&typeof measured.raw==='number')chip('Temperatur',measured.text);
- const items=room.groups.flatMap(g=>g.items),motion=items.filter(item=>['motion','presence'].includes(item.role));
+ const items=room.groups.flatMap(g=>g.items);
+ // Praesenz ist keine Bewegung; beide Statuswerte getrennt anzeigen.
+ const motion=items.filter(item=>item.role==='motion');
  if(motion.length){const active=motion.some(item=>item.value.raw===true),known=motion.every(item=>typeof item.value.raw==='boolean');chip('Bewegung',active?'Erkannt':known?'Keine':'Unbekannt');}
+ const presence=items.filter(item=>item.role==='presence');
+ if(presence.length){const active=presence.some(item=>item.value.raw===true),known=presence.every(item=>typeof item.value.raw==='boolean');chip('Präsenz',active?'Erkannt':known?'Keine':'Unbekannt');}
  const humidity=items.find(item=>item.role==='humidity'&&typeof item.value.raw==='number');if(humidity)chip('Luftfeuchte',humidity.value.text);
  if(overview.children.length)section.append(overview);
 }
@@ -2229,6 +2233,18 @@ function renderMotion(m){
   const title=document.createElement('div');text(title,sensor.name+' \u2014 '+(sensor.current===true?'Bewegung erkannt':sensor.current===false?'Keine Bewegung':'Unbekannt'));box.append(title);
   const track=document.createElement('div');track.className='motionTrack';track.setAttribute('aria-label','Bewegungszeiten '+sensor.name);
   const h=sensor.history, entries=h.entries.filter(e=>e.time>=m.start&&e.time<=m.end).slice().sort((a,b)=>a.time-b.time);
+  // Bei einer fehlenden Archivmeldung den letzten echten Zustandswechsel eintragen.
+  // Der aktuelle Sensorwert entscheidet immer ueber den rechten Rand des Balkens.
+  const live=typeof sensor.current==='boolean'?sensor.current:null;
+  if(live!==null){
+   const last=entries.length?entries[entries.length-1]:null;
+   const lastValue=last?last.active:h.previous;
+   if(lastValue!==live){
+    const changed=Number(sensor.changed)||0;
+    const time=changed>=m.start&&changed<=m.end&&(!last||changed>=last.time)?changed:m.end;
+    entries.push({time,active:live,live:true});
+   }
+  }
   let active=h.previous,begin=m.start;
   const bar=(a,b)=>{if(b<=a)return;const n=document.createElement('div');n.className='motionBar';n.style.left=((a-m.start)/86400*100)+'%';n.style.width=((b-a)/86400*100)+'%';n.title=motionTime(a)+' bis '+motionTime(b);track.append(n);};
   for(const e of entries){if(active===true)bar(begin,e.time);active=e.active;begin=e.time;}if(active===true)bar(begin,m.end);
@@ -2237,7 +2253,7 @@ function renderMotion(m){
   const detail=document.createElement('details'),summary=document.createElement('summary');text(summary,'Zeitpunkte anzeigen ('+entries.length+' Zustandswechsel)');detail.append(summary);
   const log=document.createElement('div');log.className='motionLog';
   if(!entries.length){const n=document.createElement('div');text(n,'Keine aufgezeichneten Zustandswechsel in diesem Zeitraum.');log.append(n);}
-  for(const e of entries.slice().reverse()){const n=document.createElement('div');n.className='row';text(n,motionTime(e.time)+' \u2014 '+(e.active?'Bewegung erkannt':'Keine Bewegung'));log.append(n);}detail.append(log);box.append(detail);el('motion').append(box);
+  for(const e of entries.slice().reverse()){const n=document.createElement('div');n.className='row';text(n,motionTime(e.time)+' \u2014 '+(e.active?'Bewegung erkannt':'Keine Bewegung')+(e.live?' (Live-Wert)':''));log.append(n);}detail.append(log);box.append(detail);el('motion').append(box);
  }
 }
 function send(command,value){
