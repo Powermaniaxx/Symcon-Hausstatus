@@ -750,6 +750,12 @@ function viewerPing(){
 viewerPing();
 setInterval(viewerPing,30000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){viewerPing();if(inlinePage!==null)schedulePagePoll();requestRefresh();}});
+const roomViewStorageKey='hausstatus.room-view.v1:'+(typeof location==='undefined'?'default':location.pathname+location.search);
+let roomRestoreDone=false;
+function saveRoomView(page){
+ try{if(page&&page.view===12)localStorage.setItem(roomViewStorageKey,JSON.stringify({view:12,room:page.room??''}));
+ else localStorage.removeItem(roomViewStorageKey);}catch{}
+}
 const activeRoomCategories=new Map();
 const el=id=>document.getElementById(id);
 function text(node,value){node.textContent=String(value??'Unbekannt');}
@@ -1733,7 +1739,7 @@ el('pageBack').addEventListener('click',()=>{
  if(busy)return;
  if(inlinePage?.view===12&&inlinePage.room!==''){readInlinePage({view:12,room:''},'navigate');return;}
  clearTimeout(pagePollTimer);pagePollTimer=null;cancelPageRequest();inlinePage=null;showingRooms=false;
- state=homeState;showStatus('');text(el('refreshStatus'),'');render();
+ state=homeState;saveRoomView(null);showStatus('');text(el('refreshStatus'),'');render();
 });
 function renderPageNavigation(){
  renderRoomNavigation();
@@ -1804,7 +1810,7 @@ function receivePageReply(message){
  const pending=pageRequest;if(!pending||message.pageReply!==pending.request)return;
  cancelPageRequest();if(pending.reason==='navigate'||pending.reason==='value')busy=false;
  const valid=message.state?.Controls&&message.state.View===pending.page.view&&message.state.PageRoom===pending.page.room;
- if(valid){inlinePage=pending.page;showingRooms=false;state=message.state;}
+ if(valid){inlinePage=pending.page;showingRooms=false;state=message.state;saveRoomView(pending.page);}
  const error=message.error||(!valid?'Die Unterseite hat keine gültigen Werte geliefert.':'');
  if(pending.reason==='refresh')text(el('refreshStatus'),error?'Aktualisierung fehlgeschlagen: '+error:'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
  else if(error)showStatus(error);
@@ -2349,6 +2355,18 @@ handleMessage=function(data){
 const renderContents=render;render=function(){try{renderContents();}catch(e){showStatus('Darstellung konnte nicht geladen werden: '+String(e?.message??e));}};
 render();
 firstRenderComplete=true;
+// Restore the last room after the initial page has been drawn.
+// Never issue any device action: PageRead only.
+if(!roomRestoreDone){
+ roomRestoreDone=true;
+ try{
+  const saved=JSON.parse(localStorage.getItem(roomViewStorageKey)||'null');
+  const rooms=homeState?.NavigationRooms??state?.NavigationRooms??[];
+  if(saved?.view===12&&typeof saved.room==='string'&&saved.room!==''&&rooms.includes(saved.room)){
+   setTimeout(()=>{if(inlinePage===null&&!busy)readInlinePage({view:12,room:saved.room},'navigate');},250);
+  }
+ }catch{}
+}
 // The remote forecast is requested after the first paint, not while building
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
