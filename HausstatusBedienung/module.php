@@ -1327,7 +1327,11 @@ class HausstatusBedienung extends IPSModuleStrict
         $result = ['start' => $start, 'end' => $now, 'sensors' => []];
         foreach ($this->MotionSensors() as $sensor) {
             $id = $sensor['Variable'];
+            // Der reale Variablenstatus hat Vorrang vor dem verzögerten Archiv.
+            $changed = $id > 0 && IPS_VariableExists($id)
+                ? (int) IPS_GetVariable($id)['VariableChanged'] : 0;
             $result['sensors'][] = ['name' => $sensor['Name'], 'current' => $this->Read($id)['raw'],
+                'changed' => $changed,
                 'history' => $cache['history'][(string)$id] ?? ['entries' => [], 'previous' => null, 'note' => 'Noch keine Daten.']];
         }
         return $result;
