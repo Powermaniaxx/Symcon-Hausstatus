@@ -1370,7 +1370,10 @@ class HausstatusBedienung extends IPSModuleStrict
             $changed = $id > 0 && IPS_VariableExists($id)
                 ? (int) IPS_GetVariable($id)['VariableChanged'] : 0;
             $raw = $this->Read($id)['raw'];
-            $result['sensors'][] = ['name' => $sensor['Name'], 'current' => is_bool($raw) ? $raw : null,
+            $valid = $id > 0 && IPS_VariableExists($id) && IPS_GetVariable($id)['VariableType'] === 0;
+            $result['sensors'][] = ['name' => $sensor['Name'], 'variable' => $id,
+                'source' => $valid ? IPS_GetLocation($id) : 'Keine gültige Boolean-Variable',
+                'current' => $valid && is_bool($raw) ? $raw : null,
                 'changed' => $changed,
                 'history' => $cache['history'][(string)$id] ?? ['entries' => [], 'previous' => null, 'note' => 'Noch keine Daten.']];
         }
