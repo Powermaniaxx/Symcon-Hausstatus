@@ -5,6 +5,22 @@ const HOST=process.env.PHILIPS_TV_HOST === '192.168.178.190' ? '192.168.178.189'
 const FILE=process.env.PHILIPS_TV_CONFIG||'/data/shield/philips-tv.credentials.json';
 const HDMI_PENDING=FILE+'.hdmi3-pending';
 const BACKOFF_FILE=FILE+'.connection-backoff.json';
+const POWER_FILE=FILE+'.last-power.json';
+const LIVING_FILE=require('node:path').join(process.env.SHIELD_STATUS_DIR||'/data/shield','wohnzimmer-status.json');
+
+function rememberPower(power,now=Date.now()){
+ try{fs.writeFileSync(POWER_FILE,JSON.stringify({host:HOST,power,updated:now}),{mode:0o600});}catch{}
+}
+
+function bothStandby(now=Date.now()){
+ try{
+  const tv=JSON.parse(fs.readFileSync(POWER_FILE,'utf8'));
+  const shield=JSON.parse(fs.readFileSync(LIVING_FILE,'utf8'));
+  return tv.host===HOST&&tv.power==='standby'&&Number.isFinite(tv.updated)&&tv.updated>0&&tv.updated<=now
+   &&shield.online===true&&shield.power==='standby'&&Number.isFinite(shield.updated)
+   &&now-shield.updated>=0&&now-shield.updated<=150000;
+ }catch{return false;}
+}
 const FINGERPRINT='88CA8280AA7C86E1457AC62C717F3052F5F6B29B8339D223F96011D1566BF3F9';
 const SHARED_KEY=Buffer.from('ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA==','base64');
 const md5=value=>crypto.createHash('md5').update(value).digest('hex');
@@ -140,13 +156,16 @@ async function collect(request=api,health=reachable,now=Date.now){
  };
  try{
   const config=credentials();
+  if(bothStandby(now()))return {...empty,online:true,power:'standby',error:'Ruhemodus: TV zuletzt Standby, Shield im Standby; TV-Abfrage pausiert.'};
   const backoff=connectionBackoff(now());
   if(backoff.nextAttempt>now())return await unavailable(backoff);
   const state=await request('GET','powerstate',undefined,config);
   resetConnectionBackoff();
+  rememberPower(state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',now());
   let error=['On','Standby'].includes(state.powerstate)?'':'TV-Energiezustand unbekannt.';
   return {...empty,online:true,power:state.powerstate==='On'?'awake':state.powerstate==='Standby'?'standby':'unknown',error};
  }catch(error){
+  rememberPower('unknown',now());
   if(networkFailure(error)){
    return await unavailable(recordConnectionFailure(now()));
   }
@@ -161,13 +180,17 @@ async function execute(command,request=api,wakeDevice=wake){
  clearPendingHdmi3();
  // Acknowledge old queued HDMI commands without sending anything to the TV.
  if(command.action==='hdmi3')return true;
+ if(command.action==='sleep'&&bothStandby())return true;
  const config=credentials();
+ // A new power command cancels any old standby assumption, including failed wakeups.
+ rememberPower('unknown');
  try{await request('POST','powerstate',{powerstate:command.action==='wake'?'On':'Standby'},config);}
  catch(error){
   if(command.action!=='wake'||!networkFailure(error))throw error;
   await wakeDevice(config.mac,config.broadcast);
  }
  resetConnectionBackoff();
+ if(command.action==='sleep')rememberPower('standby');
  return true;
 }
 
@@ -185,7 +208,7 @@ async function pair(){
  fs.writeFileSync(FILE,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.chmodSync(FILE,0o600);
  console.log('TV gekoppelt. Zugangsdaten ausschließlich lokal gespeichert.');
 }
-module.exports={digest,api,wakePacket,collect,execute,applyPendingHdmi3,networkFailure,reachable};
+module.exports={digest,api,wakePacket,collect,execute,applyPendingHdmi3,networkFailure,reachable,bothStandby};
 if(require.main===module){
  const action=process.argv[2]||'status';
  (action==='pair'?pair():action==='status'?collect().then(status=>console.log(JSON.stringify(status))):Promise.reject(new Error('Aufruf: philips-tv.js pair oder status'))).catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -107,6 +107,16 @@ async function executePower(command, run = adb) {
     return true;
 }
 
+function rememberLivingStatus(status, directory = '/data/shield', now = Date.now()) {
+    const file = path.join(directory,'wohnzimmer-status.json');
+    const value = {online:status.online === true,power:status.power,updated:now};
+    try {
+        fs.writeFileSync(file+'.update',JSON.stringify(value),{mode:0o600});
+        fs.renameSync(file+'.update',file);
+        return true;
+    } catch { return false; }
+}
+
 async function main() {
     if(!TARGET) throw new Error('Unbekannte Shield: '+device);
     const lock = '/data/shield/poll-'+device+'.lock';
@@ -121,10 +131,12 @@ async function main() {
         const powerAck = fs.existsSync(ackFile) ? fs.readFileSync(ackFile,'utf8').trim() : '';
         const driver = device === 'philips' ? require('./philips-tv.js') : null;
         const status = {...await (driver ? driver.collect() : collect()),device,powerAck};
+        // Share the real ADB observation with the TV poller; no extra Shield connection.
+        if(device === 'wohnzimmer' && !rememberLivingStatus(status)) console.error('Ruhemodus: Wohnzimmer-Status konnte nicht gespeichert werden.');
         const command = await send(status);
         if(command && (driver || status.online) && await (driver ? driver.execute(command) : executePower(command))) fs.writeFileSync(ackFile,command.id,{mode:0o600});
         console.log(JSON.stringify({ok:true,device,online:status.online,power:status.power,error:status.error}));
     } finally { fs.rmdirSync(lock); }
 }
-module.exports = {parse,blank,collect,send,executePower};
+module.exports = {parse,blank,collect,send,executePower,rememberLivingStatus};
 if(require.main === module) main().catch(error => {console.error(error.message);process.exitCode=1;});

@@ -1581,8 +1581,9 @@ function renderShield(cinema,shield){
  const box=document.createElement('section');box.className='card shieldStatus';box.setAttribute('aria-label','Nvidia Shield Status');
  const title=document.createElement('h3');text(title,shield.kind==='tv'?'Philips TV':'Nvidia Shield');box.append(title);
  const playback={playing:'Läuft',paused:'Pausiert',stopped:'Gestoppt',unknown:'Unbekannt'};
+ const tvPaused=shield.kind==='tv'&&String(shield.error||'').startsWith('Ruhemodus:');
  const rows=shield.kind==='tv'
-  ? [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Nicht erreichbar'],['Betrieb',shield.power==='awake'?'Ein':shield.power==='standby'?'Standby':'Unbekannt'],['Diagnose',shield.error||'OK']]
+  ? [['Verbindung',shield.stale?'Daten veraltet':tvPaused?'Abfrage pausiert':shield.online?'Online':'Nicht erreichbar'],['Betrieb',tvPaused?'Standby (zuletzt gemeldet)':shield.power==='awake'?'Ein':shield.power==='standby'?'Standby':'Unbekannt'],['Diagnose',shield.error||'OK']]
   : shield.compact
   ? [['Online',shield.stale?'Unbekannt – Daten veraltet':shield.online?'Online':'Offline'],['Diagnose',shield.error||'OK']]
   : [['Verbindung',shield.stale?'Daten veraltet':shield.online?'Online':'Offline'],['Betrieb',shield.power==='awake'?'Wach':shield.power==='standby'?'Standby':'Unbekannt'],['Aktive App',shield.app||'—'],['Wiedergabe',playback[shield.playback]||'Unbekannt'],['Medientitel',shield.title||'—'],['Diagnose',shield.error||'OK']];
@@ -1600,7 +1601,7 @@ function renderShield(cinema,shield){
   buttons(box,'ShieldPower_'+shield.device,shield.kind==='tv'||(shield.online===true&&!shield.stale),shield.power==='awake'?true:shield.power==='standby'?false:null);
 
  }
- if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,'Letzte Abfrage: '+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
+ if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,(tvPaused?'Letzte Statusmeldung: ':'Letzte Abfrage: ')+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
  cinema.append(box);
  return box;
 }
