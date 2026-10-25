@@ -2267,6 +2267,9 @@ function renderMotion(m){
   box.append(track);const scale=document.createElement('div');scale.className='motionScale';for(const t of [m.start,m.end]){const n=document.createElement('span');text(n,motionTime(t));scale.append(n);}box.append(scale);
   if(h.note){const n=document.createElement('div');n.className='small';text(n,h.note);box.append(n);}
   const detail=document.createElement('details'),summary=document.createElement('summary');text(summary,'Zeitpunkte anzeigen ('+entries.length+' Zustandswechsel)');detail.append(summary);
+  const source=document.createElement('div');source.className='small';
+  text(source,'Symcon-Quelle: '+(sensor.source||'Unbekannt')+' · ID '+(sensor.variable??'?'));
+  detail.append(source);
   const log=document.createElement('div');log.className='motionLog';
   if(!entries.length){const n=document.createElement('div');text(n,'Keine aufgezeichneten Zustandswechsel in diesem Zeitraum.');log.append(n);}
   for(const e of entries.slice().reverse()){const n=document.createElement('div');n.className='row';text(n,motionTime(e.time)+' \u2014 '+(e.active?'Bewegung erkannt':'Keine Bewegung')+(e.live?' (Live-Wert)':''));log.append(n);}detail.append(log);box.append(detail);el('motion').append(box);
