@@ -730,6 +730,19 @@ function scheduleSettling(){
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')cancelSettling();});
 let refreshRequest=null,refreshTimer=null;
 let homeState=state,inlinePage=null,showingRooms=false,pageRequest=null,pageTimer=null,pagePollTimer=null;
+let roomSensorRefreshTimer=null,roomSensorRefreshPending=false;
+// Sensorwechsel loesen eine gezielte Neulesung der gerade sichtbaren Raumseite aus.
+function queueRoomSensorRefresh(){
+ roomSensorRefreshPending=true;
+ if(roomSensorRefreshTimer!==null)return;
+ roomSensorRefreshTimer=setTimeout(()=>{
+  roomSensorRefreshTimer=null;
+  if(inlinePage?.view!==12||document.visibilityState!=='visible'){roomSensorRefreshPending=false;return;}
+  if(!roomSensorRefreshPending||busy||editing||pageRequest!==null)return;
+  roomSensorRefreshPending=false;
+  readInlinePage(inlinePage,'background');
+ },150);
+}
 const openPanels=new Set();
 let firstRenderComplete=false,lastForecastRequest=0;
 function requestForecastAfterLoad(){
@@ -1818,6 +1831,7 @@ function receivePageReply(message){
  else if(pending.reason==='navigate')showStatus('');
  schedulePagePoll();
  if(!editing)render();
+ if(roomSensorRefreshPending)queueRoomSensorRefresh();
 }
 function openDetail(target,name){
  if(busy||!Number.isInteger(target)||target<=0||typeof openObject!=='function')return;
@@ -2232,22 +2246,24 @@ function renderMotion(m){
   const box=document.createElement('div');box.className='motionItem';
   const title=document.createElement('div');text(title,sensor.name+' \u2014 '+(sensor.current===true?'Bewegung erkannt':sensor.current===false?'Keine Bewegung':'Unbekannt'));box.append(title);
   const track=document.createElement('div');track.className='motionTrack';track.setAttribute('aria-label','Bewegungszeiten '+sensor.name);
-  const h=sensor.history, entries=h.entries.filter(e=>e.time>=m.start&&e.time<=m.end).slice().sort((a,b)=>a.time-b.time);
-  // Bei einer fehlenden Archivmeldung den letzten echten Zustandswechsel eintragen.
-  // Der aktuelle Sensorwert entscheidet immer ueber den rechten Rand des Balkens.
-  const live=typeof sensor.current==='boolean'?sensor.current:null;
-  if(live!==null){
-   const last=entries.length?entries[entries.length-1]:null;
-   const lastValue=last?last.active:h.previous;
-   if(lastValue!==live){
-    const changed=Number(sensor.changed)||0;
-    const time=changed>=m.start&&changed<=m.end&&(!last||changed>=last.time)?changed:m.end;
-    entries.push({time,active:live,live:true});
+  const h=sensor.history,live=typeof sensor.current==='boolean'?sensor.current:null;
+  let entries=h.entries.filter(e=>e.time>=m.start&&e.time<=m.end).slice().sort((a,b)=>a.time-b.time);
+  let initial=h.previous;
+  const changed=Number(sensor.changed)||0;
+  // Die letzte reale Variablenaenderung hat Vorrang vor asynchronen Archivdaten.
+  if(live!==null&&changed>0&&changed<=m.end){
+   if(changed<=m.start){initial=live;entries=[];}
+   else{
+    entries=entries.filter(e=>e.time<changed);
+    const last=entries.length?entries[entries.length-1]:null;
+    if((last?last.active:initial)!==live)entries.push({time:changed,active:live,live:true});
    }
   }
-  let active=h.previous,begin=m.start;
+  let active=initial,begin=m.start;
   const bar=(a,b)=>{if(b<=a)return;const n=document.createElement('div');n.className='motionBar';n.style.left=((a-m.start)/86400*100)+'%';n.style.width=((b-a)/86400*100)+'%';n.title=motionTime(a)+' bis '+motionTime(b);track.append(n);};
-  for(const e of entries){if(active===true)bar(begin,e.time);active=e.active;begin=e.time;}if(active===true)bar(begin,m.end);
+  for(const e of entries){if(active===true)bar(begin,e.time);active=e.active;begin=e.time;}
+  // Keinen laufenden Bewegungsbalken ohne ein aktuelles TRUE des Sensors.
+  if(active===true&&live===true)bar(begin,m.end);
   box.append(track);const scale=document.createElement('div');scale.className='motionScale';for(const t of [m.start,m.end]){const n=document.createElement('span');text(n,motionTime(t));scale.append(n);}box.append(scale);
   if(h.note){const n=document.createElement('div');n.className='small';text(n,h.note);box.append(n);}
   const detail=document.createElement('details'),summary=document.createElement('summary');text(summary,'Zeitpunkte anzeigen ('+entries.length+' Zustandswechsel)');detail.append(summary);
@@ -2273,7 +2289,7 @@ function send(command,value){
  timeoutTimer=setTimeout(()=>{finish();showStatus('Keine Best\u00e4tigung empfangen. Status pr\u00fcfen.');render();},8000);
  try{const action=command==='RoomValue'?'RoomValue:'+value.id:command;requestAction('Command:'+commandRequest+':'+action,command==='RoomValue'?value.value:['DoorConfirm','DoorOpen','DockerControl'].includes(command)?JSON.stringify(value):value);}catch(e){finish();showStatus('Befehl konnte nicht gesendet werden.');render();}
 }
-function finish(){busy=false;commandRequest=null;lockedControls.forEach(control=>{control.disabled=false;});lockedControls=[];clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();}
+function finish(){busy=false;commandRequest=null;lockedControls.forEach(control=>{control.disabled=false;});lockedControls=[];clearTimeout(pendingTimer);clearTimeout(timeoutTimer);pendingTimer=null;timeoutTimer=null;updateRefreshButton();if(roomSensorRefreshPending)queueRoomSensorRefresh();}
 function updateRefreshButton(){
  const waiting=refreshRequest!==null||pageRequest?.reason==='refresh';el('refresh').disabled=busy||waiting;
  el('refresh').setAttribute('aria-busy',String(waiting));text(el('refresh'),waiting?'Aktualisiere ...':'\u21bb Aktualisieren');
@@ -2328,6 +2344,7 @@ const receiveState=handleMessage;
 handleMessage=function(data){
  let message;try{message=typeof data==='string'?JSON.parse(data):data;}catch(e){return;}
  if(message?.commandDone&&Object.prototype.hasOwnProperty.call(message,'commandRequest')&&(commandRequest===null||message.commandRequest!==commandRequest))return;
+ if(message&&Number.isInteger(message.roomSensorChanged)){if(inlinePage?.view===12)queueRoomSensorRefresh();return;}
  if(message&&Object.prototype.hasOwnProperty.call(message,'wetterComUpdate')){
   if(homeState)homeState.WetterComForecast=message.wetterComUpdate;
   if(state)state.WetterComForecast=message.wetterComUpdate;
