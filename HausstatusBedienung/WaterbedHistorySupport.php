@@ -25,8 +25,9 @@ trait HausstatusWaterbedHistorySupport
         $cursor = $start;
         while ($cursor->getTimestamp() < $now) {
             $a = $cursor->getTimestamp();
-            $next = $level === 0 ? $cursor->setTimestamp($a + 3600)
-                : $cursor->modify($level === 3 ? 'first day of next month' : '+1 day');
+            $next = $level === 4 ? $cursor->setTimestamp($a + 900)
+                : ($level === 0 ? $cursor->setTimestamp($a + 3600)
+                : $cursor->modify($level === 3 ? 'first day of next month' : '+1 day'));
             $b = min($now, $next->getTimestamp()); $position = $a; $sum = 0.0; $complete = true;
             while ($position < $b) {
                 $end = $index < count($times) ? min($b, $times[$index]) : $b;
@@ -50,7 +51,7 @@ trait HausstatusWaterbedHistorySupport
             'sven' => $this->ConfigInteger('WaterbedSvenTemperature'),
             'susi' => $this->ConfigInteger('WaterbedSusiTemperature')];
         $now = time();
-        $key = json_encode(['year-selection-v4', $archive, $ids, $this->ConfigString('WaterbedEnergyUnit')]);
+        $key = json_encode(['day-power-quarterhour-v5', $archive, $ids, $this->ConfigString('WaterbedEnergyUnit')]);
         $cache = json_decode($this->GetBuffer('WaterbedChartCache'), true);
         if (($cache['key'] ?? '') === $key && ($cache['until'] ?? 0) > $now) { return $cache['data']; }
         $local = (new DateTimeImmutable('@' . $now))->setTimezone(new DateTimeZone('Europe/Berlin'));
@@ -72,10 +73,10 @@ trait HausstatusWaterbedHistorySupport
                     if ($name === 'kwh' && AC_GetAggregationType($archive, $id) !== 1) {
                         $notes[] = 'Verbrauch ID 17732 benötigt im Archiv den Aggregationstyp Zähler.'; continue;
                     }
-                    if ($name === 'w' && AC_GetAggregationType($archive, $id) !== 0) {
-                        $raw = $this->WaterbedRawPower($archive, $id, $start, $rangeEnd, $level);
+                    if ($name === 'w' && ($range === 'day' || AC_GetAggregationType($archive, $id) !== 0)) {
+                        $raw = $this->WaterbedRawPower($archive, $id, $start, $rangeEnd, $range === 'day' ? 4 : $level);
                         $series[$name] = $raw['points'];
-                        $notes[] = 'Leistungsmittelwerte aus Rohdaten; Zähler-Summen werden nicht als Watt verwendet.';
+                        if ($range !== 'day') { $notes[] = 'Leistungsmittelwerte aus Rohdaten; Zähler-Summen werden nicht als Watt verwendet.'; }
                         if ($raw['limited']) { $notes[] = 'Rohdatenlimit erreicht; unvollständige ältere Leistungsintervalle bleiben leer.'; }
                         continue;
                     }
