@@ -2241,7 +2241,8 @@ function motionTime(t){return new Date(t*1000).toLocaleString('de-DE',{timeZone:
 function renderMotion(m){
  el('motion').replaceChildren();if(!m)return;
  if(!m.sensors.length){text(el('motion'),'Keine Bewegungsmelder eingerichtet.');return;}
- const sensors=m.sensors.slice().sort((a,b)=>a.name.localeCompare(b.name,'de',{numeric:true,sensitivity:'base'}));
+ // Reihenfolge wie in den Moduleinstellungen gespeichert (Drag & Drop), nicht alphabetisch.
+ const sensors=m.sensors.slice();
  for(const sensor of sensors){
   const box=document.createElement('div');box.className='motionItem';
   const title=document.createElement('div');text(title,sensor.name+' \u2014 '+(sensor.current===true?'Bewegung erkannt':sensor.current===false?'Keine Bewegung':'Unbekannt'));box.append(title);
