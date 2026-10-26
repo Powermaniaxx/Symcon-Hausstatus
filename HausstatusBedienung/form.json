@@ -1362,6 +1362,7 @@
           "rowCount": 6,
           "add": true,
           "delete": true,
+          "changeOrder": true,
           "columns": [
             {
               "caption": "Melder",
@@ -1395,7 +1396,7 @@
         },
         {
           "type": "Label",
-          "caption": "Die Melder müssen Boolean-Variablen sein. Der Verlauf zeigt die im Archiv gespeicherten Zustandswechsel."
+          "caption": "Reihenfolge selbst festlegen: Melder in der Liste per Drag & Drop verschieben, anschließend Übernehmen. Die Bewegungsanzeige und der 24-Stunden-Verlauf übernehmen genau diese Reihenfolge. Melder müssen Boolean-Variablen sein."
         }
       ]
     },
