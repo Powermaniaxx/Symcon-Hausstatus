@@ -10,8 +10,14 @@ panel=ctx.renderWaterbedEnergy({values:{},historyLoaded:false,historyError:'Test
 ctx.renderWaterbedChart=()=>{throw Error('Malformed archive');};panel=ctx.renderWaterbedEnergy({values:{power:{text:'51 W'}},historyLoaded:true});assert(all(panel).some(n=>n.textContent==='51 W'));assert(all(panel).some(n=>n.textContent.includes('Malformed archive')),'Chart error contained');
 const nav={homeState:{InlinePages:true},pageRequest:{request:'old',reason:'history'},busy:false,editing:false,requestAction:(...args)=>calls.push(args),setTimeout:(f,ms)=>{nav.lastTimeout=ms;return 1;},cancelPageRequest:()=>nav.pageRequest=null,showStatus:()=>{},render:()=>{},text:()=>{},el:()=>({}),updateRefreshButton:()=>{},schedulePagePoll:()=>{},saveRoomView:()=>{},scheduleSettling:()=>{},roomSensorRefreshPending:false};
 vm.createContext(nav);vm.runInContext(html.slice(html.indexOf('function readInlinePage('),html.indexOf('function openDetail(')),nav);
+nav.readInlinePage({view:12,room:'Schlafzimmer'},'background');assert.equal(nav.pageRequest.request,'old','Sensor/background refresh must not discard pending chart response');
 nav.readInlinePage({view:12,room:'Wohnzimmer'},'navigate');assert.equal(nav.pageRequest.page.room,'Wohnzimmer','Navigation cancels pending history');assert.equal(nav.lastTimeout,8000,'Normal timeout unchanged');
 nav.receivePageReply({pageReply:'old',state:{Controls:{},View:12,PageRoom:'Schlafzimmer'}});assert.equal(nav.pageRequest.page.room,'Wohnzimmer','Stale history cannot restore wrong room');
 nav.pageRequest=null;nav.busy=false;nav.readInlinePage({view:12,room:'Schlafzimmer'},'history');assert.equal(nav.lastTimeout,30000);assert.equal(nav.busy,false,'Archive request does not lock controls');
+const historyRequest=nav.pageRequest.request;
+for(let i=0;i<10;i++)nav.readInlinePage({view:12,room:'Schlafzimmer'},'background');
+nav.receivePageReply({pageReply:historyRequest,state:{Controls:{},View:12,PageRoom:'Schlafzimmer',WaterbedEnergy:{historyLoaded:true}}});
+assert.equal(nav.state.WaterbedEnergy.historyLoaded,true,'History response still arrives after a sensor burst');
+nav.busy=true;assert.equal(nav.readInlinePage({view:12,room:'Schlafzimmer'},'history'),false,'A blocked attempt is not marked as sent');
 const php=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.php','utf8');assert(php.includes("str_replace('<!--HAUSSTATUS_RELEASE-->'"));assert(php.lastIndexOf('$this->VersionHausstatusPresentationLinks();')>php.indexOf('IPS_ApplyChanges($child)'),'Release labels refreshed after child setup');assert(html.includes('Hausstatus · v<!--HAUSSTATUS_RELEASE-->'));
 console.log('waterbed-page-loading: OK (deferred loading, isolated errors, retry, navigation cancellation, release marker for shared template)');

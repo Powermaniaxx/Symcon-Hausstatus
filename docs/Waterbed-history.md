@@ -34,3 +34,12 @@ Der erste Schlafzimmer-Aufruf liest nur aktuelle Werte. Die Archivhistorie wird 
 ApplyChanges leert die Wasserbett-Caches jeder Instanz. Alle Seiten verwenden dieselbe HTML-Vorlage mit einer Versionsangabe aus library.json. Die vorhandenen Versionsbeschriftungen werden nach dem Einrichten der Unterseiten erneut aktualisiert, damit deren Einrichtung keine alten Namen hinterlässt. Bereits geöffnete Ansichten müssen nach dem Modulupdate neu geöffnet werden.
 
 Zusätzliche Prüfungen: `php tests/waterbed-page-loading.php` (mbstring benötigt) und `node tests/waterbed-page-loading.js`. Sie prüfen den archivfreien Raumaufruf, Fehlerbegrenzung, Cache-Ablauf, getrenntes Nachladen, erneute Versuche und Navigation während einer laufenden Historienanfrage.
+
+
+## v0.123: Nachladen trotz Sensoraktualisierung und Raumtitel
+
+Automatische Hintergrund-/Sensoraktualisierungen verdrängen keine laufende Historienanfrage mehr. Nur bewusste Navigation, Bedienung oder manuelles Aktualisieren darf sie ablösen. Der automatische Ladeversuch gilt erst dann als gestartet, wenn die Anfrage tatsächlich gesendet wurde.
+
+Die Raumübersicht wird auch mit einem Versionszusatz im Instanz- oder Linknamen erkannt. Versionsbeschriftungen werden anhand der Zugehörigkeit zur Hausstatus-Hauptinstanz aktualisiert, nicht anhand fester Ordner. Vorhandene Raumseiten und Links außerhalb der bisherigen Visualisierungsordner werden dadurch ebenfalls erfasst. Kategorien, fremde Instanzen, Linkziele, Sichtbarkeit und Anordnung bleiben unverändert.
+
+Regressionstests: `php tests/room-version-navigation.php` und `node tests/waterbed-page-loading.js`, einschließlich Sensorereignissen während einer laufenden Historienanfrage.
