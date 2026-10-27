@@ -1810,7 +1810,6 @@ function schedulePagePoll(){
 }
 function readInlinePage(page,reason,value){
  if(!homeState?.InlinePages||typeof requestAction!=='function')return false;
- if(pageRequest?.reason==='history'&&['navigate','value','refresh'].includes(reason))cancelPageRequest();
  if(pageRequest!==null)return false;
  if(busy)return false;
  const request='page-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,14);
@@ -1825,7 +1824,7 @@ function readInlinePage(page,reason,value){
   if(pending.reason==='refresh')text(el('refreshStatus'),'Keine Antwort. Bitte die Verbindung prüfen.');
   else if(pending.reason!=='background')showStatus(command?'Keine Bestätigung empfangen. Status prüfen.':'Seite konnte nicht geladen werden. Bitte erneut öffnen.');
   render();
- },reason==='history'?30000:8000);
+ },8000);
  try{requestAction(command?'PageValue':'PageRead',JSON.stringify({request,view:page.view,room:page.room,reason,...(command?{value}:{})}));return true;}
  catch(e){cancelPageRequest();if(reason==='navigate'||command)busy=false;if(reason==='refresh')text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');else if(reason!=='background')showStatus('Seitenanfrage konnte nicht gesendet werden.');render();return false;}
 }
@@ -1838,7 +1837,7 @@ function receivePageReply(message){
  if(pending.reason==='refresh')text(el('refreshStatus'),error?'Aktualisierung fehlgeschlagen: '+error:'Aktualisiert um '+new Date().toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit'}));
  else if(error)showStatus(error);
  else if(pending.reason==='value'){showStatus('Befehl übergeben.',true);scheduleSettling();}
- else if(['navigate','history'].includes(pending.reason))showStatus('');
+ else if(pending.reason==='navigate')showStatus('');
  schedulePagePoll();
  if(!editing)render();
  if(roomSensorRefreshPending)queueRoomSensorRefresh();
@@ -2029,22 +2028,12 @@ function waterbedDailyTable(data){
  if(!(data?.daily?.length)){const empty=document.createElement('p');empty.className='roomNote';text(empty,'Keine Tageswerte verfügbar.');details.append(empty);}return details;
 }
 
-let waterbedAutoHistoryRequested=false,waterbedAutoHistoryTimer=null;
 function renderWaterbedEnergy(data){
  const section=document.createElement('div');section.className='waterbedEnergy';const title=document.createElement('h4');text(title,'Wasserbett · Leistung und Verbrauch');section.append(title);
  const totals=document.createElement('div');totals.className='waterbedTotals';for(const [key,label] of [['power','Aktuelle Leistung'],['today','Heute'],['week','Diese Woche'],['month','Dieser Monat'],['total','Gesamtverbrauch']]){const item=document.createElement('div');item.className='waterbedTotal';const name=document.createElement('span'),value=document.createElement('strong');text(name,label);text(value,data.values?.[key]?.text??'—');item.append(name,value);totals.append(item);}section.append(totals);
- if(data.historyLoaded===false){
-  const note=document.createElement('p');note.className='roomNote';text(note,data.historyError||'Der Raum ist bereit. Der Wasserbett-Verlauf wird separat geladen.');section.append(note);
-  const load=document.createElement('button');load.type='button';text(load,'Diagramm und Tageswerte laden');load.addEventListener('click',()=>readInlinePage({view:12,room:'Schlafzimmer'},'history'));section.append(load);
-  if(!waterbedAutoHistoryRequested&&!data.historyError&&waterbedAutoHistoryTimer===null){
-   waterbedAutoHistoryTimer=setTimeout(()=>{waterbedAutoHistoryTimer=null;
-    if(state?.View===12&&state?.PageRoom==='Schlafzimmer')waterbedAutoHistoryRequested=readInlinePage({view:12,room:'Schlafzimmer'},'history')===true;
-   },0);
-  }
- }else{
-  try{section.append(renderWaterbedChart(data.history,data.annual,data.values?.power));}
-  catch(error){const note=document.createElement('p');note.className='roomNote';text(note,'Wasserbett-Diagramm: '+String(error?.message??error));section.append(note);}
- }
+ if(data.note){const note=document.createElement('p');note.className='roomNote';text(note,data.note);section.append(note);}
+ try{section.append(renderWaterbedChart(data.history,data.annual,data.values?.power));}
+ catch(error){const note=document.createElement('p');note.className='roomNote';text(note,'Wasserbett-Diagramm: '+String(error?.message??error));section.append(note);}
  return section;
 }
 

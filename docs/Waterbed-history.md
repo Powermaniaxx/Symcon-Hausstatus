@@ -1,4 +1,10 @@
-# Wasserbett: Verlauf und Tageswerte (v0.121)
+# Wasserbett: Verlauf und Tageswerte (v0.126)
+
+## Aktueller Ladeweg ab v0.126
+
+Das Diagramm gehört wieder direkt zur normalen Raumantwort wie vor dem getrennten Nachladen. Es gibt keine zweite Historienanfrage, keinen Ladebutton und keinen timerabhängigen Ladezustand. Die zwischenzeitlichen Nachladeänderungen aus v0.122/v0.123 sind zurückgenommen. Der doppelte Wasserbett-Seitencache und die ungenutzten alten Tagesgrenzabfragen entfallen. Diagramm und Jahresvergleich werden innerhalb der Raumantwort unabhängig gegen Fehler abgesichert; aktuelle Werte bleiben sichtbar. Der bestehende Diagrammcache und die verlustfreie Speicherung großer Zustandsdaten bleiben erhalten.
+
+Tag/Woche/Monat mit Heizphasen, Jahres-Tagesmittel, W/kWh, Tageswerttabelle und Jahresvergleich bleiben verfügbar. Die Tests prüfen jetzt den initialen Raumaufruf mit 45.000 Heizwechseln und das direkte Rendern ohne weitere Bridge-Anfrage.
 
 ## Bedienung
 

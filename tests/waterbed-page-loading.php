@@ -19,14 +19,12 @@ class PageFixture {
 }
 function check($ok,$message){if(!$ok)throw new RuntimeException($message);}
 $f=new PageFixture();$result=$f->run();
-check($archiveLookups===0,'Opening bedroom performs no archive lookup');
-check($result['historyLoaded']===false&&$result['values']['power']['raw']===51,'Immediate current values, deferred history');
-$f->pageContext=['waterbedHistory'=>true];$f->fail=true;$result=$f->run();
-check(isset($result['historyError'])&&$result['historyLoaded']===false,'History exception is contained in waterbed panel');
-check($result['values']['power']['raw']===51,'Current readings survive failed history');
-$f->fail=false;$result=$f->run();check($result['historyLoaded']===true,'Explicit history request can load');
-$calls=$archiveLookups;$f->pageContext=null;$result=$f->run();check($result['historyLoaded']===true&&$archiveLookups===$calls,'Cached history never blocks room refresh');
-$cache=json_decode($f->buffers['WaterbedPageCache'],true);$cache['until']=time()-1;$f->buffers['WaterbedPageCache']=json_encode($cache);$result=$f->run();
-check($result['historyLoaded']===false&&$archiveLookups===$calls,'Expired history does not trigger archive work on navigation');
+check(is_array($result['history'])&&$result['values']['power']['raw']===51,'Initial state directly includes chart and current values');
+check(!array_key_exists('historyLoaded',$result),'No deferred loader state');
+$f->fail=true;$f->buffers=[];$result=$f->run();
+check($result['history']===null&&str_contains($result['note'],'Test: Archiv nicht verfügbar'),'History failure stays inside waterbed panel');
+check($result['values']['power']['raw']===51,'Current values survive history failure');
+$f->fail=false;$result=$f->run();check(is_array($result['history']),'Next ordinary state read retries without a special request');
+$calls=$archiveLookups;$result=$f->run();check(is_array($result['history']),'Repeated direct state remains readable');
 $f->room='Wohnzimmer';check($f->run()===null,'Other rooms unaffected');
-echo "waterbed-page-loading: OK (no archive on navigation, isolated errors, cached/expired data, other rooms)\n";
+echo "waterbed-page-loading: OK (direct initial chart, contained errors, ordinary retry, other rooms)\n";

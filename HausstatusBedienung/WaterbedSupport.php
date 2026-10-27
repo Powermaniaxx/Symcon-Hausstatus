@@ -149,115 +149,23 @@ trait HausstatusWaterbedSupport
             $id = $name === 'power' ? 16905 : $this->ConfigInteger($property);
             $values[$name] = $id > 0 && IPS_VariableExists($id) ? $this->Read($id) : ['raw'=>null,'text'=>'Nicht eingerichtet'];
         }
-        $key = json_encode([$this->ConfigInteger('WaterbedArchive'), $this->ConfigString('WaterbedEnergyUnit'),
-            $this->ConfigInteger('WaterbedSvenTemperature'), $this->ConfigInteger('WaterbedSusiTemperature'),
-            (new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin')))->format('Y-m-d')]);
-        $cached = json_decode($this->ReadLargeBuffer('WaterbedPageCache'), true);
-        if (($cached['key'] ?? null) === $key && ($cached['until'] ?? 0) > time() && is_array($cached['data'] ?? null)) {
-            return array_replace($cached['data'], ['values'=>$values]);
-        }
-        $result = ['values'=>$values,'days'=>[],'annual'=>null,'history'=>null,'note'=>'','historyLoaded'=>false];
-        // Opening a room must never synchronously read months of archive data.
-        // The visible waterbed panel requests its history separately through PageRead.
-        if (!($this->pageContext['waterbedHistory'] ?? false)) { return $result; }
-        try {
-            $result = $this->BuildWaterbedEnergyState();
-            $result['historyLoaded'] = true;
-            $this->WriteLargeBuffer('WaterbedPageCache', json_encode(['key'=>$key,'until'=>time()+300,'data'=>$result], JSON_THROW_ON_ERROR));
-        } catch (Throwable $e) {
-            $result = ['values'=>$values,'days'=>[],'annual'=>null,'history'=>null,'historyLoaded'=>false,
-                'historyError'=>'Wasserbett-Verlauf konnte nicht geladen werden: '.$e->getMessage()];
+        // Same direct state response as the original room page. No second request,
+        // page-context flag or duplicated page cache is needed to display the chart.
+        $result = ['values'=>$values,'history'=>null,'annual'=>null,'days'=>[],'note'=>''];
+        try { $result['history'] = $this->WaterbedChartHistory(); }
+        catch (Throwable $e) {
+            $result['note'] = 'Wasserbett-Verlauf: '.$e->getMessage();
             $this->SendDebug('Wasserbett-Verlauf', $e->getMessage(), 0);
         }
-        return $result;
-    }
-
-    private function BuildWaterbedEnergyState(): ?array
-    {
-        if (!$this->WaterbedVisible()) { return null; }
-        $sources = [];
-        foreach ([
-            'power' => 'WaterbedPower', 'today' => 'WaterbedToday',
-            'week' => 'WaterbedWeek', 'month' => 'WaterbedMonth',
-            'total' => 'WaterbedTotal'
-        ] as $key => $property) {
-            $id = $key === 'power' ? 16905 : $this->ConfigInteger($property);
-            $sources[$key] = $id > 0 && IPS_VariableExists($id)
-                ? $this->Read($id) : ['raw' => null, 'text' => 'Nicht eingerichtet'];
-        }
-        $result = ['values' => $sources, 'days' => [], 'annual' => null, 'note' => '',
-            'history' => $this->WaterbedChartHistory()];
-        $archive = $this->WaterbedArchiveID();
-        $totalID = 17732;
-        if ($archive <= 0 || $totalID <= 0 || !IPS_VariableExists($totalID)) {
-            $result['note'] = 'Für den Tagesverlauf muss der Gesamtverbrauchszähler im Symcon-Archiv verfügbar sein.';
-            return $result;
-        }
         try {
-            if (!AC_GetLoggingStatus($archive, $totalID)) {
-                $result['note'] = 'Archivierung für den Gesamtverbrauchszähler (ID ' . $totalID . ') aktivieren. Vergangene Werte lassen sich nicht nachträglich herstellen.';
-                return $result;
+            $archive = $this->WaterbedArchiveID();
+            if ($archive > 0 && IPS_VariableExists(17732) && AC_GetLoggingStatus($archive,17732)) {
+                $result['annual'] = $this->WaterbedYearComparison($archive,17732,time());
             }
-            $now = time();
-            try {
-                $result['annual'] = $this->WaterbedYearComparison($archive, $totalID, $now);
-            } catch (Throwable $e) {
-                $this->SendDebug('Wasserbett Jahresverlauf', $e->getMessage(), 0);
-            }
-            $zone = new DateTimeZone('Europe/Berlin');
-            $today = (new DateTimeImmutable('@' . $now))->setTimezone($zone)->setTime(0, 0);
-            $cache = json_decode($this->GetBuffer('WaterbedEnergyHistoryCache'), true);
-            if (is_array($cache) && ($cache['until'] ?? 0) > $now
-                && ($cache['today'] ?? 0) === $today->getTimestamp()
-                && ($cache['source'] ?? 0) === $totalID && ($cache['archive'] ?? 0) === $archive
-                && ($cache['unit'] ?? '') === $this->ConfigString('WaterbedEnergyUnit')) {
-                $result['days'] = $cache['days'] ?? [];
-                $result['note'] = $cache['note'] ?? '';
-                return $result;
-            }
-            $unit = $this->ConfigString('WaterbedEnergyUnit');
-            $factor = $unit === 'Wh' ? 0.001 : 1.0;
-            $boundaries = [];
-            for ($ago = 8; $ago >= 0; $ago--) {
-                $boundary = $today->modify('-' . $ago . ' days')->getTimestamp();
-                // One archived reading before each local day boundary; DST is handled by DateTime.
-                $values = AC_GetLoggedValues($archive, $totalID, 0, $boundary - 1, 1);
-                $reading = $values[0] ?? null;
-                $time = (int)($reading['TimeStamp'] ?? 0);
-                $raw = $reading['Value'] ?? null;
-                // Stale readings are not treated as measured consumption.
-                $boundaries[$ago] = $time > 0 && $boundary - $time <= 129600
-                    && is_numeric($raw) && is_finite((float)$raw)
-                    ? (float)$raw : null;
-            }
-            $days = [];
-            for ($ago = 7; $ago >= 1; $ago--) {
-                $start = $boundaries[$ago];
-                $end = $boundaries[$ago - 1];
-                $amount = $start === null || $end === null ? null : ($end - $start) * $factor;
-                if ($amount !== null && ($amount < -0.00001 || !is_finite($amount))) { $amount = null; }
-                $days[] = [
-                    'date' => $today->modify('-' . $ago . ' days')->format('d.m.Y'),
-                    'kwh' => $amount === null ? null : round(max(0.0, $amount), 3)
-                ];
-            }
-            $days = array_reverse($days); // Yesterday first.
-            $note = 'Abgeschlossene Tage, aus archivierten Zählerständen berechnet. Fehlende Tage bleiben leer.';
-            if (!array_filter($days, static fn(array $day): bool => $day['kwh'] !== null)) {
-                $note = 'Noch nicht genug archivierte Zählerstände für Tageswerte. Mindestens zwei Tagesgrenzen abwarten.';
-            }
-            $this->SetBuffer('WaterbedEnergyHistoryCache', json_encode([
-                'until' => $now + 900, 'today' => $today->getTimestamp(),
-                'source' => $totalID, 'archive' => $archive, 'unit' => $unit,
-                'days' => $days, 'note' => $note
-            ], JSON_THROW_ON_ERROR));
-            $result['days'] = $days;
-            $result['note'] = $note;
         } catch (Throwable $e) {
-            $result['note'] = 'Stromverlauf konnte nicht aus dem Archiv gelesen werden: ' . $e->getMessage();
+            $result['note'] .= ($result['note'] === '' ? '' : ' ').'Jahresvergleich: '.$e->getMessage();
+            $this->SendDebug('Wasserbett-Jahresvergleich', $e->getMessage(), 0);
         }
         return $result;
     }
 }
-
-
