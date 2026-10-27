@@ -25,3 +25,12 @@ Verbrauch stammt ausschließlich aus den Zähleraggregaten. Tageswerte werden zu
 
 `php tests/waterbed-history.php`, `php tests/waterbed-annual.php`, `node tests/waterbed-chart.js`.
 Die Tests prüfen Schaltstufen, Archiv-Paginierung, Tagesmittel, Zeitumstellung, Einheiten, fehlende Werte, Tagesdetails/-tabellen, Jahresvergleich, Skalen, Temperatureinblendung und gespeicherte Einstellungen. Zusätzlich im Browser mit synthetischen Daten auf Desktop und Smartphone geprüft. Ein Live-Test gegen die private Symcon-Installation ist nicht enthalten.
+
+
+## v0.122: Raumaufbau und Historie getrennt
+
+Der erste Schlafzimmer-Aufruf liest nur aktuelle Werte. Die Archivhistorie wird erst nach dem Zeichnen des sichtbaren Wasserbett-Bereichs in einer getrennten PageRead-Anfrage geladen. Navigation oder Bedienung kann diese Anfrage ablösen; verspätete Antworten werden verworfen. Ergebnisse werden fünf Minuten zwischengespeichert, ein abgelaufener Cache löst beim Raumwechsel keine neue Archivabfrage aus. Fehler bleiben im Wasserbett-Bereich und verhindern nicht das Laden des Raums. Ein erneuter Versuch ist über „Diagramm und Tageswerte laden“ möglich.
+
+ApplyChanges leert die Wasserbett-Caches jeder Instanz. Alle Seiten verwenden dieselbe HTML-Vorlage mit einer Versionsangabe aus library.json. Die vorhandenen Versionsbeschriftungen werden nach dem Einrichten der Unterseiten erneut aktualisiert, damit deren Einrichtung keine alten Namen hinterlässt. Bereits geöffnete Ansichten müssen nach dem Modulupdate neu geöffnet werden.
+
+Zusätzliche Prüfungen: `php tests/waterbed-page-loading.php` (mbstring benötigt) und `node tests/waterbed-page-loading.js`. Sie prüfen den archivfreien Raumaufruf, Fehlerbegrenzung, Cache-Ablauf, getrenntes Nachladen, erneute Versuche und Navigation während einer laufenden Historienanfrage.

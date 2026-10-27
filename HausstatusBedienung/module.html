@@ -1810,6 +1810,7 @@ function schedulePagePoll(){
 }
 function readInlinePage(page,reason,value){
  if(!homeState?.InlinePages||typeof requestAction!=='function')return;
+ if(pageRequest?.reason==='history'&&reason!=='history')cancelPageRequest();
  if(pageRequest!==null)return;
  if(busy)return;
  const request='page-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,14);
@@ -1824,7 +1825,7 @@ function readInlinePage(page,reason,value){
   if(pending.reason==='refresh')text(el('refreshStatus'),'Keine Antwort. Bitte die Verbindung prüfen.');
   else if(pending.reason!=='background')showStatus(command?'Keine Bestätigung empfangen. Status prüfen.':'Seite konnte nicht geladen werden. Bitte erneut öffnen.');
   render();
- },8000);
+ },reason==='history'?30000:8000);
  try{requestAction(command?'PageValue':'PageRead',JSON.stringify({request,view:page.view,room:page.room,reason,...(command?{value}:{})}));}
  catch(e){cancelPageRequest();if(reason==='navigate'||command)busy=false;if(reason==='refresh')text(el('refreshStatus'),'Aktualisierung konnte nicht gesendet werden.');else if(reason!=='background')showStatus('Seitenanfrage konnte nicht gesendet werden.');render();}
 }
@@ -2028,9 +2029,19 @@ function waterbedDailyTable(data){
  if(!(data?.daily?.length)){const empty=document.createElement('p');empty.className='roomNote';text(empty,'Keine Tageswerte verfügbar.');details.append(empty);}return details;
 }
 
+let waterbedAutoHistoryRequested=false;
 function renderWaterbedEnergy(data){
  const section=document.createElement('div');section.className='waterbedEnergy';const title=document.createElement('h4');text(title,'Wasserbett · Leistung und Verbrauch');section.append(title);
- const totals=document.createElement('div');totals.className='waterbedTotals';for(const [key,label] of [['power','Aktuelle Leistung'],['today','Heute'],['week','Diese Woche'],['month','Dieser Monat'],['total','Gesamtverbrauch']]){const item=document.createElement('div');item.className='waterbedTotal';const name=document.createElement('span'),value=document.createElement('strong');text(name,label);text(value,data.values?.[key]?.text??'—');item.append(name,value);totals.append(item);}section.append(totals,renderWaterbedChart(data.history,data.annual,data.values?.power));return section;
+ const totals=document.createElement('div');totals.className='waterbedTotals';for(const [key,label] of [['power','Aktuelle Leistung'],['today','Heute'],['week','Diese Woche'],['month','Dieser Monat'],['total','Gesamtverbrauch']]){const item=document.createElement('div');item.className='waterbedTotal';const name=document.createElement('span'),value=document.createElement('strong');text(name,label);text(value,data.values?.[key]?.text??'—');item.append(name,value);totals.append(item);}section.append(totals);
+ if(data.historyLoaded===false){
+  const note=document.createElement('p');note.className='roomNote';text(note,data.historyError||'Der Raum ist bereit. Der Wasserbett-Verlauf wird separat geladen.');section.append(note);
+  const load=document.createElement('button');load.type='button';text(load,'Diagramm und Tageswerte laden');load.addEventListener('click',()=>readInlinePage({view:12,room:'Schlafzimmer'},'history'));section.append(load);
+  if(!waterbedAutoHistoryRequested&&!data.historyError){waterbedAutoHistoryRequested=true;setTimeout(()=>{if(state?.View===12&&state?.PageRoom==='Schlafzimmer')readInlinePage({view:12,room:'Schlafzimmer'},'history');},0);}
+ }else{
+  try{section.append(renderWaterbedChart(data.history,data.annual,data.values?.power));}
+  catch(error){const note=document.createElement('p');note.className='roomNote';text(note,'Wasserbett-Diagramm: '+String(error?.message??error));section.append(note);}
+ }
+ return section;
 }
 
 function deviceItems(items){
@@ -2370,7 +2381,7 @@ if(!roomRestoreDone){
 // The remote forecast is requested after the first paint, not while building
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
-</script></body></html>
+</script><footer class="roomNote" style="text-align:right;padding:6px 12px;font-size:11px">Hausstatus · v<!--HAUSSTATUS_RELEASE--></footer></body></html>
 
 
 

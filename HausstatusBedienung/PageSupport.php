@@ -124,7 +124,8 @@ trait HausstatusPageSupport
                 || ($view === 7 && ($room !== '' || !in_array($this->ReadPropertyInteger('View'), [0, 15, 29], true))) || ($view === 12 && $room !== '' && !in_array($room, $this->NavigationRooms(), true))) {
                 throw new InvalidArgumentException('Diese Seite ist nicht eingerichtet.');
             }
-            $this->pageContext = ['view' => $view, 'room' => $room];
+            $this->pageContext = ['view' => $view, 'room' => $room,
+                'waterbedHistory' => $action === 'PageRead' && ($payload['reason'] ?? '') === 'history'];
             if ($action === 'PageValue') {
                 if ($view === 12 && $room === ''
                     && ($payload['value']['id'] ?? null) !== $this->ConfigInteger('HeatingProfile')) {
@@ -194,4 +195,5 @@ trait HausstatusPageSupport
         return implode(PHP_EOL, $lines);
     }
 }
+
 

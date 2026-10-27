@@ -136,6 +136,9 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+        foreach (['WaterbedPageCache', 'WaterbedChartCache', 'WaterbedYearComparisonCache', 'WaterbedEnergyHistoryCache'] as $cache) {
+            $this->SetBuffer($cache, '');
+        }
         // Restore the user's confirmed pre-reset balance after the plug change.
         // Undo the provisional 6.15 kWh balance once; preserve other configured balances.
         if (!$this->ReadAttributeBoolean('WasherHandover726Restored')) {
@@ -317,6 +320,10 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $child) {
                 if ($child !== $this->InstanceID && IPS_GetProperty($child, 'ConfigSource') === $this->InstanceID) { IPS_ApplyChanges($child); }
             }
+
+            // Child setup may restore its presentation name; version all pages afterwards.
+            try { $this->VersionHausstatusPresentationLinks(); }
+            catch (Throwable $e) { $this->SendDebug('Hausstatus-Verknuepfungen', $e->getMessage(), 0); }
 
             // Child ApplyChanges calls may touch presentation objects after the split
             // homepage was built. Enforce the intended final state once more: when
@@ -656,6 +663,7 @@ class HausstatusBedienung extends IPSModuleStrict
             if (!str_contains($html, '/*INITIAL_STATE*/null')) { throw new RuntimeException('Die HTML-Vorlage enthält keinen Platzhalter für Zustandsdaten.'); }
             $initial = json_encode($this->BaseState(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
                 | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+            $html = str_replace('<!--HAUSSTATUS_RELEASE-->', htmlspecialchars($this->HausstatusReleaseVersion(), ENT_QUOTES, 'UTF-8'), $html);
             return str_replace('/*INITIAL_STATE*/null', $initial, $html);
         } catch (Throwable $e) {
             $this->SendDebug('HTML-Darstellung', $e->getMessage(), 0);
@@ -1597,4 +1605,5 @@ class HausstatusBedienung extends IPSModuleStrict
         return $state;
     }
 }
+
 

@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const html=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.html','utf8');
+class E{constructor(tag){this.tag=tag;this.children=[];this.events={};this.style={};this.textContent='';}append(...n){this.children.push(...n);}replaceChildren(...n){this.children=n;}setAttribute(){}addEventListener(k,f){this.events[k]=f;}}
+const all=n=>[n,...n.children.flatMap(all)],scheduled=[],calls=[];
+const ctx={document:{createElement:t=>new E(t),createElementNS:(ns,t)=>new E(t)},text:(n,t)=>n.textContent=String(t),state:{View:12,PageRoom:'Schlafzimmer'},setTimeout:f=>scheduled.push(f),readInlinePage:(...args)=>calls.push(args)};
+vm.createContext(ctx);vm.runInContext(html.slice(html.indexOf('function renderWaterbedYearComparison('),html.indexOf('function deviceItems(')),ctx);
+let panel=ctx.renderWaterbedEnergy({values:{power:{raw:51,text:'51 W'}},historyLoaded:false});
+assert(all(panel).some(n=>n.textContent==='51 W'));assert.equal(scheduled.length,1);assert.equal(calls.length,0,'No synchronous archive request during render');scheduled.shift()();assert.equal(calls[0][1],'history');
+panel=ctx.renderWaterbedEnergy({values:{},historyLoaded:false,historyError:'Testfehler'});assert(all(panel).some(n=>n.textContent==='Testfehler'));assert.equal(scheduled.length,0,'Failure does not create retry loop');all(panel).find(n=>n.tag==='button').events.click();assert.equal(calls.length,2,'Manual retry');
+ctx.renderWaterbedChart=()=>{throw Error('Malformed archive');};panel=ctx.renderWaterbedEnergy({values:{power:{text:'51 W'}},historyLoaded:true});assert(all(panel).some(n=>n.textContent==='51 W'));assert(all(panel).some(n=>n.textContent.includes('Malformed archive')),'Chart error contained');
+const nav={homeState:{InlinePages:true},pageRequest:{request:'old',reason:'history'},busy:false,editing:false,requestAction:(...args)=>calls.push(args),setTimeout:(f,ms)=>{nav.lastTimeout=ms;return 1;},cancelPageRequest:()=>nav.pageRequest=null,showStatus:()=>{},render:()=>{},text:()=>{},el:()=>({}),updateRefreshButton:()=>{},schedulePagePoll:()=>{},saveRoomView:()=>{},scheduleSettling:()=>{},roomSensorRefreshPending:false};
+vm.createContext(nav);vm.runInContext(html.slice(html.indexOf('function readInlinePage('),html.indexOf('function openDetail(')),nav);
+nav.readInlinePage({view:12,room:'Wohnzimmer'},'navigate');assert.equal(nav.pageRequest.page.room,'Wohnzimmer','Navigation cancels pending history');assert.equal(nav.lastTimeout,8000,'Normal timeout unchanged');
+nav.receivePageReply({pageReply:'old',state:{Controls:{},View:12,PageRoom:'Schlafzimmer'}});assert.equal(nav.pageRequest.page.room,'Wohnzimmer','Stale history cannot restore wrong room');
+nav.pageRequest=null;nav.busy=false;nav.readInlinePage({view:12,room:'Schlafzimmer'},'history');assert.equal(nav.lastTimeout,30000);assert.equal(nav.busy,false,'Archive request does not lock controls');
+const php=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.php','utf8');assert(php.includes("str_replace('<!--HAUSSTATUS_RELEASE-->'"));assert(php.lastIndexOf('$this->VersionHausstatusPresentationLinks();')>php.indexOf('IPS_ApplyChanges($child)'),'Release labels refreshed after child setup');assert(html.includes('Hausstatus · v<!--HAUSSTATUS_RELEASE-->'));
+console.log('waterbed-page-loading: OK (deferred loading, isolated errors, retry, navigation cancellation, release marker for shared template)');

@@ -144,6 +144,37 @@ trait HausstatusWaterbedSupport
     private function WaterbedEnergyState(): ?array
     {
         if (!$this->WaterbedVisible()) { return null; }
+        $values = [];
+        foreach (['power'=>'WaterbedPower','today'=>'WaterbedToday','week'=>'WaterbedWeek','month'=>'WaterbedMonth','total'=>'WaterbedTotal'] as $name=>$property) {
+            $id = $name === 'power' ? 16905 : $this->ConfigInteger($property);
+            $values[$name] = $id > 0 && IPS_VariableExists($id) ? $this->Read($id) : ['raw'=>null,'text'=>'Nicht eingerichtet'];
+        }
+        $key = json_encode([$this->ConfigInteger('WaterbedArchive'), $this->ConfigString('WaterbedEnergyUnit'),
+            $this->ConfigInteger('WaterbedSvenTemperature'), $this->ConfigInteger('WaterbedSusiTemperature'),
+            (new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin')))->format('Y-m-d')]);
+        $cached = json_decode($this->GetBuffer('WaterbedPageCache'), true);
+        if (($cached['key'] ?? null) === $key && ($cached['until'] ?? 0) > time() && is_array($cached['data'] ?? null)) {
+            return array_replace($cached['data'], ['values'=>$values]);
+        }
+        $result = ['values'=>$values,'days'=>[],'annual'=>null,'history'=>null,'note'=>'','historyLoaded'=>false];
+        // Opening a room must never synchronously read months of archive data.
+        // The visible waterbed panel requests its history separately through PageRead.
+        if (!($this->pageContext['waterbedHistory'] ?? false)) { return $result; }
+        try {
+            $result = $this->BuildWaterbedEnergyState();
+            $result['historyLoaded'] = true;
+            $this->SetBuffer('WaterbedPageCache', json_encode(['key'=>$key,'until'=>time()+300,'data'=>$result], JSON_THROW_ON_ERROR));
+        } catch (Throwable $e) {
+            $result = ['values'=>$values,'days'=>[],'annual'=>null,'history'=>null,'historyLoaded'=>false,
+                'historyError'=>'Wasserbett-Verlauf konnte nicht geladen werden: '.$e->getMessage()];
+            $this->SendDebug('Wasserbett-Verlauf', $e->getMessage(), 0);
+        }
+        return $result;
+    }
+
+    private function BuildWaterbedEnergyState(): ?array
+    {
+        if (!$this->WaterbedVisible()) { return null; }
         $sources = [];
         foreach ([
             'power' => 'WaterbedPower', 'today' => 'WaterbedToday',
@@ -228,4 +259,5 @@ trait HausstatusWaterbedSupport
         return $result;
     }
 }
+
 
