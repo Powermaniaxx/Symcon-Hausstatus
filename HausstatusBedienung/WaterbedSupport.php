@@ -152,7 +152,7 @@ trait HausstatusWaterbedSupport
         $key = json_encode([$this->ConfigInteger('WaterbedArchive'), $this->ConfigString('WaterbedEnergyUnit'),
             $this->ConfigInteger('WaterbedSvenTemperature'), $this->ConfigInteger('WaterbedSusiTemperature'),
             (new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin')))->format('Y-m-d')]);
-        $cached = json_decode($this->GetBuffer('WaterbedPageCache'), true);
+        $cached = json_decode($this->ReadLargeBuffer('WaterbedPageCache'), true);
         if (($cached['key'] ?? null) === $key && ($cached['until'] ?? 0) > time() && is_array($cached['data'] ?? null)) {
             return array_replace($cached['data'], ['values'=>$values]);
         }
@@ -163,7 +163,7 @@ trait HausstatusWaterbedSupport
         try {
             $result = $this->BuildWaterbedEnergyState();
             $result['historyLoaded'] = true;
-            $this->SetBuffer('WaterbedPageCache', json_encode(['key'=>$key,'until'=>time()+300,'data'=>$result], JSON_THROW_ON_ERROR));
+            $this->WriteLargeBuffer('WaterbedPageCache', json_encode(['key'=>$key,'until'=>time()+300,'data'=>$result], JSON_THROW_ON_ERROR));
         } catch (Throwable $e) {
             $result = ['values'=>$values,'days'=>[],'annual'=>null,'history'=>null,'historyLoaded'=>false,
                 'historyError'=>'Wasserbett-Verlauf konnte nicht geladen werden: '.$e->getMessage()];

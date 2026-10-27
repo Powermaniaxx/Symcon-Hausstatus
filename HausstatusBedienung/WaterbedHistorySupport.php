@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/BufferSupport.php';
+
 /** Read-only waterbed archive data: raw heating phases, daily means and energy intervals. */
 trait HausstatusWaterbedHistorySupport
 {
+    use HausstatusBufferSupport;
     private function WaterbedPowerEvents(int $archive, int $id, int $from, int $until, int $maxPages = 5): array
     {
         $values = []; $cursor = $until; $limited = false;
@@ -81,7 +84,7 @@ trait HausstatusWaterbedHistorySupport
         $now = time(); $zone = new DateTimeZone('Europe/Berlin');
         $today = (new DateTimeImmutable('@' . $now))->setTimezone($zone)->setTime(0, 0);
         $key = json_encode(['heating-phases-daily-v7', $archive, $ids, $this->ConfigString('WaterbedEnergyUnit'), $today->format('Y-m-d')]);
-        $cache = json_decode($this->GetBuffer('WaterbedChartCache'), true);
+        $cache = json_decode($this->ReadLargeBuffer('WaterbedChartCache'), true);
         if (($cache['key'] ?? '') === $key && ($cache['until'] ?? 0) > $now) { return $cache['data']; }
         $ranges = ['day' => [$today, 0, '+1 day'], 'week' => [$today->modify('monday this week'), 1, '+1 week'],
             'month' => [$today->modify('first day of this month'), 1, 'first day of next month'],
@@ -157,7 +160,7 @@ trait HausstatusWaterbedHistorySupport
                 'powerMode' => $isYear ? 'dailyMean' : 'steps', 'powerNote' => $powerNote,
                 'series' => $series, 'note' => implode(' ', array_unique($notes))];
         }
-        $this->SetBuffer('WaterbedChartCache', json_encode(['key' => $key, 'until' => $now + 300, 'data' => $result], JSON_THROW_ON_ERROR));
+        $this->WriteLargeBuffer('WaterbedChartCache', json_encode(['key' => $key, 'until' => $now + 300, 'data' => $result], JSON_THROW_ON_ERROR));
         return $result;
     }
 }

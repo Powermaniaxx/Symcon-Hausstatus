@@ -43,3 +43,12 @@ Automatische Hintergrund-/Sensoraktualisierungen verdrängen keine laufende Hist
 Die Raumübersicht wird auch mit einem Versionszusatz im Instanz- oder Linknamen erkannt. Versionsbeschriftungen werden anhand der Zugehörigkeit zur Hausstatus-Hauptinstanz aktualisiert, nicht anhand fester Ordner. Vorhandene Raumseiten und Links außerhalb der bisherigen Visualisierungsordner werden dadurch ebenfalls erfasst. Kategorien, fremde Instanzen, Linkziele, Sichtbarkeit und Anordnung bleiben unverändert.
 
 Regressionstests: `php tests/room-version-navigation.php` und `node tests/waterbed-page-loading.js`, einschließlich Sensorereignissen während einer laufenden Historienanfrage.
+
+
+## v0.125: Große Archivdaten ohne Symcon-Pufferwarnung
+
+Symcon warnt bei einem einzelnen Buffer ab 256 KiB und schneidet Inhalte oberhalb von 1 MiB ab (https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/module/setbuffer/). Ein Test mit 45.000 archivierten Heizwechseln reproduziert einen 1,14-MB-Diagrammpuffer. Das bisherige direkte SetBuffer löst damit eine native Warnung aus und kann den JSON-Cache beschädigen.
+
+Diagramm-Cache, Wasserbett-Seitencache und LastState werden nun bei Bedarf verlustfrei in Blöcken von höchstens 192 KiB abgelegt. Die Daten werden dabei weder geglättet noch gekürzt. Große Inhalte werden vor dem Aufteilen als Base64 codiert, sodass einzelne Blöcke gültige API-Zeichenketten bleiben. Ein kleines Manifest enthält Generation, Länge und SHA-256. Erst nach vollständigem Schreiben werden neue Blöcke freigegeben; fehlende oder beschädigte Blöcke werden als Cache-Miss behandelt. Alte einfache Buffer bleiben lesbar. Ersetzen und Invalidieren räumen die bisherigen Blöcke auf.
+
+Prüfung: `php tests/large-buffer.php`, `php tests/waterbed-buffer-limit.php` und `php tests/waterbed-page-transfer.php` (letzterer benötigt mbstring). Der Übertragungstest durchläuft die echten HandlePageRequest-/Waterbed-Methoden mit synthetischem Archiv über die JSON-Antwort bis zur folgenden Hintergrundaktualisierung; jeder SetBuffer-Aufruf wird gegen die native Warnschwelle geprüft. Alle 45.000 Leistungswechsel bleiben erhalten. Die private Symcon-Detailmeldung wurde nicht ausgelesen; ein Live-Test der Installation steht aus.
