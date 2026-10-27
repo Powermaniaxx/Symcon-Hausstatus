@@ -39,4 +39,22 @@ check($names[202]==='Andere Ansicht'&&$names[300]==='Fremdes Modul'&&$names[400]
 check($links[200]===101&&$links[201]===200,'Targets unchanged');
 $count=count($renamed);$f->update();check(count($renamed)===$count,'Version update is idempotent');
 $f->InstanceID=101;check($f->room()==='','Navigation also works after renaming');
+$names[101]='Räume · v0.120';$names[200]='Räume · v0.120';$names[102]='Wohnzimmer · v0.120';
+$f->update();
+check($names[101]==='Räume · v'.$version&&$names[200]==='Räume · v'.$version,'Room instance updates its own native title and incoming links without master ApplyChanges');
+check($names[102]==='Wohnzimmer · v0.120','A child only updates its own presentation');
+$source=file_get_contents(__DIR__.'/../HausstatusBedienung/module.php');
+$start=strpos($source,'    public function GetVisualizationTile(): string');
+$end=strpos($source,'    public function RequestAction(', $start);
+$method=substr($source,$start,$end-$start);
+$method=str_replace('__DIR__',var_export(realpath(__DIR__.'/../HausstatusBedienung'),true),$method);
+eval('class NativeTileFixture { use HausstatusNavigationSupport; public int $InstanceID=101;
+ function ReadPropertyInteger($key){return (int)IPS_GetProperty($this->InstanceID,$key);}
+ private function BaseState():array{return [];}
+ function SendDebug(...$args){}
+ '.$method.' }');
+$names[101]='Räume · v0.120';$names[200]='Räume · v0.120';
+$tile=new NativeTileFixture();$html=$tile->GetVisualizationTile();
+check($names[101]==='Räume · v'.$version&&$names[200]==='Räume · v'.$version,'Actual GetVisualizationTile refreshes native title without a master update');
+check(str_contains($html,'Hausstatus · v'.$version.'</footer>'),'Native title and HTML footer use the same installed release');
 echo "room-version-navigation: OK (old/new versioned room menus, all owned locations, link chains, cycles, foreign objects, idempotence)\n";

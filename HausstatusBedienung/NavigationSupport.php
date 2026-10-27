@@ -26,15 +26,15 @@ trait HausstatusNavigationSupport
     /** Update only this dashboard's existing instances and links, wherever presented. */
     private function VersionHausstatusPresentationLinks(): void
     {
-        if ($this->ReadPropertyInteger('ConfigSource') !== 0
-            || $this->ReadPropertyInteger('View') !== 0) { return; }
+        $wholeDashboard = $this->ReadPropertyInteger('ConfigSource') === 0
+            && $this->ReadPropertyInteger('View') === 0;
         $module = '{9E33E109-4881-4E78-9906-38CAC2F1E210}';
-        $belongs = function (int $target) use ($module): bool {
+        $belongs = function (int $target) use ($module, $wholeDashboard): bool {
             if (IPS_VariableExists($target)) { $target = IPS_GetParent($target); }
             if (!IPS_InstanceExists($target)) { return false; }
             if (IPS_GetInstance($target)['ModuleInfo']['ModuleID'] !== $module) { return false; }
             return $target === $this->InstanceID
-                || (int)IPS_GetProperty($target, 'ConfigSource') === $this->InstanceID;
+                || ($wholeDashboard && (int)IPS_GetProperty($target, 'ConfigSource') === $this->InstanceID);
         };
         // Room menus can be outside the homepage and the two historical mirror roots.
         // Ownership, not location or visibility, determines which captions to update.

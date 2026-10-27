@@ -657,6 +657,10 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
+        // A room tile can be opened while the master is inactive or was not reapplied.
+        // Refresh its native caption and incoming links as well as the HTML footer.
+        try { $this->VersionHausstatusPresentationLinks(); }
+        catch (Throwable $e) { $this->SendDebug('Hausstatus-Seitentitel', $e->getMessage(), 0); }
         try {
             $html = file_get_contents(__DIR__ . '/module.html');
             if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
