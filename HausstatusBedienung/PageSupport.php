@@ -21,11 +21,11 @@ trait HausstatusPageSupport
 
     private function IsRoomLanding(): bool
     {
-        if ($this->ReadPropertyString('RoomFilter') === '' || $this->PresentationBaseName(IPS_GetName($this->InstanceID)) === 'Räume') { return true; }
+        if ($this->ReadPropertyString('RoomFilter') === '' || IPS_GetName($this->InstanceID) === 'Räume') { return true; }
         $category = $this->RoomNavigationTarget();
         if ($category > 0) {
             foreach (IPS_GetChildrenIDs($category) as $id) {
-                if ($this->PresentationBaseName(IPS_GetName($id)) === 'Räume' && IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID
+                if (IPS_GetName($id) === 'Räume' && IPS_LinkExists($id) && IPS_GetLink($id)['TargetID'] === $this->InstanceID
                     && !(IPS_GetObject($id)['ObjectIsHidden'] ?? false)) { return true; }
             }
         }

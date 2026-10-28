@@ -136,9 +136,6 @@ class HausstatusBedienung extends IPSModuleStrict
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
-        foreach (['WaterbedPageCache', 'WaterbedChartCache', 'WaterbedYearComparisonCache', 'WaterbedEnergyHistoryCache'] as $cache) {
-            $this->WriteLargeBuffer($cache, '');
-        }
         // Restore the user's confirmed pre-reset balance after the plug change.
         // Undo the provisional 6.15 kWh balance once; preserve other configured balances.
         if (!$this->ReadAttributeBoolean('WasherHandover726Restored')) {
@@ -313,17 +310,13 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->SetTimerInterval('Refresh', 0);
         $this->SetStatus(102);
         $this->SetSummary($this->GetBuffer('HomepageLayoutError') ?: 'Hausstatus mit HTML-Bedienung');
-        $this->WriteLargeBuffer('LastState', '');
+        $this->SetBuffer('LastState', '');
         if ($this->HasLiveViewers()) { $this->EnableViewerSubscriptions(); }
         $this->Refresh();
         if ($this->ReadPropertyInteger('ConfigSource') === 0) {
             foreach (IPS_GetInstanceListByModuleID('{9E33E109-4881-4E78-9906-38CAC2F1E210}') as $child) {
                 if ($child !== $this->InstanceID && IPS_GetProperty($child, 'ConfigSource') === $this->InstanceID) { IPS_ApplyChanges($child); }
             }
-
-            // Child setup may restore its presentation name; version all pages afterwards.
-            try { $this->VersionHausstatusPresentationLinks(); }
-            catch (Throwable $e) { $this->SendDebug('Hausstatus-Verknuepfungen', $e->getMessage(), 0); }
 
             // Child ApplyChanges calls may touch presentation objects after the split
             // homepage was built. Enforce the intended final state once more: when
@@ -381,7 +374,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
         }
         $this->SetBuffer('ViewerSubscriptionsActive', '0');
-        $this->WriteLargeBuffer('LastState', '');
+        $this->SetBuffer('LastState', '');
     }
 
     public function ExpireViewers(): void
@@ -459,8 +452,8 @@ class HausstatusBedienung extends IPSModuleStrict
         if (!$this->HasLiveViewers()) { return; }
         $state = $this->BaseState();
         $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
-        if ($this->ReadLargeBuffer('LastState') !== $encoded) {
-            $this->WriteLargeBuffer('LastState', $encoded);
+        if ($this->GetBuffer('LastState') !== $encoded) {
+            $this->SetBuffer('LastState', $encoded);
             $this->UpdateVisualizationValue($encoded);
         }
     }
@@ -548,7 +541,7 @@ class HausstatusBedienung extends IPSModuleStrict
         $this->SetBuffer('RainCache', '');
         $this->SetBuffer('PresenceHistoryCache', '');
         $state = $this->BaseState();
-        $this->WriteLargeBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+        $this->SetBuffer('LastState', json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         return $state;
     }
 
@@ -657,17 +650,12 @@ class HausstatusBedienung extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
-        // A room tile can be opened while the master is inactive or was not reapplied.
-        // Refresh its native caption and incoming links as well as the HTML footer.
-        try { $this->VersionHausstatusPresentationLinks(); }
-        catch (Throwable $e) { $this->SendDebug('Hausstatus-Seitentitel', $e->getMessage(), 0); }
         try {
             $html = file_get_contents(__DIR__ . '/module.html');
             if ($html === false) { throw new RuntimeException('module.html fehlt.'); }
             if (!str_contains($html, '/*INITIAL_STATE*/null')) { throw new RuntimeException('Die HTML-Vorlage enthält keinen Platzhalter für Zustandsdaten.'); }
             $initial = json_encode($this->BaseState(), JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE
                 | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-            $html = str_replace('<!--HAUSSTATUS_RELEASE-->', htmlspecialchars($this->HausstatusReleaseVersion(), ENT_QUOTES, 'UTF-8'), $html);
             return str_replace('/*INITIAL_STATE*/null', $initial, $html);
         } catch (Throwable $e) {
             $this->SendDebug('HTML-Darstellung', $e->getMessage(), 0);
@@ -745,8 +733,8 @@ class HausstatusBedienung extends IPSModuleStrict
                 $encoded = json_encode($state, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
                 if ($Value === false) {
                     // Silent background reads need not rebuild every mirror's unchanged DOM.
-                    if ($this->ReadLargeBuffer('LastState') === $encoded) { return; }
-                    $this->WriteLargeBuffer('LastState', $encoded);
+                    if ($this->GetBuffer('LastState') === $encoded) { return; }
+                    $this->SetBuffer('LastState', $encoded);
                 }
                 $reply = $request === null ? $encoded : json_encode(['refreshDone' => $request, 'state' => $state],
                     JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -823,7 +811,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             // Acknowledge the device call before rebuilding charts and unrelated sections.
             $this->UpdateVisualizationValue(json_encode(['commandDone' => true, 'commandRequest' => $commandRequest], JSON_THROW_ON_ERROR));
-            $this->WriteLargeBuffer('LastState', '');
+            $this->SetBuffer('LastState', '');
             $this->QueueRefresh();
         } catch (Throwable $e) {
             $this->SetBuffer('LastCommandError', get_class($e) . ': ' . $e->getMessage());
@@ -1326,7 +1314,7 @@ class HausstatusBedienung extends IPSModuleStrict
     private function MotionLiveStateChanged(): bool
     {
         if (!$this->HasMotionView()) { return false; }
-        $last = json_decode($this->ReadLargeBuffer('LastState'), true);
+        $last = json_decode($this->GetBuffer('LastState'), true);
         $shown = $last['Motion']['sensors'] ?? null;
         // Andere Startseitenkacheln ohne Bewegungsansicht nicht zusaetzlich abfragen.
         if (!is_array($shown)) { return false; }
