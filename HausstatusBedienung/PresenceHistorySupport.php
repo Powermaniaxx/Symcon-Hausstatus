@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// 0.35: Read-only 24-hour history for existing personal presence variables.
+// Read-only 24-hour display plus expandable seven-day history for each status.
 // The original variables, their actions and archive configuration remain untouched.
 trait HausstatusPresenceHistorySupport
 {
@@ -138,12 +138,23 @@ trait HausstatusPresenceHistorySupport
     {
         $now = time();
         $start = $now - 86400;
+        $today = (new DateTimeImmutable('@'.$now))->setTimezone(new DateTimeZone('Europe/Berlin'))->setTime(0,0);
+        $weekStart = $today->modify('-6 days')->getTimestamp();
+        $days = [];
+        for ($day=$today->modify('-6 days'); $day<=$today; $day=$day->modify('+1 day')) {
+            $days[] = ['start'=>$day->getTimestamp(),'end'=>$day->modify('+1 day')->getTimestamp(),
+                'until'=>min($now,$day->modify('+1 day')->getTimestamp()),'label'=>$day->format('d.m.'),'today'=>$day==$today];
+        }
         $cache = json_decode($this->GetBuffer('PresenceHistoryCache'), true);
         $sources = $this->PresenceHistorySources();
-        if (!is_array($cache) || (int)($cache['time'] ?? 0) < $now - 45) {
+        $archive = $this->PresenceHistoryArchive();
+        $cacheKey = json_encode(['presence-week-v1',$weekStart,$archive,array_column($sources,'id')]);
+        // Bound total history payload as well as archive work; shared sources are read once.
+        $uniqueCount=max(1,count(array_unique(array_filter(array_column($sources,'id')))));
+        $limit=max(100,min(2000,intdiv(2000,$uniqueCount)));
+        if (!is_array($cache) || ($cache['key']??'')!==$cacheKey || (int)($cache['time'] ?? 0) < $now - 45) {
             $history = [];
             $historyByVariable = [];
-            $archive = $this->PresenceHistoryArchive();
 
             foreach ($sources as $source) {
                 $id = (int)$source['id'];
@@ -166,22 +177,23 @@ trait HausstatusPresenceHistorySupport
                         throw new RuntimeException('Archivierung dieser Variable ist nicht aktiviert.');
                     }
 
-                    $values = AC_GetLoggedValues($archive, $id, $start, $now, 10000);
+                    $values = AC_GetLoggedValues($archive, $id, $weekStart, $now, $limit);
                     foreach ($values as $value) {
                         $stamp = (int)($value['TimeStamp'] ?? 0);
-                        if ($stamp < $start || $stamp > $now) { continue; }
+                        if ($stamp < $weekStart || $stamp > $now) { continue; }
                         $item['entries'][] = ['time' => $stamp, 'active' => (bool)$value['Value']];
                     }
                     usort($item['entries'], static fn(array $a, array $b): int => $a['time'] <=> $b['time']);
-                    $previous = $start > 0 ? AC_GetLoggedValues($archive, $id, 0, $start - 1, 1) : [];
+                    $previous = $weekStart > 0 ? AC_GetLoggedValues($archive, $id, 0, $weekStart - 1, 1) : [];
                     if ($previous !== []) { $item['previous'] = (bool)$previous[0]['Value']; }
 
-                    if (count($values) >= 10000) {
-                        $item['note'] = 'Abfragelimit erreicht: Verlauf möglicherweise unvollständig.';
+                    if (count($values) >= $limit) {
+                        $item['previous'] = null;
+                        $item['note'] = 'Viele Statuswechsel: Ältere Abschnitte vor dem ersten geladenen Wert bleiben unbekannt.';
                     } elseif ($item['entries'] === [] && $previous === []) {
                         $item['note'] = 'Noch keine Archivdaten. Der Verlauf beginnt mit der ersten Aufzeichnung.';
                     } elseif ($item['previous'] === null && $item['entries'] !== []
-                        && $item['entries'][0]['time'] > $start) {
+                        && $item['entries'][0]['time'] > $weekStart) {
                         $item['note'] = 'Vor dem ersten Archivwert ist der Zustand unbekannt.';
                     }
                 } catch (Throwable $e) {
@@ -190,24 +202,33 @@ trait HausstatusPresenceHistorySupport
                 $history[$key] = $item;
                 if ($id > 0) { $historyByVariable[$id] = $item; }
             }
-            $cache = ['time' => $now, 'history' => $history];
-            $this->SetBuffer('PresenceHistoryCache', json_encode($cache, JSON_THROW_ON_ERROR));
+            $cache = ['key'=>$cacheKey,'time' => $now, 'history' => $history];
+            $encoded=json_encode($cache, JSON_THROW_ON_ERROR);
+            $this->SetBuffer('PresenceHistoryCache', strlen($encoded)<=196608 ? $encoded : '');
         }
 
         $people = [];
         foreach ($sources as $source) {
             $key = $source['source'];
             $isPerson = $source['kind'] === 'person';
+            $weekHistory = $cache['history'][$key] ?? ['entries'=>[],'previous'=>null,'note'=>'Noch keine Archivdaten.'];
+            $recent = ['entries'=>[],'previous'=>$weekHistory['previous'],'note'=>$weekHistory['note']];
+            foreach ($weekHistory['entries'] as $event) {
+                if ($event['time'] < $start) { $recent['previous']=$event['active']; }
+                else { $recent['entries'][]=$event; }
+            }
             $people[] = [
+                'source' => $key,
+                'id' => (int)$source['id'],
                 'name' => $source['name'],
                 'kind' => $source['kind'],
                 'avatar' => $isPerson ? $this->PresenceAvatar($key) : ['src' => null, 'note' => ''],
                 'current' => $this->Read((int)$source['id']),
-                'history' => $cache['history'][$key] ?? [
-                    'entries' => [], 'previous' => null, 'note' => 'Noch keine Archivdaten.'
-                ]
+                'history' => $recent,
+                'weekHistory' => $weekHistory
             ];
         }
-        return ['start' => $start, 'end' => $now, 'people' => $people];
+        return ['start' => $start, 'end' => $now, 'week'=>['start'=>$weekStart,'end'=>$now,'days'=>$days], 'people' => $people];
     }
 }
+

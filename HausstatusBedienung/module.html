@@ -677,6 +677,8 @@ body.roomDetailView .waterbedAnnual{margin:0}
 
 
 .roomGroupGrid.roomSinglePage{display:grid;grid-template-columns:1fr;gap:10px}.roomMotion{display:grid;gap:10px;margin-top:8px}.roomGroup h4{margin:12px 0 6px;font-size:13px}
+.presenceWeek{grid-column:1/-1;margin-top:8px;font-size:11px;min-width:0}.presenceWeek>summary{cursor:pointer;min-height:30px;padding:7px 0;font-weight:600}.presenceWeekBody{border-top:1px solid #8883;padding-top:7px}.presenceDay{display:grid;grid-template-columns:74px minmax(0,1fr);gap:7px;align-items:center;margin:6px 0}.presenceDay>.presenceTrack{margin:0;height:16px}.presenceDay>span{font-variant-numeric:tabular-nums;font-size:10px}.presenceWeekScale{display:flex;justify-content:space-between;margin-left:81px;font-size:9px;opacity:.7}.presencePerson.isResident .presenceWeek{grid-row:6}.presencePerson .presenceWeek .presenceTrack{grid-column:auto;grid-row:auto;height:16px;margin-top:0}
+@media(max-width:600px){.presenceHistoryGrid>.presencePerson:has(>.presenceWeek[open]){grid-column:1/-1}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1168,6 +1170,28 @@ function renderExtraTileVariables(list){
   card.append(value);root.append(card);
  }
 }
+function presenceWeekDetails(person,week,onLabel,offLabel){
+ const panel=document.createElement('details');panel.className='presenceWeek';
+ const summary=document.createElement('summary');text(summary,'Verlauf · letzte 7 Tage');summary.setAttribute('aria-label','7-Tage-Verlauf für '+person.name);panel.append(summary);
+ const body=document.createElement('div');body.className='presenceWeekBody';panel.append(body);
+ function draw(){
+  body.replaceChildren();if(!panel.open)return;
+  const history=person.weekHistory??{entries:[],previous:null,note:'Noch keine Archivdaten.'};
+  const events=(history.entries??[]).filter(e=>Number.isFinite(e.time)&&typeof e.active==='boolean').slice().sort((a,b)=>a.time-b.time);
+  for(const day of week.days??[]){
+   const row=document.createElement('div');row.className='presenceDay';const date=document.createElement('span');text(date,day.label+(day.today?' · heute':''));row.append(date);
+   const track=document.createElement('div');track.className='presenceTrack';track.setAttribute('role','img');track.setAttribute('aria-label',person.name+' · '+day.label+' · 00:00 bis '+(day.today?'jetzt':'24:00'));
+   const until=Math.min(day.until??day.end,week.end),span=day.end-day.start;let active=typeof history.previous==='boolean'?history.previous:null,from=day.start;
+   const segment=(a,b,state)=>{if(typeof state!=='boolean'||b<=a||span<=0)return;const bar=document.createElement('div');bar.className='presenceSegment '+(state?'home':'away');bar.style.left=((a-day.start)/span*100)+'%';bar.style.width=((b-a)/span*100)+'%';bar.title=(state?onLabel:offLabel)+': '+motionTime(a)+' – '+motionTime(b);track.append(bar);};
+   for(const event of events){if(event.time<day.start){active=event.active;continue;}if(event.time>until)break;segment(from,event.time,active);active=event.active;from=event.time;}
+   segment(from,until,active);row.append(track);body.append(row);
+  }
+  const scale=document.createElement('div');scale.className='presenceWeekScale';for(const value of ['00:00','24:00']){const span=document.createElement('span');text(span,value);scale.append(span);}body.append(scale);
+  const legend=document.createElement('div');legend.className='presenceLegend';for(const [style,label] of [['home',onLabel],['away',offLabel],['unknown','Keine Daten']]){const span=document.createElement('span');span.className=style;text(span,label);legend.append(span);}body.append(legend);
+  if(history.note){const note=document.createElement('p');note.className='small';text(note,history.note);body.append(note);}
+ }
+ panel.addEventListener('toggle',draw);rememberPanel(panel,'presence-week:'+(person.source??person.name));draw();return panel;
+}
 function renderPresenceHistory(data){
  const root=el('presenceHistory');root.replaceChildren();
  if(!data||!Array.isArray(data.people))return;
@@ -1238,6 +1262,7 @@ function renderPresenceHistory(data){
    }
    card.append(detail);
   }
+  if(data.week)card.append(presenceWeekDetails(person,data.week,onLabel,offLabel));
   (isPerson?groups[1]:groups[0]).element.append(card);
  }
  for(const group of groups){if(group.element.children.length)root.append(group.section);}
@@ -2414,6 +2439,7 @@ if(!roomRestoreDone){
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
 </script></body></html>
+
 
 
 
