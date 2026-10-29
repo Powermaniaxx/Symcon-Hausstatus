@@ -338,7 +338,7 @@ trait HausstatusRoomSupport
     private function RoomMotionState(): ?array
     {
         if ($this->CurrentView() !== 12
-            || !in_array(mb_strtolower(trim($this->CurrentRoom()), 'UTF-8'), ['terrasse','terasse'], true)) { return null; }
+            || !in_array(mb_strtolower(trim($this->CurrentRoom()), 'UTF-8'), ['terrasse','terasse','schlafzimmer','flur','keller'], true)) { return null; }
         $configured = [];
         foreach ($this->MotionSensors() as $sensor) { $configured[$sensor['Variable']] = $sensor; }
         $sensors = [];

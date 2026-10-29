@@ -17,6 +17,7 @@ rendered.find(n=>n.attrs.role==='switch').events.click();assert.equal(sent[0][0]
 ctx.renderMotion(motion);const homeCount=nodes.motion.children.length;ctx.renderMotion(motion,new E('div'));assert.equal(nodes.motion.children.length,homeCount,'Room rendering does not clear homepage');
 ctx.renderHeatingProfile({View:12,HeatingProfileItem:{name:'Klima allgemein'}});assert.equal(nodes.heatingProfileSection.hidden,true);assert.equal(nodes.heatingProfile.children.length,0);
 ctx.renderHeatingProfile({View:14,HeatingProfileItem:{name:'Heizungsprofil'}});assert.equal(nodes.heatingProfileSection.hidden,false,'Other heating page unaffected');
+for(const name of ['Schlafzimmer','Flur','Keller']){ctx.state={View:12,PageRoom:name,RoomMotion:motion};ctx.renderRoomSections([{...sections[0],name}]);assert(!all(root).some(n=>n.className==='roomCategoryTabs'),name+' is a single overview');assert.equal(all(root).filter(n=>n.className==='motionTrack').length,1,name+' has motion history');}
 ctx.state={View:12,PageRoom:'Wohnzimmer'};ctx.renderRoomSections([{...sections[0],name:'Wohnzimmer'}]);assert(all(root).some(n=>n.className==='roomCategoryTabs'),'Other rooms retain their navigation');
 if(process.env.TERRACE_FIXTURE)fs.writeFileSync(process.env.TERRACE_FIXTURE,JSON.stringify({code,sections,motion,css:html.match(/<style[^>]*>([\s\S]*?)<\/style>/)[1]}));
 console.log('room-terrace UI: OK (single page, motion bars, unchanged switch action, shared renderer, no general climate, other rooms unchanged)');

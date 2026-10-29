@@ -2170,8 +2170,9 @@ function renderRoomSections(sections,climate=[]){
   for(const group of room.groups){const kind=groupKind(group.name);if(!categories.has(kind))categories.set(kind,{name:labels[kind],items:[]});categories.get(kind).items.push(...group.items);}
   if(temperatures.length&&!categories.has('climate'))categories.set('climate',{name:labels.climate,items:[]});
   if(state.WaterbedEnergy&&name==='Schlafzimmer'&&!categories.has('bed'))categories.set('bed',{name:labels.bed,items:[]});
+  const singlePage=['terrasse','terasse','schlafzimmer','flur','keller'].includes(name.trim().toLocaleLowerCase('de-DE'));
+  if(singlePage&&state.RoomMotion?.sensors?.length&&!categories.has('sensor'))categories.set('sensor',{name:labels.sensor,items:[]});
   const kinds=order.filter(kind=>categories.has(kind));
-  const singlePage=['terrasse','terasse'].includes(name.trim().toLocaleLowerCase('de-DE'));
   if(singlePage)groups.className+=' roomSinglePage';
   let active=activeRoomCategories.get(name);if(!categories.has(active))active=kinds[0];
   if(kinds.length>1&&!singlePage){
