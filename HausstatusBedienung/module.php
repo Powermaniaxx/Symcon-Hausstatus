@@ -1336,14 +1336,16 @@ class HausstatusBedienung extends IPSModuleStrict
         return count($ids) === 1 ? $ids[0] : 0;
     }
 
-    private function MotionState(): array
+    private function MotionState(?array $selectedSensors = null): array
     {
+        $sensors = $selectedSensors ?? $this->MotionSensors();
+        $cacheName = $selectedSensors === null ? 'MotionCache' : 'RoomMotionCache_'.substr(sha1(json_encode(array_column($sensors, 'Variable'))),0,12);
         $now = time(); $start = $now - 86400;
-        $cache = json_decode($this->GetBuffer('MotionCache'), true);
+        $cache = json_decode($this->GetBuffer($cacheName), true);
         if (!is_array($cache) || ($cache['time'] ?? 0) < $now - 30) {
             $cache = ['time' => $now, 'history' => []];
             $archive = $this->MotionArchive();
-            foreach ($this->MotionSensors() as $sensor) {
+            foreach ($sensors as $sensor) {
                 $id = $sensor['Variable'];
                 $history = ['entries' => [], 'previous' => null, 'note' => ''];
                 try {
@@ -1361,10 +1363,10 @@ class HausstatusBedienung extends IPSModuleStrict
                 } catch (Throwable $e) { $history['note'] = $e->getMessage(); }
                 $cache['history'][(string)$id] = $history;
             }
-            $this->SetBuffer('MotionCache', json_encode($cache, JSON_THROW_ON_ERROR));
+            $this->SetBuffer($cacheName, json_encode($cache, JSON_THROW_ON_ERROR));
         }
         $result = ['start' => $start, 'end' => $now, 'sensors' => []];
-        foreach ($this->MotionSensors() as $sensor) {
+        foreach ($sensors as $sensor) {
             $id = $sensor['Variable'];
             // Der reale Variablenstatus hat Vorrang vor dem verzögerten Archiv.
             $changed = $id > 0 && IPS_VariableExists($id)
@@ -1559,6 +1561,7 @@ class HausstatusBedienung extends IPSModuleStrict
         catch (Throwable $e) { $state['VolumeReason'] = $e->getMessage(); }
         $state['Rooms'] = [];
         $state['RoomSections'] = $shows([11]) ? $this->RoomSections() : [];
+        $state['RoomMotion'] = $this->RoomMotionState();
         $state['WaterbedEnergy'] = $this->WaterbedEnergyState();
         $state['TemperatureRows'] = $shows([11]) ? $this->TemperatureRows() : [];
         $state['RoomSummary'] = [];
@@ -1597,5 +1600,6 @@ class HausstatusBedienung extends IPSModuleStrict
         return $state;
     }
 }
+
 
 

@@ -1,0 +1,22 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync(__dirname+'/../HausstatusBedienung/module.html','utf8');for(const script of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(script[1]);
+const extract=name=>{const a=html.indexOf('function '+name+'('),b=html.indexOf('\nfunction ',a+1);assert(a>=0,name);return html.slice(a,b<0?html.length:b);};
+const code=['groupKind','deviceItems','roomDetails','renderDeviceSwitch','roomDevicePanel','roomOverview','addClimateSteps','renderRoomSections','motionTime','renderMotion','renderHeatingProfile'].map(extract).join('\n');
+class E{constructor(tag){this.tag=tag;this.children=[];this.attrs={};this.style={};this.events={};this.textContent='';this.classList={toggle:()=>{}};}append(...nodes){for(const n of nodes){this.children.push(n);n.parentNode=this;}}replaceChildren(...nodes){this.children=[];this.append(...nodes);}setAttribute(k,v){this.attrs[k]=String(v);}addEventListener(k,f){this.events[k]=f;}remove(){}}
+const nodes={motion:new E('div'),roomDeviceSections:new E('div'),heatingProfile:new E('div'),heatingProfileSection:new E('section')},sent=[];
+const ctx={document:{createElement:t=>new E(t)},el:id=>nodes[id]??null,text:(n,v)=>n.textContent=String(v),activeRoomCategories:new Map(),busy:false,rememberPanel:()=>{},roomItemBox:item=>{const n=new E('div');n.textContent=item.label??item.name;return n;},renderRoomControl:()=>{},displayDescription:()=>{},send:(...args)=>sent.push(args)};
+vm.createContext(ctx);vm.runInContext(code,ctx);
+const end=Date.parse('2026-10-29T12:00:00Z')/1000,motion={start:end-86400,end,sensors:[{name:'Bewegung Terrasse',variable:201,current:true,changed:end-120,source:'Haus/Terrasse/Bewegung',history:{previous:false,entries:[{time:end-3600,active:true},{time:end-300,active:false}],note:''}}]};
+const item=(id,name,role,raw,control=null)=>({id,name,label:name,deviceName:name,deviceKey:'device:'+id,role,primary:true,value:{raw,text:raw?'An':'Aus'},control});
+const sections=[{name:'Terrasse',groups:[{name:'Licht',items:[item(101,'Terrassenlicht','switch',true,{kind:'bool',options:[{name:'An',value:true},{name:'Aus',value:false}]})]},{name:'Sensoren',items:[item(201,'Bewegung Terrasse','motion',true)]}]}];
+ctx.state={View:12,PageRoom:'Terrasse',RoomMotion:motion};const all=n=>[n,...n.children.flatMap(all)];
+ctx.renderRoomSections(sections);let root=nodes.roomDeviceSections,rendered=all(root);
+assert(!rendered.some(n=>n.className==='roomCategoryTabs'),'Terrace has no tabs');assert(rendered.some(n=>n.className==='roomGroup roomGroup-light'));assert(rendered.some(n=>n.className==='roomGroup roomGroup-sensor'));
+assert.equal(rendered.filter(n=>n.className==='motionTrack').length,1);assert.equal(rendered.filter(n=>n.className==='motionBar').length,2,'History includes real and ongoing movement');
+rendered.find(n=>n.attrs.role==='switch').events.click();assert.equal(sent[0][0],'RoomValue');assert.equal(sent[0][1].id,101);assert.equal(sent[0][1].value,false);
+ctx.renderMotion(motion);const homeCount=nodes.motion.children.length;ctx.renderMotion(motion,new E('div'));assert.equal(nodes.motion.children.length,homeCount,'Room rendering does not clear homepage');
+ctx.renderHeatingProfile({View:12,HeatingProfileItem:{name:'Klima allgemein'}});assert.equal(nodes.heatingProfileSection.hidden,true);assert.equal(nodes.heatingProfile.children.length,0);
+ctx.renderHeatingProfile({View:14,HeatingProfileItem:{name:'Heizungsprofil'}});assert.equal(nodes.heatingProfileSection.hidden,false,'Other heating page unaffected');
+ctx.state={View:12,PageRoom:'Wohnzimmer'};ctx.renderRoomSections([{...sections[0],name:'Wohnzimmer'}]);assert(all(root).some(n=>n.className==='roomCategoryTabs'),'Other rooms retain their navigation');
+if(process.env.TERRACE_FIXTURE)fs.writeFileSync(process.env.TERRACE_FIXTURE,JSON.stringify({code,sections,motion,css:html.match(/<style[^>]*>([\s\S]*?)<\/style>/)[1]}));
+console.log('room-terrace UI: OK (single page, motion bars, unchanged switch action, shared renderer, no general climate, other rooms unchanged)');

@@ -158,7 +158,9 @@ trait HausstatusRoomSupport
         $device = $type === 1 ? $target : (IPS_InstanceExists($parent) ? $parent : $target);
         $parts = explode(' · ', $prefix);
         $deviceName = $prefix !== '' ? $this->RoomLabel((string)end($parts)) : ($device !== $target ? $this->RoomLabel(IPS_GetName($device)) : $entry['Name']);
-        if ($this->IsCinemaVariable($target)) { $deviceName = $this->DisplayText('CinemaState'); }
+        // The editable room-entry label must also label the visible device card.
+        if ($prefix === '' && trim($entry['Name']) !== '') { $deviceName = trim($entry['Name']); }
+        if ($this->IsCinemaVariable($target) && trim($entry['Name']) === '') { $deviceName = $this->DisplayText('CinemaState'); }
         $result[] = ['room' => $entry['Room'], 'group' => $entry['Group'], 'name' => $name,
             'id' => $target, 'type' => $type, 'operate' => ($entry['Operate'] ?? false) === true,
             'deviceKey' => 'device:' . $device, 'deviceName' => $deviceName];
@@ -331,6 +333,23 @@ trait HausstatusRoomSupport
             catch (Throwable $e) { /* Preserve the actual native control for other presentations. */ }
         }
         return ['kind' => 'native', 'id' => $id];
+    }
+
+    private function RoomMotionState(): ?array
+    {
+        if ($this->CurrentView() !== 12
+            || !in_array(mb_strtolower(trim($this->CurrentRoom()), 'UTF-8'), ['terrasse','terasse'], true)) { return null; }
+        $configured = [];
+        foreach ($this->MotionSensors() as $sensor) { $configured[$sensor['Variable']] = $sensor; }
+        $sensors = [];
+        foreach ($this->ExpandedRoomEntries($this->CurrentRoom()) as $entry) {
+            $id = $entry['id'];
+            if ($entry['type'] !== 2 || !IPS_VariableExists($id) || IPS_GetVariable($id)['VariableType'] !== 0
+                || $this->RoomItemRole($entry, null) !== 'motion') { continue; }
+            // Read exactly the room's motion variables; presence is a separate status.
+            $sensors[$id] = ['Name'=>trim($entry['deviceName'] ?? $entry['name']) ?: ($configured[$id]['Name'] ?? 'Bewegung'), 'Variable'=>$id];
+        }
+        return $sensors ? $this->MotionState(array_values($sensors)) : null;
     }
 
     private function RoomSections(): array
@@ -628,3 +647,4 @@ trait HausstatusRoomSupport
     }
 
 }
+
