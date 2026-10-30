@@ -679,7 +679,27 @@ body.roomDetailView .waterbedAnnual{margin:0}
 .roomGroupGrid.roomSinglePage{display:grid;grid-template-columns:1fr;gap:10px}.roomMotion{display:grid;gap:10px;margin-top:8px}.roomGroup h4{margin:12px 0 6px;font-size:13px}
 .presenceWeek{grid-column:1/-1;margin-top:8px;font-size:11px;min-width:0}.presenceWeek>summary{cursor:pointer;min-height:30px;padding:7px 0;font-weight:600}.presenceWeekBody{border-top:1px solid #8883;padding-top:7px}.presenceDay{display:grid;grid-template-columns:74px minmax(0,1fr);gap:7px;align-items:center;margin:6px 0}.presenceDay>.presenceTrack{margin:0;height:16px}.presenceDay>span{font-variant-numeric:tabular-nums;font-size:10px}.presenceWeekScale{display:flex;justify-content:space-between;margin-left:81px;font-size:9px;opacity:.7}.presencePerson.isResident .presenceWeek{grid-row:6}.presencePerson .presenceWeek .presenceTrack{grid-column:auto;grid-row:auto;height:16px;margin-top:0}
 @media(max-width:600px){.presenceHistoryGrid>.presencePerson:has(>.presenceWeek[open]){grid-column:1/-1}}
-.philipsDirect{min-width:0}.philipsDirect .row>span:last-child{overflow-wrap:anywhere;min-width:0}.philipsControls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.philipsControls .philipsVolume{grid-column:1/-1}.philipsControls input[type=range]{width:100%;min-width:0}.philipsControls button{min-height:40px}.philipsRemote{margin-top:10px}.philipsRemote summary{cursor:pointer;padding:6px 0}.philipsKeypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.philipsKeypad button{min-height:40px;min-width:0;padding:7px 4px}.philipsDirect .small{overflow-wrap:anywhere}
+.philipsDirect{min-width:0;display:flex;flex-direction:column;gap:6px}
+.philipsDirect h3{margin:0 0 3px}
+.philipsDirect>.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:5px 0;font-size:13px;line-height:1.35}
+.philipsDirect>.row>span:last-child{text-align:right;overflow-wrap:anywhere;min-width:0;font-weight:600}
+.philipsDirect>.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:6px 0 2px}
+.philipsDirect>.buttons button{min-width:0;min-height:40px;padding:7px 9px}
+.philipsControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin-top:4px}
+.philipsControls .philipsVolume{grid-column:1/-1;min-width:0}
+.philipsControls .philipsVolume>div:first-child{font-size:12px}
+.philipsControls input[type=range]{width:100%;min-width:0;margin:6px 0}
+.philipsControls .small{font-size:12px;margin-bottom:4px}
+.philipsControls .buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0}
+.philipsControls button{min-width:0;min-height:40px;padding:6px}
+.philipsRemote{margin-top:4px}
+.philipsRemote summary{cursor:pointer;padding:9px 0;font-size:13px}
+.philipsKeypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.philipsKeypad button{min-height:40px;min-width:0;padding:7px 4px}
+.philipsDirect .small{font-size:11px;overflow-wrap:anywhere}
+.philipsDirect>.philipsRefresh{align-self:flex-start;min-height:40px;padding:7px 12px;font-size:12px}
+@media(max-width:420px){.philipsControls{gap:6px}.philipsDirect>.row{font-size:12px}.philipsDirect>.buttons button,.philipsControls button{min-height:40px}}
+
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1678,7 +1698,7 @@ function renderDirectPhilips(parent,tv){
   const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy||!usable;b.setAttribute('aria-label','Philips TV '+name);b.addEventListener('click',()=>send('PhilipsRemoteKey',key));keys.append(b);
  }
  remote.append(keys);box.append(remote);
- const refresh=document.createElement('button');refresh.type='button';text(refresh,'TV-Status aktualisieren');refresh.disabled=busy||!tv.enabled;refresh.addEventListener('click',()=>send('PhilipsRefresh',true));box.append(refresh);
+ const refresh=document.createElement('button');refresh.className='philipsRefresh';refresh.type='button';text(refresh,'TV-Status aktualisieren');refresh.disabled=busy||!tv.enabled;refresh.addEventListener('click',()=>send('PhilipsRefresh',true));box.append(refresh);
  if(tv.error){const n=document.createElement('div');n.className='small';text(n,tv.error);box.append(n);}
  if(tv.updated){const n=document.createElement('div');n.className='small';text(n,'Letzte Statusmeldung: '+new Date(tv.updated*1000).toLocaleString('de-DE'));box.append(n);}
  parent.append(box);return box;
