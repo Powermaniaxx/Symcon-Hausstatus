@@ -17,3 +17,5 @@ Beim manuellen Start zeigt das Skript Quelle, verwendete Variablen-IDs, Werte un
 Der TV-Status löst diese Kopplung nicht aus. Bei Netzwerkfehlern, unbekanntem, veraltetem oder offensichtlich zukünftigem Shield-Status wird nicht geschaltet und der letzte gültige Zustand bleibt erhalten. Ein unveränderter Shield-Zustand sendet keinen weiteren Befehl. Erst nach erfolgreichem Aktionsaufruf wird der gespeicherte Übergang aktualisiert; dies bestätigt den Versand, nicht die Ausführung am Gerät.
 
 Das Skript muss im bestehenden Symcon-Skript ersetzt werden. Keine zweite Kopplung parallel anlegen. Das Skript benötigt für die Shield-Statusquelle Hausstatus; die eigenständige Philips-TV-Bibliothek benötigt diesen Helfer nicht.
+
+Ab Philips-TV-Modul 1.2.0 lässt sich alternativ die integrierte Ein-/Aus-Automatik des optionalen Steuersignals verwenden. Für denselben TV und denselben Zustandswechsel nicht zugleich diese Signal-Schaltoptionen und das zusätzliche Skript aktivieren.
