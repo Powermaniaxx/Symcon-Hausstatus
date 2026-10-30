@@ -714,6 +714,22 @@ body.roomDetailView .waterbedAnnual{margin:0}
 .mediaLivingContent .philipsDirect .philipsControls{margin-top:0;gap:8px}
 .mediaLivingContent .philipsDirect .philipsRemote{margin-top:2px}
 .mediaLivingContent .philipsDirect .philipsRefresh{order:7}
+
+/* The media grid must not stretch short device cards to the receiver's height. */
+.mediaLivingGroup .mediaLivingContent{align-items:start;align-content:start}
+.mediaLivingGroup .mediaDeviceColumn{align-self:start;height:auto;display:flex;flex-direction:column;gap:10px}
+.mediaLivingGroup .mediaDeviceColumn>.shieldStatus{height:auto;min-height:0;flex:0 0 auto}
+.mediaLivingGroup .mediaDeviceColumn>.shieldStatus+.shieldStatus{margin-top:0;padding-top:10px}
+body.homepagePart .mediaLivingGroup .mediaLivingContent{align-items:start}
+body.homepagePart .mediaLivingGroup .mediaLivingContent>.mediaDeviceColumn{height:auto;align-self:start}
+.mediaLivingGroup .philipsDirect{gap:4px;padding:10px 12px}
+.mediaLivingGroup .philipsDirect .philipsStateLine{padding:2px 0;font-size:13px}
+.mediaLivingGroup .philipsDirect .philipsRemote summary,.mediaLivingGroup .philipsDirect .philipsInfo summary{padding:6px 0;min-height:32px}
+.mediaLivingGroup .philipsDirect .philipsDiagnostic{order:8;border-top:1px solid #8883}
+.mediaLivingGroup .philipsDirect .philipsDiagnostic summary{font-size:11px;cursor:pointer;min-height:32px;padding:7px 0;color:#555}
+.mediaLivingGroup .philipsDirect .philipsDiagnostic .small{padding:4px 0;white-space:normal;overflow-wrap:anywhere}
+.mediaLivingGroup .philipsDirect>.small{font-size:10px;margin-top:0}
+@media(max-width:680px){.mediaLivingGroup .mediaLivingContent{grid-template-columns:minmax(0,1fr)}.mediaLivingGroup .mediaDeviceColumn{border-left:0;border-top:1px solid #8883;padding:8px 0 0}}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1716,7 +1732,7 @@ function renderDirectPhilips(parent,tv){
  }
  remote.append(keys);box.append(remote);
  const refresh=document.createElement('button');refresh.className='philipsRefresh';refresh.type='button';text(refresh,'TV-Status aktualisieren');refresh.disabled=busy||!tv.enabled;refresh.addEventListener('click',()=>send('PhilipsRefresh',true));box.append(refresh);
- if(tv.error){const n=document.createElement('div');n.className='small';text(n,tv.error);box.append(n);}
+ if(tv.error){const diagnostic=document.createElement('details');diagnostic.className='philipsDiagnostic';const summary=document.createElement('summary');text(summary,'API-Diagnose');diagnostic.append(summary);const n=document.createElement('div');n.className='small';text(n,tv.error);diagnostic.append(n);box.append(diagnostic);}
  if(tv.updated){const n=document.createElement('div');n.className='small';text(n,'Letzte Statusmeldung: '+new Date(tv.updated*1000).toLocaleString('de-DE'));box.append(n);}
  parent.append(box);return box;
 }
