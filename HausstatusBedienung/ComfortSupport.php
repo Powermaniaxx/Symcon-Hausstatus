@@ -18,11 +18,11 @@ trait HausstatusComfortSupport
     private function HeaterState(): ?array
     {
         // Display only Dreo; legacy heater properties remain stored and untouched.
-        $dreo = ['DreoPower' => [39318, 'Ein/Aus', true], 'DreoTarget' => [49141, 'Solltemperatur', false],
-            'DreoActual' => [13990, 'Raumtemperatur', false], 'DreoHeating' => [44698, 'Heizelement aktiv', false],
-            'DreoMode' => [18780, 'Betriebsart', true], 'DreoPreset' => [13592, 'Heizstufe', true],
-            'DreoDelivered' => [40481, 'Heizstatus geliefert', false],
-            'DreoOnline' => [26239, 'Online bestätigt', false]];
+        $dreo = ['DreoPower' => [44033, 'Ein/Aus', true], 'DreoTarget' => [59658, 'Solltemperatur', false],
+            'DreoActual' => [58453, 'Raumtemperatur', false], 'DreoHeating' => [14547, 'Heizelement aktiv', false],
+            'DreoMode' => [44974, 'Betriebsart', true], 'DreoPreset' => [27804, 'Heizstufe', true],
+            'DreoDelivered' => [10363, 'Heizstatus geliefert', false],
+            'DreoOnline' => [17978, 'Online bestätigt', false]];
         $result = ['title' => 'Zusatzheizung Wohnzimmer · Dreo 720S', 'items' => []];
         foreach ($dreo as $key => [$id, $label, $writable]) {
             if (!IPS_VariableExists($id)) {
@@ -40,7 +40,7 @@ trait HausstatusComfortSupport
 
     private function SetDreo(string $command, mixed $value): void
     {
-        $targets = ['DreoPower' => 39318, 'DreoMode' => 18780, 'DreoPreset' => 13592];
+        $targets = ['DreoPower' => 44033, 'DreoMode' => 44974, 'DreoPreset' => 27804];
         if (!isset($targets[$command]) || !in_array($this->CurrentView(), [0, 14], true)
             || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
             throw new RuntimeException('Dreo-Steuerung ist nicht freigegeben.');
