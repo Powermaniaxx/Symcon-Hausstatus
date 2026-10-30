@@ -1705,6 +1705,7 @@ function renderShield(cinema,shield){
 }
 function renderDirectPhilips(parent,tv){
  const box=document.createElement('section');box.className='card shieldStatus philipsDirect';box.setAttribute('aria-label','Philips TV direkt');
+ const display=state?.PhilipsDisplay??{};
  const heading=document.createElement('h3');text(heading,'Philips TV');box.append(heading);
  const stateLine=document.createElement('div');stateLine.className='philipsStateLine';
  const power=document.createElement('strong');text(power,tv.power==='awake'?'Eingeschaltet':tv.power==='standby'?'Standby':'Status unbekannt');stateLine.append(power);
@@ -1713,16 +1714,16 @@ function renderDirectPhilips(parent,tv){
  const info=document.createElement('details');info.className='philipsInfo';const infoTitle=document.createElement('summary');text(infoTitle,'Gerätedetails');info.append(infoTitle);
  const row=(name,value)=>{const n=document.createElement('div');n.className='row';const a=document.createElement('span'),b=document.createElement('span');text(a,name);text(b,value);n.append(a,b);info.append(n);};
  if(tv.power==='awake'){row('Anwendung / Eingang',tv.activity||'Nicht verfügbar');if(tv.ambilightMode)row('Ambilight-Modus',tv.ambilightMode);}
- box.append(info);
+ if(display.details===true)box.append(info);
  const controls=document.createElement('div');controls.className='philipsControls';
  const usable=tv.enabled&&tv.online&&tv.power==='awake'&&!tv.stale;
  const toggle=(name,command,value,enabled)=>{const field=document.createElement('div');const label=document.createElement('div');label.className='small';text(label,name);field.append(label);buttons(field,command,!!enabled,value);controls.append(field);};
- if(tv.caps?.audio&&typeof tv.volume==='number'){
+ if(display.volume===true&&tv.caps?.audio&&typeof tv.volume==='number'){ 
   const field=document.createElement('div');field.className='philipsVolume';const label=document.createElement('div');text(label,'Lautstärke '+tv.volume+' %');field.append(label);
   const input=document.createElement('input');input.type='range';input.min='0';input.max='100';input.step='1';input.value=String(tv.volume);input.disabled=busy||!usable;input.setAttribute('aria-label','Philips TV Lautstärke');
   safeRange(input,value=>text(label,'Lautstärke '+value+' %'),value=>send('PhilipsVolume',Math.round(value)));field.append(input);controls.append(field);
-  toggle('Stumm','PhilipsMute',tv.mute,usable);
  }
+ if(display.mute===true&&tv.caps?.audio)toggle('Stumm','PhilipsMute',tv.mute,usable);
  if(tv.caps?.ambilight)toggle('Ambilight','PhilipsAmbilight',tv.ambilight,usable);
  box.append(controls);
  const remote=document.createElement('details');remote.className='philipsRemote';rememberPanel(remote,'philips-remote');const summary=document.createElement('summary');text(summary,'Fernbedienung');remote.append(summary);
@@ -1730,7 +1731,7 @@ function renderDirectPhilips(parent,tv){
  for(const [key,name] of [['Home','Home'],['CursorUp','↑'],['Back','Zurück'],['CursorLeft','←'],['Confirm','OK'],['CursorRight','→'],['Source','Eingänge'],['CursorDown','↓'],['Options','Optionen'],['VolumeDown','Leiser'],['Mute','Stumm'],['VolumeUp','Lauter'],['PlayPause','Play / Pause'],['Stop','Stopp'],['Info','Info']]){
   const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy||!usable;b.setAttribute('aria-label','Philips TV '+name);b.addEventListener('click',()=>send('PhilipsRemoteKey',key));keys.append(b);
  }
- remote.append(keys);box.append(remote);
+ remote.append(keys);if(display.remote===true)box.append(remote);
  const refresh=document.createElement('button');refresh.className='philipsRefresh';refresh.type='button';text(refresh,'TV-Status aktualisieren');refresh.disabled=busy||!tv.enabled;refresh.addEventListener('click',()=>send('PhilipsRefresh',true));box.append(refresh);
  if(tv.error){const diagnostic=document.createElement('details');diagnostic.className='philipsDiagnostic';const summary=document.createElement('summary');text(summary,'API-Diagnose');diagnostic.append(summary);const n=document.createElement('div');n.className='small';text(n,tv.error);diagnostic.append(n);box.append(diagnostic);}
  if(tv.updated){const n=document.createElement('div');n.className='small';text(n,'Letzte Statusmeldung: '+new Date(tv.updated*1000).toLocaleString('de-DE'));box.append(n);}
