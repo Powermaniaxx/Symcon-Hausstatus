@@ -753,7 +753,7 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             return;
         }
-        if (!in_array($Ident, ['Light', 'Brightness', 'LivingColor', 'DiningColor', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
+        if (!in_array($Ident, ['Light', 'Brightness', 'LivingColor', 'DiningColor', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'PhilipsVolume', 'PhilipsMute', 'PhilipsAmbilight', 'PhilipsRemoteKey', 'PhilipsRefresh', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
             'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'DreoPower', 'DreoMode', 'DreoPreset', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
@@ -772,6 +772,8 @@ class HausstatusBedienung extends IPSModuleStrict
             }
             if ($Ident === 'HeatingCenterMode') {
                 $this->SetHeatingCenterMode($Value);
+            } elseif (in_array($Ident, ['PhilipsVolume', 'PhilipsMute', 'PhilipsAmbilight', 'PhilipsRemoteKey', 'PhilipsRefresh'], true)) {
+                $this->DirectPhilipsAction($Ident, $Value);
             } elseif ($Ident === 'PhilipsHdmi3') {
                 $this->SetPhilipsHdmi3($Value);
             } elseif (str_starts_with($Ident, 'ShieldPower_')) {
@@ -1607,6 +1609,7 @@ class HausstatusBedienung extends IPSModuleStrict
         return $state;
     }
 }
+
 
 
 

@@ -995,7 +995,19 @@
         {
           "type": "CheckBox",
           "name": "PhilipsTvEnabled",
-          "caption": "Philips TV Wohnzimmer anzeigen und bedienen (192.168.178.190)"
+          "caption": "Philips TV Wohnzimmer anzeigen und bedienen"
+        },
+        {
+          "type": "SelectInstance",
+          "name": "PhilipsTVInstance",
+          "caption": "Direkte Philips-TV-Instanz (0 = bisheriger Node-RED-Weg)",
+          "validModules": [
+            "{7A9BA592-5E11-4F37-B9D0-740BC1C61C19}"
+          ]
+        },
+        {
+          "type": "Label",
+          "caption": "Neue Instanz: Philips TV (JointSpace direkt). IP-Adresse und bestehende Kopplungsdaten dort eintragen. Diese Auswahl gilt auch für alle Hausstatus-Kacheln mit dieser Konfigurationsquelle. Bei ausgewählter Instanz laufen die TV-Befehle direkt; der alte Philips-Flow kann anschließend deaktiviert werden."
         },
         {
           "type": "CheckBox",

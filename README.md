@@ -1,3 +1,7 @@
+## Version 0.132 – Philips-TV-Anbindung
+
+Die Hausstatus-Kachel kann die eigenständige Bibliothek [Philips TV für Symcon](https://github.com/Powermaniaxx/Philips-TV-Modul-for-Symcon) direkt verwenden. TV-Modul separat installieren und die Instanz in den Wohnzimmer-Einstellungen auswählen. Ein/Aus, Lautstärke, Stumm, Ambilight und eine aufklappbare Fernbedienung bleiben in der Haussteuerung verfügbar. [Einrichtung und Standby-Verhalten](docs/PhilipsTV.md).
+
 # Hausstatus 0.63 für IP-Symcon
 
 ## 0.101 / Build 102: RGB-Farbauswahl für Wohnzimmer, Essbereich und Schlafzimmer
@@ -270,3 +274,4 @@ Zur aktuellen Version über dasselbe Zahnrad wieder **main** wählen. Die Quelle
 ## Nvidia Shield Status
 
 Separate, nur lesbare Shield-Kachel innerhalb Cinema/HEOS; eigenständiger Node-RED-Flow mit 15-Sekunden-Poll und automatischem Timeout. Vollständige Einrichtung einschließlich dauerhaftem ADB: [docs/integrations/shield/README.md](docs/integrations/shield/README.md).
+

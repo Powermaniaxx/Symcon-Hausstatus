@@ -679,6 +679,7 @@ body.roomDetailView .waterbedAnnual{margin:0}
 .roomGroupGrid.roomSinglePage{display:grid;grid-template-columns:1fr;gap:10px}.roomMotion{display:grid;gap:10px;margin-top:8px}.roomGroup h4{margin:12px 0 6px;font-size:13px}
 .presenceWeek{grid-column:1/-1;margin-top:8px;font-size:11px;min-width:0}.presenceWeek>summary{cursor:pointer;min-height:30px;padding:7px 0;font-weight:600}.presenceWeekBody{border-top:1px solid #8883;padding-top:7px}.presenceDay{display:grid;grid-template-columns:74px minmax(0,1fr);gap:7px;align-items:center;margin:6px 0}.presenceDay>.presenceTrack{margin:0;height:16px}.presenceDay>span{font-variant-numeric:tabular-nums;font-size:10px}.presenceWeekScale{display:flex;justify-content:space-between;margin-left:81px;font-size:9px;opacity:.7}.presencePerson.isResident .presenceWeek{grid-row:6}.presencePerson .presenceWeek .presenceTrack{grid-column:auto;grid-row:auto;height:16px;margin-top:0}
 @media(max-width:600px){.presenceHistoryGrid>.presencePerson:has(>.presenceWeek[open]){grid-column:1/-1}}
+.philipsDirect{min-width:0}.philipsDirect .row>span:last-child{overflow-wrap:anywhere;min-width:0}.philipsControls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.philipsControls .philipsVolume{grid-column:1/-1}.philipsControls input[type=range]{width:100%;min-width:0}.philipsControls button{min-height:40px}.philipsRemote{margin-top:10px}.philipsRemote summary{cursor:pointer;padding:6px 0}.philipsKeypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.philipsKeypad button{min-height:40px;min-width:0;padding:7px 4px}.philipsDirect .small{overflow-wrap:anywhere}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1624,6 +1625,7 @@ function comfortLivingRow(items){
 }
 function renderShield(cinema,shield){
  if(!shield)return;
+ if(shield.kind==='tv'&&shield.direct)return renderDirectPhilips(cinema,shield);
  const box=document.createElement('section');box.className='card shieldStatus';box.setAttribute('aria-label','Nvidia Shield Status');
  const title=document.createElement('h3');text(title,shield.kind==='tv'?'Philips TV':'Nvidia Shield');box.append(title);
  const playback={playing:'Läuft',paused:'Pausiert',stopped:'Gestoppt',unknown:'Unbekannt'};
@@ -1650,6 +1652,36 @@ function renderShield(cinema,shield){
  if(!shield.compact&&shield.updated){const updated=document.createElement('div');updated.className='small';text(updated,(tvPaused?'Letzte Statusmeldung: ':'Letzte Abfrage: ')+new Date(shield.updated*1000).toLocaleString());box.append(updated);}
  cinema.append(box);
  return box;
+}
+function renderDirectPhilips(parent,tv){
+ const box=document.createElement('section');box.className='card shieldStatus philipsDirect';box.setAttribute('aria-label','Philips TV direkt');
+ const heading=document.createElement('h3');text(heading,'Philips TV');box.append(heading);
+ const row=(name,value)=>{const n=document.createElement('div');n.className='row';const a=document.createElement('span'),b=document.createElement('span');text(a,name);text(b,value);n.append(a,b);box.append(n);};
+ row('Verbindung',!tv.enabled?'Nicht eingerichtet / deaktiviert':tv.paused?'Abfrage pausiert':tv.stale?'Daten veraltet':tv.online?'Online':'Nicht erreichbar');
+ row('Betrieb',tv.paused?'Standby (zuletzt gemeldet)':tv.power==='awake'?'Ein':tv.power==='standby'?'Standby':'Unbekannt');
+ if(tv.power==='awake'){row('Anwendung / Eingang',tv.activity||'Nicht verfügbar');if(tv.ambilightMode)row('Ambilight-Modus',tv.ambilightMode);}
+ buttons(box,'ShieldPower_philips',tv.enabled===true,tv.power==='awake'?true:tv.power==='standby'?false:null);
+ const controls=document.createElement('div');controls.className='philipsControls';
+ const usable=tv.enabled&&tv.online&&tv.power==='awake'&&!tv.stale;
+ const toggle=(name,command,value,enabled)=>{const field=document.createElement('div');const label=document.createElement('div');label.className='small';text(label,name);field.append(label);buttons(field,command,!!enabled,value);controls.append(field);};
+ if(tv.caps?.audio&&typeof tv.volume==='number'){
+  const field=document.createElement('div');field.className='philipsVolume';const label=document.createElement('div');text(label,'Lautstärke '+tv.volume+' %');field.append(label);
+  const input=document.createElement('input');input.type='range';input.min='0';input.max='100';input.step='1';input.value=String(tv.volume);input.disabled=busy||!usable;input.setAttribute('aria-label','Philips TV Lautstärke');
+  safeRange(input,value=>text(label,'Lautstärke '+value+' %'),value=>send('PhilipsVolume',Math.round(value)));field.append(input);controls.append(field);
+  toggle('Stumm','PhilipsMute',tv.mute,usable);
+ }
+ if(tv.caps?.ambilight)toggle('Ambilight','PhilipsAmbilight',tv.ambilight,usable);
+ box.append(controls);
+ const remote=document.createElement('details');remote.className='philipsRemote';rememberPanel(remote,'philips-remote');const summary=document.createElement('summary');text(summary,'Fernbedienung');remote.append(summary);
+ const keys=document.createElement('div');keys.className='philipsKeypad';
+ for(const [key,name] of [['Home','Home'],['CursorUp','↑'],['Back','Zurück'],['CursorLeft','←'],['Confirm','OK'],['CursorRight','→'],['Source','Eingänge'],['CursorDown','↓'],['Options','Optionen'],['VolumeDown','Leiser'],['Mute','Stumm'],['VolumeUp','Lauter'],['PlayPause','Play / Pause'],['Stop','Stopp'],['Info','Info']]){
+  const b=document.createElement('button');b.type='button';text(b,name);b.disabled=busy||!usable;b.setAttribute('aria-label','Philips TV '+name);b.addEventListener('click',()=>send('PhilipsRemoteKey',key));keys.append(b);
+ }
+ remote.append(keys);box.append(remote);
+ const refresh=document.createElement('button');refresh.type='button';text(refresh,'TV-Status aktualisieren');refresh.disabled=busy||!tv.enabled;refresh.addEventListener('click',()=>send('PhilipsRefresh',true));box.append(refresh);
+ if(tv.error){const n=document.createElement('div');n.className='small';text(n,tv.error);box.append(n);}
+ if(tv.updated){const n=document.createElement('div');n.className='small';text(n,'Letzte Statusmeldung: '+new Date(tv.updated*1000).toLocaleString('de-DE'));box.append(n);}
+ parent.append(box);return box;
 }
 function renderCinemaFields(box,s){
  const fields=document.createElement('div');fields.className='cinemaFields';
@@ -2439,6 +2471,7 @@ if(!roomRestoreDone){
 // the initial HTML. No browser activity means no remote weather work.
 setTimeout(requestForecastAfterLoad,350);
 </script></body></html>
+
 
 
 

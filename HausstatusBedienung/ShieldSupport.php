@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/PhilipsTVSupport.php';
+
 trait HausstatusShieldSupport
 {
+    use HausstatusPhilipsTVSupport;
     private const SHIELD_FIELDS = ['ShieldOnline', 'ShieldPower', 'ShieldApp', 'ShieldPlayback', 'ShieldTitle', 'ShieldChannel', 'ShieldSubtitle', 'ShieldError', 'ShieldUpdated'];
 
     private const SHIELD_DEVICES = ['wohnzimmer' => 'Shield', 'ankleidezimmer' => 'ShieldDressing', 'schlafzimmer' => 'ShieldBedroom', 'philips' => 'PhilipsTv'];
@@ -11,6 +14,7 @@ trait HausstatusShieldSupport
     {
         $this->RegisterPropertyBoolean('ShieldEnabled', false);
         $this->RegisterPropertyBoolean('PhilipsTvEnabled', true);
+        $this->RegisterPropertyInteger('PhilipsTVInstance', 0);
         $this->RegisterAttributeString('ShieldPowerQueue', '{}');
         // Presentation belongs to this view, independently of ConfigSource.
         $this->RegisterPropertyBoolean('ShieldCompact', false);
@@ -268,6 +272,13 @@ trait HausstatusShieldSupport
         $ids = [];
         foreach (self::SHIELD_DEVICES as $device => $prefix) {
             if (!$this->ConfigBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { continue; }
+            if ($device === 'philips' && $this->ConfigInteger('PhilipsTVInstance') > 0) {
+                try {
+                    $stateID = @IPS_GetObjectIDByIdent('State', $this->DirectPhilipsInstance());
+                    if ($stateID !== false && IPS_VariableExists($stateID)) { $ids[] = $stateID; }
+                } catch (Throwable $e) { /* The state renderer shows the configuration error. */ }
+                continue;
+            }
             foreach (self::SHIELD_FIELDS as $field) {
                 $id = @IPS_GetObjectIDByIdent($prefix . substr($field, 6), $this->ShieldOwner());
                 if ($id !== false) { $ids[] = $id; }
@@ -300,6 +311,9 @@ trait HausstatusShieldSupport
     {
         if (!isset(self::SHIELD_DEVICES[$device]) || !is_bool($on)) { throw new InvalidArgumentException('Ungültiger Shield-Befehl.'); }
         if (!$this->ConfigBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { throw new RuntimeException('Gerät ist deaktiviert.'); }
+        if ($device === 'philips' && $this->ConfigInteger('PhilipsTVInstance') > 0) {
+            $this->DirectPhilipsAction('PhilipsPower', $on); return;
+        }
         $owner = $this->ShieldOwner();
         if ($owner !== $this->InstanceID) { IPS_RequestAction($owner, 'ShieldPower_' . $device, $on); return; }
         $this->ShieldPowerQueue($device, $on);
@@ -316,6 +330,8 @@ trait HausstatusShieldSupport
         $data = json_decode($JSON, true, 16, JSON_THROW_ON_ERROR);
         $device = is_array($data) ? ($data['device'] ?? 'wohnzimmer') : '';
         if (!is_string($device) || !isset(self::SHIELD_DEVICES[$device])) { throw new InvalidArgumentException('Unbekannte Shield.'); }
+        // Once a direct instance is selected, the old flow cannot own TV state or receive TV commands.
+        if ($device === 'philips' && $this->ConfigInteger('PhilipsTVInstance') > 0) { return '{"command":null}'; }
         if (!$this->ReadPropertyBoolean($device === 'philips' ? 'PhilipsTvEnabled' : 'ShieldEnabled') || $this->ReadPropertyInteger('ConfigSource') !== 0) {
             throw new RuntimeException('Gerät in der zentralen Hausstatus-Instanz aktivieren.');
         }
@@ -412,6 +428,7 @@ trait HausstatusShieldSupport
     private function ShieldState(string $prefix = 'Shield'): ?array
     {
         if (!$this->ConfigBoolean($prefix === 'PhilipsTv' ? 'PhilipsTvEnabled' : 'ShieldEnabled')) { return null; }
+        if ($prefix === 'PhilipsTv' && $this->ConfigInteger('PhilipsTVInstance') > 0) { return $this->DirectPhilipsState(); }
         $data = [];
         foreach (self::SHIELD_FIELDS as $ident) {
             $id = @IPS_GetObjectIDByIdent($prefix . substr($ident, 6), $this->ShieldOwner());
@@ -437,3 +454,4 @@ trait HausstatusShieldSupport
         return $data;
     }
 }
+
