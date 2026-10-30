@@ -238,7 +238,7 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) {
-            foreach ([40020, 26961, 16673, 40887, 55619, 35915, 25551, 38129] as $id) { $ids[] = $id; }
+            foreach ([39318, 49141, 13990, 44698, 18780, 13592, 40481, 26239] as $id) { $ids[] = $id; }
         }
         if ($this->ReadPropertyInteger('View') === 31) {
             foreach ([33763, 53624, 21012, 23009, 38996, 46284, 48316, 54068] as $upsID) { $ids[] = $upsID; }
@@ -754,7 +754,7 @@ class HausstatusBedienung extends IPSModuleStrict
             return;
         }
         if (!in_array($Ident, ['Light', 'Brightness', 'LivingColor', 'DiningColor', 'ShieldPower_wohnzimmer', 'ShieldPower_ankleidezimmer', 'ShieldPower_schlafzimmer', 'ShieldPower_philips', 'PhilipsHdmi3', 'Cinema', 'CinemaSource', 'CinemaVolume', 'DoorConfirm', 'DoorOpen', 'DoorPermission',
-            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'DreoPower', 'DreoMode', 'DreoPreset', 'DreoOscillation', 'DreoDisplay', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
+            'AwningPosition', 'AwningAuto', 'RoofPosition', 'RoofAuto', 'RoofNight', 'RoomValue', 'HeatingCenterMode', 'Dining', 'DiningBrightness', 'HeosSelection', 'HeosRadio', 'HeosNAS', 'HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan', 'DreoPower', 'DreoMode', 'DreoPreset', 'BedroomAvrPower', 'BedroomAvrZone', 'BedroomAvrSource', 'BedroomAvrVolume', 'BedroomAvrMute', 'BedroomSubwoofer', 'DockerControl'], true)) {
             throw new InvalidArgumentException('Unbekannte Bedienaktion.');
         }
         $key = 'SVHSCommand' . $this->InstanceID;
@@ -780,7 +780,7 @@ class HausstatusBedienung extends IPSModuleStrict
                 $this->SetBedroomMedia($Ident, $Value);
             } elseif ($Ident === 'DockerControl') {
                 $this->SetDockerControl($Value);
-            } elseif (in_array($Ident, ['DreoPower', 'DreoMode', 'DreoPreset', 'DreoOscillation', 'DreoDisplay'], true)) {
+            } elseif (in_array($Ident, ['DreoPower', 'DreoMode', 'DreoPreset'], true)) {
                 $this->SetDreo($Ident, $Value);
             } elseif (in_array($Ident, ['HeaterSwitch', 'HeaterMinimum', 'HeaterMaximum', 'HeaterManual', 'HeaterWeekplan'], true)) {
                 $this->SetHeater($Ident, $Value);
