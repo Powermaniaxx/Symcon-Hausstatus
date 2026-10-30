@@ -700,6 +700,20 @@ body.roomDetailView .waterbedAnnual{margin:0}
 .philipsDirect>.philipsRefresh{align-self:flex-start;min-height:40px;padding:7px 12px;font-size:12px}
 @media(max-width:420px){.philipsControls{gap:6px}.philipsDirect>.row{font-size:12px}.philipsDirect>.buttons button,.philipsControls button{min-height:40px}}
 
+
+/* Philips TV: compact layout; secondary data lives in details. */
+.mediaLivingContent .philipsDirect .philipsStateLine{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0 2px;font-size:13px}
+.mediaLivingContent .philipsDirect .philipsOnline{font-size:12px;color:#a33;font-weight:600}
+.mediaLivingContent .philipsDirect .philipsOnline.isOnline{color:#15743c}
+.mediaLivingContent .philipsDirect .philipsInfo{order:6;border-top:1px solid #8883;margin-top:4px}
+.mediaLivingContent .philipsDirect .philipsInfo summary{min-height:36px;padding:8px 0;cursor:pointer;font-size:12px}
+.mediaLivingContent .philipsDirect .philipsInfo>.row{display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:8px;padding:4px 0;font-size:12px}
+.mediaLivingContent .philipsDirect .philipsInfo>.row span:last-child{text-align:right;overflow-wrap:anywhere}
+.mediaLivingContent .philipsDirect>.buttons{margin:2px 0 4px;gap:6px}
+.mediaLivingContent .philipsDirect>.buttons button{min-height:40px}
+.mediaLivingContent .philipsDirect .philipsControls{margin-top:0;gap:8px}
+.mediaLivingContent .philipsDirect .philipsRemote{margin-top:2px}
+.mediaLivingContent .philipsDirect .philipsRefresh{order:7}
 </style></head><body><main>
 <div class="pageHeader" id="pageHeader" hidden><button id="pageBack" type="button">← Startseite</button><h2 id="pageTitle"></h2></div>
 <div id="roomNavigation" class="roomNavigation" hidden></div>
@@ -1676,11 +1690,14 @@ function renderShield(cinema,shield){
 function renderDirectPhilips(parent,tv){
  const box=document.createElement('section');box.className='card shieldStatus philipsDirect';box.setAttribute('aria-label','Philips TV direkt');
  const heading=document.createElement('h3');text(heading,'Philips TV');box.append(heading);
- const row=(name,value)=>{const n=document.createElement('div');n.className='row';const a=document.createElement('span'),b=document.createElement('span');text(a,name);text(b,value);n.append(a,b);box.append(n);};
- row('Verbindung',!tv.enabled?'Nicht eingerichtet / deaktiviert':tv.paused?'Abfrage pausiert':tv.stale?'Daten veraltet':tv.online?'Online':'Nicht erreichbar');
- row('Betrieb',tv.paused?'Standby (zuletzt gemeldet)':tv.power==='awake'?'Ein':tv.power==='standby'?'Standby':'Unbekannt');
- if(tv.power==='awake'){row('Anwendung / Eingang',tv.activity||'Nicht verfügbar');if(tv.ambilightMode)row('Ambilight-Modus',tv.ambilightMode);}
+ const stateLine=document.createElement('div');stateLine.className='philipsStateLine';
+ const power=document.createElement('strong');text(power,tv.power==='awake'?'Eingeschaltet':tv.power==='standby'?'Standby':'Status unbekannt');stateLine.append(power);
+ const status=document.createElement('span');status.className='philipsOnline'+(tv.enabled&&tv.online&&!tv.stale?' isOnline':'');text(status,!tv.enabled?'Deaktiviert':tv.paused?'Abfrage pausiert':tv.stale?'Daten veraltet':tv.online?'Online':'Offline');stateLine.append(status);box.append(stateLine);
  buttons(box,'ShieldPower_philips',tv.enabled===true,tv.power==='awake'?true:tv.power==='standby'?false:null);
+ const info=document.createElement('details');info.className='philipsInfo';const infoTitle=document.createElement('summary');text(infoTitle,'Gerätedetails');info.append(infoTitle);
+ const row=(name,value)=>{const n=document.createElement('div');n.className='row';const a=document.createElement('span'),b=document.createElement('span');text(a,name);text(b,value);n.append(a,b);info.append(n);};
+ if(tv.power==='awake'){row('Anwendung / Eingang',tv.activity||'Nicht verfügbar');if(tv.ambilightMode)row('Ambilight-Modus',tv.ambilightMode);}
+ box.append(info);
  const controls=document.createElement('div');controls.className='philipsControls';
  const usable=tv.enabled&&tv.online&&tv.power==='awake'&&!tv.stale;
  const toggle=(name,command,value,enabled)=>{const field=document.createElement('div');const label=document.createElement('div');label.className='small';text(label,name);field.append(label);buttons(field,command,!!enabled,value);controls.append(field);};
