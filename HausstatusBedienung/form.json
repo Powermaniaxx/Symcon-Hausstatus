@@ -998,6 +998,26 @@
           "caption": "Philips TV Wohnzimmer anzeigen und bedienen"
         },
         {
+          "type": "CheckBox",
+          "name": "PhilipsShowVolume",
+          "caption": "Philips TV: Lautstärke anzeigen"
+        },
+        {
+          "type": "CheckBox",
+          "name": "PhilipsShowMute",
+          "caption": "Philips TV: Stumm anzeigen"
+        },
+        {
+          "type": "CheckBox",
+          "name": "PhilipsShowDetails",
+          "caption": "Philips TV: Gerätedetails anzeigen"
+        },
+        {
+          "type": "CheckBox",
+          "name": "PhilipsShowRemote",
+          "caption": "Philips TV: Fernbedienung anzeigen"
+        },
+        {
           "type": "SelectInstance",
           "name": "PhilipsTVInstance",
           "caption": "Direkte Philips-TV-Instanz (0 = bisheriger Node-RED-Weg)",
