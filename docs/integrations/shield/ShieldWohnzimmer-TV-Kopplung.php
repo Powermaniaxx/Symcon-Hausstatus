@@ -13,11 +13,11 @@ declare(strict_types=1);
  * Manueller Start richtet nur das Ereignis ein.
  */
 
-$MASTER_ID = 52627;
+$MASTER_ID = 0;
 // 0 übernimmt die im Hausstatus ausgewählte Philips-TV-Instanz.
 $TV_INSTANCE_ID = 0;
 // Shield-Instanz, Statusvariable oder Link. 0 = bisherige Shield-Werte im Hausstatus.
-$SHIELD_SOURCE_ID = 26475;
+$SHIELD_SOURCE_ID = 0;
 // Wie im Hausstatus: 150 Sekunden tolerieren (60-Sekunden-Polling plus Laufzeit).
 $MAX_STATUS_AGE = 150;
 $SCRIPT_ID = (int) ($_IPS['SELF'] ?? 0);
@@ -25,6 +25,10 @@ $MANUAL = ($_IPS['SENDER'] ?? '') === 'Execute';
 
 if ($SCRIPT_ID <= 0 || !IPS_ScriptExists($SCRIPT_ID)) {
     throw new RuntimeException('Ungültige Skript-ID.');
+}
+
+if ($MASTER_ID <= 0) {
+    throw new RuntimeException('Oben im Skript MASTER_ID auf die eigene Hausstatus-Hauptinstanz setzen.');
 }
 
 if (!IPS_InstanceExists($MASTER_ID)

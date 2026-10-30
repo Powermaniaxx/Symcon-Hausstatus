@@ -2,11 +2,11 @@
 
 1. In der zentralen Hausstatus-Instanz unter Wohnzimmer die **Direkte Philips-TV-Instanz** auswählen und Änderungen übernehmen. Die TV-Instanz muss bereits gekoppelt und aktiviert sein.
 2. Den Inhalt von [ShieldWohnzimmer-TV-Kopplung.php](ShieldWohnzimmer-TV-Kopplung.php) in das **bestehende Kopplungsskript** in Symcon übernehmen. Dadurch bleiben Skript-ID und zugehörige Ereignis-/Cache-Objekte erhalten.
-3. Oben im Skript die Hausstatus-Hauptinstanz `$MASTER_ID` prüfen. Für das ursprüngliche System ist sie `52627`; bei anderen Anwendern deren eigene ID eintragen. `$TV_INSTANCE_ID = 0` verwendet automatisch die im Hausstatus ausgewählte TV-Instanz. Eine ausdrücklich gesetzte Instanz-ID überschreibt diese Auswahl.
+3. Oben im Skript `$MASTER_ID` auf die eigene Hausstatus-Hauptinstanz setzen. Die öffentliche Vorlage enthält keine voreingestellte persönliche Instanz-ID. `$TV_INSTANCE_ID = 0` verwendet automatisch die im Hausstatus ausgewählte TV-Instanz. Eine ausdrücklich gesetzte Instanz-ID überschreibt diese Auswahl.
 4. Einmal manuell ausführen. Das Skript richtet sein Ereignis ein und speichert den aktuellen gültigen Shield-Zustand. Dabei wird kein TV-Befehl gesendet.
 5. Erst einen anschließenden Wechsel der Shield von `awake` nach `standby` bzw. zurück prüfen.
 
-Die Shield-Quelle wird oben über `$SHIELD_SOURCE_ID` eingestellt. Im vorbereiteten Skript ist die vom Nutzer genannte **26475** eingetragen. Bei anderen Installationen die eigene Shield-Instanz angeben; `0` verwendet die alten Statuswerte unter der Hausstatus-Hauptinstanz. Eine bekannte Statusvariable oder ein Link kann ebenfalls angegeben werden. Die Quelle wird nicht stillschweigend durch eine andere ersetzt.
+Die Shield-Quelle wird oben über `$SHIELD_SOURCE_ID` eingestellt. Die eigene Shield-Instanz angeben; der neutrale Standard `0` verwendet die bisherigen Shield-Statuswerte unter der Hausstatus-Hauptinstanz. Eine bekannte Statusvariable oder ein Link kann ebenfalls angegeben werden. Die Quelle wird nicht stillschweigend durch eine andere ersetzt.
 
 Das Skript ermittelt Online-, Betriebszustands- und Zeitstempelvariable anhand bekannter Idents und prüft ihre Typen. Es unterstützt `ShieldOnline`/`ShieldPower`/`ShieldUpdated` sowie übliche direkte Modulvariablen wie `Online`, `PowerState` bzw. `Power` und `Updated`. Power kann ein bestätigter Boolean oder ein bekannter String wie `awake`/`standby` bzw. `On`/`Off` sein. Ein unbekannter Wert bedeutet niemals automatisch Aus. Fehlt eine sichere Zuordnung, werden nur Namen, IDs, Idents und Typen der verfügbaren Variablen ausgegeben; der TV wird nicht geschaltet.
 
