@@ -59,6 +59,9 @@ class HausstatusBedienung extends IPSModuleStrict
     {
         parent::Create();
         $this->CreateShield();
+        foreach (['PhilipsShowVolume', 'PhilipsShowMute', 'PhilipsShowDetails', 'PhilipsShowRemote'] as $setting) {
+            $this->RegisterPropertyBoolean($setting, false);
+        }
         $this->CreateBedroomMedia();
         $this->CreateWaterbed();
         foreach (self::SOURCES as $name => $id) {
@@ -1557,6 +1560,12 @@ class HausstatusBedienung extends IPSModuleStrict
         $state['Outdoor'] = $shows([8]) && in_array($this->CurrentView(), [0, 11], true) ? $this->OutdoorState() : null;
         $state['Shield'] = $shows([5,6,7]) ? $this->ShieldState() : null;
         $state['PhilipsTv'] = $shows([5]) && in_array($this->CurrentView(), [0, 6], true) ? $this->ShieldState('PhilipsTv') : null;
+        $state['PhilipsDisplay'] = [
+            'volume' => $this->ConfigBoolean('PhilipsShowVolume'),
+            'mute' => $this->ConfigBoolean('PhilipsShowMute'),
+            'details' => $this->ConfigBoolean('PhilipsShowDetails'),
+            'remote' => $this->ConfigBoolean('PhilipsShowRemote')
+        ];
         $state['BedroomMedia'] = $shows([6]) && in_array($this->CurrentView(), [0, 6], true) ? $this->BedroomMediaState() : [];
         $state['LivingMediaStatus'] = $shows([5]) && in_array($this->CurrentView(), [0, 6], true) ? $this->LivingMediaStatus() : [];
         $state['HeosStatusConfigured'] = $this->ConfigInteger('HeosStatus') > 0;
