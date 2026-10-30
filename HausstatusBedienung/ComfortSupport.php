@@ -18,10 +18,11 @@ trait HausstatusComfortSupport
     private function HeaterState(): ?array
     {
         // Display only Dreo; legacy heater properties remain stored and untouched.
-        $dreo = ['DreoPower' => [40020, 'Ein/Aus', true], 'DreoTarget' => [26961, 'Solltemperatur', false],
-            'DreoActual' => [16673, 'Isttemperatur', false], 'DreoHeating' => [40887, 'Heizstatus', false],
-            'DreoMode' => [55619, 'Modus', true], 'DreoPreset' => [35915, 'Voreinstellung', true],
-            'DreoOscillation' => [25551, '360°-Luftstrom', true], 'DreoDisplay' => [38129, 'Displaybeleuchtung', true]];
+        $dreo = ['DreoPower' => [39318, 'Ein/Aus', true], 'DreoTarget' => [49141, 'Solltemperatur', false],
+            'DreoActual' => [13990, 'Raumtemperatur', false], 'DreoHeating' => [44698, 'Heizelement aktiv', false],
+            'DreoMode' => [18780, 'Betriebsart', true], 'DreoPreset' => [13592, 'Heizstufe', true],
+            'DreoDelivered' => [40481, 'Heizstatus geliefert', false],
+            'DreoOnline' => [26239, 'Online bestätigt', false]];
         $result = ['title' => 'Zusatzheizung Wohnzimmer · Dreo 720S', 'items' => []];
         foreach ($dreo as $key => [$id, $label, $writable]) {
             if (!IPS_VariableExists($id)) {
@@ -39,8 +40,7 @@ trait HausstatusComfortSupport
 
     private function SetDreo(string $command, mixed $value): void
     {
-        $targets = ['DreoPower' => 40020, 'DreoMode' => 55619, 'DreoPreset' => 35915,
-            'DreoOscillation' => 25551, 'DreoDisplay' => 38129];
+        $targets = ['DreoPower' => 39318, 'DreoMode' => 18780, 'DreoPreset' => 13592];
         if (!isset($targets[$command]) || !in_array($this->CurrentView(), [0, 14], true)
             || !$this->ConfigBoolean('HeaterEnabled') || !$this->ConfigBoolean('RoomControlsEnabled')) {
             throw new RuntimeException('Dreo-Steuerung ist nicht freigegeben.');
@@ -51,7 +51,7 @@ trait HausstatusComfortSupport
         }
         $type = (int)IPS_GetVariable($id)['VariableType'];
         $this->ValidateAction($id, $type);
-        if (in_array($command, ['DreoPower', 'DreoOscillation', 'DreoDisplay'], true) && ($type !== 0 || !is_bool($value))) {
+        if ($command === 'DreoPower' && ($type !== 0 || !is_bool($value))) {
             throw new InvalidArgumentException('Dreo-Schalter erwartet Boolean.');
         }
         if (($command === 'DreoMode' || $command === 'DreoPreset') &&
