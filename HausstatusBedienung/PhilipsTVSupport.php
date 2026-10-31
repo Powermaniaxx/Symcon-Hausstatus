@@ -30,9 +30,15 @@ trait HausstatusPhilipsTVSupport
     private function DirectPhilipsAction(string $ident, mixed $value): void
     {
         if (!$this->ConfigBoolean('PhilipsTvEnabled')) { throw new RuntimeException('Philips-TV-Bedienung ist deaktiviert.'); }
-        $actions = ['PhilipsVolume' => 'Volume', 'PhilipsMute' => 'Mute', 'PhilipsAmbilight' => 'Ambilight', 'PhilipsRemoteKey' => 'RemoteKey', 'PhilipsRefresh' => 'Refresh', 'PhilipsPower' => 'Power'];
-        if (!isset($actions[$ident])) { throw new InvalidArgumentException('Unbekannter Philips-Befehl.'); }
+        $actions = ['PhilipsVolume' => 'Volume', 'PhilipsMute' => 'Mute', 'PhilipsAmbilight' => 'Ambilight', 'PhilipsAmbilightStyle' => 'AmbilightStyle', 'PhilipsRemoteKey' => 'RemoteKey', 'PhilipsRefresh' => 'Refresh', 'PhilipsPower' => 'Power'];
+        if ($ident !== 'PhilipsAmbilightDiscover' && !isset($actions[$ident])) { throw new InvalidArgumentException('Unbekannter Philips-Befehl.'); }
         $id = $this->DirectPhilipsInstance();
+        if ($ident === 'PhilipsAmbilightDiscover') {
+            if ($value !== true) { throw new InvalidArgumentException('Ambilight-Modi einlesen erwartet true.'); }
+            if (!function_exists('SVPTV_DiscoverAmbilightStyles')) { throw new RuntimeException('Philips-TV-Modul v1.4.0 oder neuer benötigt.'); }
+            SVPTV_DiscoverAmbilightStyles($this->DirectPhilipsInstance());
+            return;
+        }
         if ($ident === 'PhilipsRefresh') {
             if ($value !== true) { throw new InvalidArgumentException('Aktualisieren erwartet true.'); }
         }
