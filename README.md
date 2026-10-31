@@ -1,5 +1,7 @@
 ## Version 0.132 – Philips-TV-Anbindung
 
+> **Version 0.138:** Die Philips-TV-Kachel kann jetzt die vom Philips-Modul ab v1.4.1 zurückgemeldeten Ambilight-Modi einlesen und auswählen. Dafür zuerst das Philips-TV-Modul aktualisieren. Ohne unterstützte Modi bleiben die vorhandenen TV-Funktionen unverändert.
+
 Die Hausstatus-Kachel kann die eigenständige Bibliothek [Philips TV für Symcon](https://github.com/Powermaniaxx/Philips-TV-Modul-for-Symcon) direkt verwenden. TV-Modul separat installieren und die Instanz in den Wohnzimmer-Einstellungen auswählen. Ein/Aus, Lautstärke, Stumm, Ambilight und eine aufklappbare Fernbedienung bleiben in der Haussteuerung verfügbar. [Einrichtung und Standby-Verhalten](docs/PhilipsTV.md).
 
 # Hausstatus 0.63 für IP-Symcon
