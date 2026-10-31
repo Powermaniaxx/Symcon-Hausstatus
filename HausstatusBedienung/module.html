@@ -692,6 +692,9 @@ body.roomDetailView .waterbedAnnual{margin:0}
 .philipsControls .small{font-size:12px;margin-bottom:4px}
 .philipsControls .buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0}
 .philipsControls button{min-width:0;min-height:40px;padding:6px}
+.philipsControls .ambilightStyle{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.philipsControls .ambilightStyle select{min-height:40px;width:100%;max-width:100%;min-width:0;padding:7px;border-radius:8px}
+.philipsControls .ambilightScan{align-self:flex-start;min-height:36px;padding:6px 10px;font-size:12px}
 .philipsRemote{margin-top:4px}
 .philipsRemote summary{cursor:pointer;padding:9px 0;font-size:13px}
 .philipsKeypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
@@ -1725,6 +1728,27 @@ function renderDirectPhilips(parent,tv){
  }
  if(display.mute===true&&tv.caps?.audio)toggle('Stumm','PhilipsMute',tv.mute,usable);
  if(tv.caps?.ambilight)toggle('Ambilight','PhilipsAmbilight',tv.ambilight,usable);
+ if(tv.caps?.ambilight){
+  const field=document.createElement('div');field.className='ambilightStyle';
+  const label=document.createElement('div');label.className='small';text(label,'Ambilight-Modus');field.append(label);
+  const styles=Array.isArray(tv.ambilightOptions)?tv.ambilightOptions:[];
+  if(styles.length){
+   const select=document.createElement('select');select.setAttribute('aria-label','Ambilight-Modus auswählen');select.disabled=busy||!usable;
+   const placeholder=document.createElement('option');placeholder.value='';text(placeholder,'Modus auswählen …');select.append(placeholder);
+   const current=tv.ambilightMode+(tv.ambilightAlgorithm?'|'+tv.ambilightAlgorithm:'');
+   for(const item of styles){
+    if(typeof item.value!=='string'||typeof item.caption!=='string')continue;
+    const option=document.createElement('option');option.value=item.value;text(option,item.caption);select.append(option);
+   }
+   select.value=styles.some(item=>item.value===current)?current:styles.some(item=>item.value===tv.ambilightMode)?tv.ambilightMode:'';
+   select.addEventListener('change',()=>{if(select.value)send('PhilipsAmbilightStyle',select.value)});
+   field.append(select);
+  }
+  const scan=document.createElement('button');scan.type='button';scan.className='ambilightScan';
+  text(scan,styles.length?'Modi neu einlesen':'Verfügbare Modi einlesen');
+  scan.disabled=busy||!usable;scan.addEventListener('click',()=>send('PhilipsAmbilightDiscover',true));field.append(scan);
+  controls.append(field);
+ }
  box.append(controls);
  const remote=document.createElement('details');remote.className='philipsRemote';rememberPanel(remote,'philips-remote');const summary=document.createElement('summary');text(summary,'Fernbedienung');remote.append(summary);
  const keys=document.createElement('div');keys.className='philipsKeypad';
