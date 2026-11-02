@@ -241,7 +241,7 @@ class HausstatusBedienung extends IPSModuleStrict
             foreach ($this->TemperatureSources() as $row) { $ids[] = $row['actualID']; }
         }
         if (in_array($this->ReadPropertyInteger('View'), [0, 14], true)) {
-            foreach ([44033, 59658, 58453, 14547, 44974, 27804, 10363, 17978] as $id) { $ids[] = $id; }
+            foreach ([30328, 52114, 40001, 46632, 12140, 18607, 22965, 36404] as $id) { $ids[] = $id; }
         }
         if ($this->ReadPropertyInteger('View') === 31) {
             foreach ([33763, 53624, 21012, 23009, 38996, 46284, 48316, 54068] as $upsID) { $ids[] = $upsID; }
